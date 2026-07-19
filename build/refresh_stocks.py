@@ -281,7 +281,7 @@ def main():
         tp = None
         if dser is not None and not dser.isna().any() and len(dser) >= 40:
             wr = rsi(raw[t]["close"]).reindex(daily.index).values
-            theta = min(0.12, max(0.045, 2.5 * (sg.get("atrp") or 5) / 100))
+            theta = min(0.22, max(0.08, 4.0 * (sg.get("atrp") or 5) / 100))   # 감도↓ = 주요 전환점만
             piv, dvg = zigzag(dser.values, wr, theta)
             if len(piv) >= 2: tp = {"zz": piv, "dvg": dvg}
         # 매수/매도 타점(마커) — 일별 순매수/순매도 강신호(≥2, 우세)일을 표시
