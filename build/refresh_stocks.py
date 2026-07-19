@@ -157,11 +157,9 @@ def main():
         if as_of is None or d > pd.Timestamp(as_of): as_of = str(pd.Timestamp(d).date())
     print(f"지표 {len(raw)}종목 · 기준일 {as_of}")
     vdf = pd.DataFrame({t: raw[t]["sig"] for t in raw}).T; pct = vdf.rank(pct=True)*100
-    mdates = None
-    for t in raw:
-        md = raw[t]["close"].resample("ME").last().tail(PX_MONTHS).index
-        if mdates is None or len(md) > len(mdates): mdates = md
-    px_dates = [d.strftime("%Y-%m") for d in mdates] if mdates is not None else []
+    # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
+    daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
+    pxd_dates = [d.strftime("%Y-%m-%d") for d in daily.index]
     def comp(spec, rp):
         vs = [rp[s[1:]] if s[0] == "+" else 100 - rp[s[1:]] for s in spec if s[1:] in rp and pd.notna(rp[s[1:]])]
         return round(float(np.mean(vs)), 0) if vs else None
@@ -170,14 +168,14 @@ def main():
         sg, rp = raw[t]["sig"], pct.loc[t]
         sig = {k: {"v": round(float(sg[k]), 2), "pct": round(float(rp[k]), 0), "dt": as_of} for k in FACTORS if k in sg and pd.notna(sg[k])}
         comps = {c2: comp(spec, rp) for c2, spec in COMPOSITES.items()}
-        mser = raw[t]["close"].resample("ME").last().reindex(mdates)
-        pxarr = [None if pd.isna(x) else round(float(x), 2) for x in mser]
+        dser = daily[t] if t in daily.columns else None
+        pxd = [None if dser is None or pd.isna(x) else round(float(x), 2) for x in (dser if dser is not None else [None]*len(pxd_dates))]
         info = mem.get(t, {})
         stocks.append({"t": t, "name": info.get("name"), "sector": info.get("sector"), "idx": info.get("idx", []),
                        "comp": {k: v for k, v in comps.items() if v is not None}, "flags": flags(sg),
-                       "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"], "sig": sig, "px": pxarr})
+                       "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"], "sig": sig, "pxd": pxd})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
-    out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "px_dates": px_dates,
+    out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": as_of} for k in FACTORS},
            "composite_defs": {"overheat": "과열도 — RSI·스토캐스틱·MFI·Williams·%b·52주", "trend": "추세강도 — ADX·이동평균·MACD·Aroon",
                               "momentum": "모멘텀 — 1/3/6M 수익률·상대강도", "volatility": "변동성 — ATR%·실현변동성"},
