@@ -255,7 +255,7 @@
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="132"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+
-      '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = 교과서 매수/매도 신호 중 최근 5거래일 발동분. 차트 <b style="color:var(--good)">▲</b>/<b style="color:var(--hot)">▼</b> = 시그널 기준 과거 매수/매도 타점(순매수·순매도 강신호일). <b>백테스트(2016~26·무비용): 역추세형(오버솔드 반등)이 종목선택 엣지 우위, 돌파·추세추종형은 오히려 열위</b>였습니다 — 신호는 타이밍 참고용. 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위(100=최상). 전 지표 기준일 '+DATA.as_of+' · 출처 yfinance. 투자자문·매매권유 아님.</div></div>';
+      '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = 교과서 매수/매도 신호 중 최근 5거래일 발동분. 차트 <b style="color:var(--good)">▲</b>/<b style="color:var(--hot)">▼</b> = 시그널 기준 과거 매수/매도 타점(순매수·순매도 강신호일). <b>백테스트(2016~26·무비용): 역추세형(오버솔드)이 돌파형보다는 나았으나, 그 엣지의 대부분이 시장 반등 베타 — 종목선택 알파는 약하고(심화검증서 배포후보 실패) 신호는 타이밍 참고용</b>입니다. 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위(100=최상). 전 지표 기준일 '+DATA.as_of+' · 출처 yfinance. 투자자문·매매권유 아님.</div></div>';
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}
