@@ -174,8 +174,10 @@ def main():
         # 매수/매도 타점(마커) — 일별 순매수/순매도 강신호(≥2, 우세)일을 표시
         bd = raw[t]["b_day"].reindex(daily.index).fillna(0); sd = raw[t]["s_day"].reindex(daily.index).fillna(0)
         bd = bd.to_numpy(); sd = sd.to_numpy()
-        buy_marks = [i for i in range(len(pxd_dates)) if bd[i] >= 2 and bd[i] > sd[i]]
-        sell_marks = [i for i in range(len(pxd_dates)) if sd[i] >= 2 and sd[i] > bd[i]]
+        braw = set(i for i in range(len(pxd_dates)) if bd[i] >= 2 and bd[i] > sd[i])
+        sraw = set(i for i in range(len(pxd_dates)) if sd[i] >= 2 and sd[i] > bd[i])
+        buy_marks = sorted(i for i in braw if (i - 1) not in braw)   # 클러스터 시작(진입)일만
+        sell_marks = sorted(i for i in sraw if (i - 1) not in sraw)
         info = mem.get(t, {})
         stocks.append({"t": t, "name": info.get("name"), "sector": info.get("sector"), "idx": info.get("idx", []),
                        "comp": {k: v for k, v in comps.items() if v is not None}, "flags": flags(sg),
