@@ -113,7 +113,8 @@ def signals_fired(o):
          "데드크로스 50/200": cd(s50, s200), "MACD 데드(0선위)": cd(ml, ms) & (ml > 0), "MACD 0선 하향": cd(ml, z),
          "Donchian20 이탈": c <= dcl.shift(1), "Aroon 다운 교차": cd(au, ad)}
     buy = [n for n, s in B.items() if bool(s.tail(5).any())]; sell = [n for n, s in S.items() if bool(s.tail(5).any())]
-    return buy, sell
+    b_day = pd.DataFrame(B).astype(int).sum(axis=1); s_day = pd.DataFrame(S).astype(int).sum(axis=1)
+    return buy, sell, b_day, s_day
 
 
 def flags(s):
@@ -149,10 +150,10 @@ def main():
         r = indicators(px[t])
         if r is None: continue
         sig, c = r; sig["rs3m"] = (sig["roc3m"]/100 - spy3)*100 if sig.get("roc3m") == sig.get("roc3m") else np.nan
-        buy, sell = signals_fired(px[t])
+        buy, sell, b_day, s_day = signals_fired(px[t])
         nb, ns = len(buy), len(sell)
         tstate = ("매수" if nb >= 4 else "매수우세") if (nb > ns and nb >= 2) else ("매도" if ns >= 4 else "매도우세") if (ns > nb and ns >= 2) else "중립"
-        raw[t] = {"sig": sig, "close": c, "buy": buy[:8], "sell": sell[:8], "timing": tstate}
+        raw[t] = {"sig": sig, "close": c, "buy": buy[:8], "sell": sell[:8], "timing": tstate, "b_day": b_day, "s_day": s_day}
         d = c.index.max()
         if as_of is None or d > pd.Timestamp(as_of): as_of = str(pd.Timestamp(d).date())
     print(f"지표 {len(raw)}종목 · 기준일 {as_of}")
@@ -170,10 +171,16 @@ def main():
         comps = {c2: comp(spec, rp) for c2, spec in COMPOSITES.items()}
         dser = daily[t] if t in daily.columns else None
         pxd = [None if dser is None or pd.isna(x) else round(float(x), 2) for x in (dser if dser is not None else [None]*len(pxd_dates))]
+        # 매수/매도 타점(마커) — 일별 순매수/순매도 강신호(≥2, 우세)일을 표시
+        bd = raw[t]["b_day"].reindex(daily.index).fillna(0); sd = raw[t]["s_day"].reindex(daily.index).fillna(0)
+        bd = bd.to_numpy(); sd = sd.to_numpy()
+        buy_marks = [i for i in range(len(pxd_dates)) if bd[i] >= 2 and bd[i] > sd[i]]
+        sell_marks = [i for i in range(len(pxd_dates)) if sd[i] >= 2 and sd[i] > bd[i]]
         info = mem.get(t, {})
         stocks.append({"t": t, "name": info.get("name"), "sector": info.get("sector"), "idx": info.get("idx", []),
                        "comp": {k: v for k, v in comps.items() if v is not None}, "flags": flags(sg),
-                       "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"], "sig": sig, "pxd": pxd})
+                       "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"],
+                       "bm": buy_marks, "sm": sell_marks, "sig": sig, "pxd": pxd})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": as_of} for k in FACTORS},

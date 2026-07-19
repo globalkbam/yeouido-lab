@@ -110,8 +110,15 @@
   .sigl.buy{color:var(--good)}.sigl.sell{color:var(--hot)}
   .sigs{display:flex;flex-wrap:wrap;gap:4px}
   .sigbadge{font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:5px;line-height:1.5}
-  .sigbadge.buy{color:var(--good);background:var(--good-bg)}.sigbadge.sell{color:var(--hot);background:var(--hot-bg)}
+  .sigbadge.rev{color:var(--good);background:var(--good-bg)}   /* 역추세 매수 (백테스트 우위) */
+  .sigbadge.brk{color:var(--watch);background:var(--watch-bg)} /* 돌파 매수 (역사적 열위) */
+  .sigbadge.soh{color:var(--hot);background:var(--hot-bg)}     /* 과매수 매도 */
+  .sigbadge.sbrk{color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft)} /* 추세붕괴 매도 */
   .signone{font-size:11px;color:var(--muted)}
+  .siglegend{margin-top:9px;font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .siglegend span{display:inline-flex;align-items:center;gap:4px}
+  .siglegend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .marklegend{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;gap:10px}
 
   a.home,button.theme{position:fixed;top:14px;z-index:50;height:38px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);box-shadow:var(--shadow);border-radius:10px;cursor:pointer}
   a.home{left:14px;display:flex;align-items:center;gap:6px;padding:0 13px;font-family:var(--mono);font-size:12px;font-weight:600;text-decoration:none}
@@ -179,14 +186,20 @@
   function gc(g){return 'var('+({hot:'--hot',good:'--good',accent:'--accent',watch:'--watch',muted:'--muted'}[g]||'--accent')+')';}
   function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
   function flagHtml(f){return '<span class="flag '+(FLAGCLS[f]||'')+'">'+f+'</span>';}
+  var REV_BUY={"RSI<30":1,"Stoch %K<20 골든":1,"CCI<-100":1,"Williams<-80":1,"MFI<20":1,"BB %b<0":1};
+  var OH_SELL={"RSI>70":1,"Stoch %K>80 데드":1,"CCI>+100":1,"Williams>-20":1,"MFI>80":1,"BB %b>1":1};
+  function buyCls(n){return REV_BUY[n]?'rev':'brk';}
+  function sellCls(n){return OH_SELL[n]?'soh':'sbrk';}
   function timing(s){
     var t=s.timing||'중립', col=t.indexOf('매수')>=0?'--good':t.indexOf('매도')>=0?'--hot':'--muted';
-    var buy=(s.buy||[]).map(function(x){return '<span class="sigbadge buy">'+x+'</span>';}).join('');
-    var sell=(s.sell||[]).map(function(x){return '<span class="sigbadge sell">'+x+'</span>';}).join('');
+    var buy=(s.buy||[]).map(function(x){return '<span class="sigbadge '+buyCls(x)+'">'+x+'</span>';}).join('');
+    var sell=(s.sell||[]).map(function(x){return '<span class="sigbadge '+sellCls(x)+'">'+x+'</span>';}).join('');
+    var legend=(buy||sell)?'<div class="siglegend"><span><i style="background:var(--good)"></i>역추세형(반등형)</span><span><i style="background:var(--watch)"></i>돌파·추세형</span>'+
+      '<span style="color:var(--muted)">· 백테스트: 역추세형이 우위, 돌파형은 열위</span></div>':'';
     return '<div class="timing"><div class="timhd"><span class="timstate" style="color:var('+col+')">타이밍 · '+t+'</span><span class="timsub">최근 5거래일 발동 신호</span></div>'+
       (buy?'<div class="sigrow"><span class="sigl buy">매수</span><div class="sigs">'+buy+'</div></div>':'')+
       (sell?'<div class="sigrow"><span class="sigl sell">매도</span><div class="sigs">'+sell+'</div></div>':'')+
-      (!buy&&!sell?'<div class="signone">최근 발동 신호 없음</div>':'')+'</div>';
+      (!buy&&!sell?'<div class="signone">최근 발동 신호 없음</div>':'')+legend+'</div>';
   }
   function chip(txt,cnt,onclick){var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');b.innerHTML=txt+(cnt!=null?' <span style="opacity:.65">'+cnt+'</span>':'');b.addEventListener('click',onclick);return b;}
   function curP(){for(var i=0;i<PRESETS.length;i++)if(PRESETS[i][0]===state.preset)return PRESETS[i];return SHOWN[0];}
@@ -239,9 +252,10 @@
     detailEl.innerHTML='<div class="dtop"><div class="tkrow"><span class="tk">'+s.t+'</span>'+s.idx.map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+'</div>'+
       '<div class="nm">'+(s.name||'')+'</div><div class="sec">'+(s.sector||'')+'</div>'+(fl?'<div class="flags">'+fl+'</div>':'')+'</div>'+
       '<div class="chartcard"><div class="charthd"><span class="cl">주가 · <span id="chgd"></span></span><span class="chartbtns" id="chartbtns"></span></div>'+
+        '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="132"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+
-      '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = 사내 ta_lab 교과서 매수 36·매도 24 신호 중 최근 5거래일 발동분(검증된 규칙). 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위(100=최상). 전 지표 동일 기준일('+DATA.as_of+'). 출처 yfinance+ta_lab. 투자자문·매매권유 아님.</div></div>';
+      '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = 교과서 매수/매도 신호 중 최근 5거래일 발동분. 차트 <b style="color:var(--good)">▲</b>/<b style="color:var(--hot)">▼</b> = 시그널 기준 과거 매수/매도 타점(순매수·순매도 강신호일). <b>백테스트(2016~26·무비용): 역추세형(오버솔드 반등)이 종목선택 엣지 우위, 돌파·추세추종형은 오히려 열위</b>였습니다 — 신호는 타이밍 참고용. 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위(100=최상). 전 지표 기준일 '+DATA.as_of+' · 출처 yfinance. 투자자문·매매권유 아님.</div></div>';
     renderChart(s);
   }
   function renderChart(s){
@@ -254,9 +268,13 @@
     var vals=slice.filter(function(x){return x!=null;}), f=vals[0], l=vals[vals.length-1], chg=(f&&l)?((l/f-1)*100):null;
     var cd=el('chgd');
     if(cd)cd.innerHTML=(l!=null?l.toLocaleString():'—')+(chg!=null?' <b style="color:'+(chg>=0?'var(--good)':'var(--hot)')+'">'+(chg>=0?'+':'')+chg.toFixed(1)+'%</b>':'')+' <span style="color:var(--muted);font-weight:400">· '+(sdates[0]||'')+' ~ '+(DATA.as_of||'')+'</span>';
-    drawChart(slice, sdates);
+    var off=pxd.length-n;
+    var bm=(s.bm||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});
+    var sm=(s.sm||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});
+    var ml=el('marklg');if(ml)ml.innerHTML='<span style="color:var(--good)">▲ 매수 '+bm.length+'</span> <span style="color:var(--hot)">▼ 매도 '+sm.length+'</span>';
+    drawChart(slice, sdates, bm, sm);
   }
-  function drawChart(arr, dates){
+  function drawChart(arr, dates, bm, sm){
     var cv=el('pxc');if(!cv)return;var ctx=cv.getContext('2d');
     var pts=[];for(var i=0;i<arr.length;i++)if(arr[i]!=null)pts.push([i,arr[i]]);
     var dpr=window.devicePixelRatio||1,W=cv.clientWidth||560,H=132;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
@@ -274,6 +292,9 @@
     ctx.beginPath();ctx.moveTo(X(pts[0][0]),Y(pts[0][1]));pts.forEach(function(p){ctx.lineTo(X(p[0]),Y(p[1]));});
     ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
     var lp=pts[pts.length-1];ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(lp[0]),Y(lp[1]),3,0,7);ctx.fill();
+    // 시그널 기준 매수(▲)/매도(▼) 타점
+    if(bm)bm.forEach(function(i){if(arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.fillStyle=css('--good');ctx.beginPath();ctx.moveTo(x,y+5);ctx.lineTo(x-3.5,y+11);ctx.lineTo(x+3.5,y+11);ctx.closePath();ctx.fill();});
+    if(sm)sm.forEach(function(i){if(arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.fillStyle=css('--hot');ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x-3.5,y-11);ctx.lineTo(x+3.5,y-11);ctx.closePath();ctx.fill();});
   }
 
   fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
