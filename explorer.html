@@ -96,6 +96,17 @@
   .dbody p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.68}
   .dbody .verdict-line{margin-top:16px;padding:13px 16px;border-radius:11px;font-size:13.5px;line-height:1.6;background:var(--vbg);color:var(--ink-2);border:1px solid var(--line-soft)}
   .dbody .verdict-line b{color:var(--ink)}
+  .arche{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:4px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--accent)}
+  .play{margin-top:18px}
+  .play h4{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:0 0 9px;color:var(--ink-2)}
+  .play ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .play li{position:relative;padding-left:19px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+  .play li::before{position:absolute;left:0;top:-1px;font-family:var(--mono);font-weight:700;font-size:14px}
+  .play.pros li::before{content:"+";color:var(--deploy)}
+  .play.cons li::before{content:"–";color:var(--rej)}
+  .play.apps li::before{content:"▸";color:var(--accent)}
+  .whenrow{margin-top:16px;padding:12px 15px;border-radius:11px;background:var(--panel-2);border:1px solid var(--line-soft);font-size:13px;color:var(--ink-2);line-height:1.55}
+  .whenrow b{color:var(--accent);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-right:6px}
 
   footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.8}
   footer a{color:var(--accent);text-decoration:none}
@@ -116,8 +127,9 @@
   <header class="mast">
     <div class="eyebrow">여의도 전략 랩 · 리서치 아카이브</div>
     <h1 class="title">전략 탐색기</h1>
-    <p class="lede">10시간 자율 리서치가 적대적으로 검증한 <b>모든 전략</b>을 클릭해서 둘러봅니다. 왼쪽에서 전략을 고르면 오른쪽에 성과·상관·판정과 그렇게 판정한 이유가 뜹니다.
-      대부분은 <b>기각</b>됐고(비용·중복·단일에피소드·과최적화), 살아남은 소수의 결합이 배포 전략입니다.</p>
+    <p class="lede">10시간 자율 리서치가 적대적으로 검증한 <b>모든 전략</b>을 클릭해서 둘러봅니다. 왼쪽에서 전략을 고르면 오른쪽에 성과·판정과 함께
+      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 대부분은 <b>기각</b>됐지만 — 기각된 전략도 <b>잔존가치</b>(전술 국면·시그널·실행 타이밍·모니터링)가 있습니다.
+      아래 <b>활용 아키타입</b> 칩으로 목적별(위기방어·인플레헤지·모니터링시그널·실행타이밍 등)로도 걸러 볼 수 있습니다.</p>
     <div class="statline" id="statline"></div>
   </header>
 
@@ -131,6 +143,7 @@
     </div>
     <div class="chiprow" id="vfilters" role="group" aria-label="판정 필터"></div>
     <div class="chiprow" id="rfilters" role="group" aria-label="라운드 필터"></div>
+    <div class="chiprow" id="afilters" role="group" aria-label="활용 아키타입 필터"></div>
   </div>
 
   <div class="board">
@@ -239,7 +252,8 @@
   var RORDER=["배포","R1","R2","R3","R4","R5","R7","R9","R10","이전"];
   D.forEach(function(d,i){d._i=i;});
 
-  var state={q:"",vf:new Set(),rf:new Set(),sort:"round",sel:0};
+  var state={q:"",vf:new Set(),rf:new Set(),af:new Set(),sort:"round",sel:0};
+  var ARCHE_ORDER=['배포코어','저상관분산','위기방어','인플레·실물헤지','레짐·리스크오버레이','저비용틸트','실행타이밍','모니터링시그널','학술적참고','중복·무용'];
 
   var el=function(id){return document.getElementById(id);};
   var listEl=el('list'), detailEl=el('detail');
@@ -283,6 +297,17 @@
     document.querySelectorAll('#rfilters .fchip').forEach(function(b){
       var r=b.textContent.replace(/\s+\d+$/,'').trim();
       b.setAttribute('aria-pressed',state.rf.has(r));});
+    document.querySelectorAll('#afilters .fchip').forEach(function(b){
+      var a=b.textContent.replace(/\s+\d+$/,'').trim();
+      b.setAttribute('aria-pressed',state.af.has(a));});
+  }
+  function buildArchetypeFilter(){
+    var af=el('afilters'); if(!af)return; af.innerHTML='';
+    var counts={}; D.forEach(function(d){var a=d.det&&d.det.archetype; if(a)counts[a]=(counts[a]||0)+1;});
+    ARCHE_ORDER.forEach(function(a){
+      if(!counts[a])return;
+      af.appendChild(chip('a',a,counts[a],false,function(){toggle(state.af,a);render();syncPressed();}));
+    });
   }
 
   el('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase().trim();render();});
@@ -296,7 +321,9 @@
     var rows=D.filter(function(d){
       if(state.vf.size && !state.vf.has(d.v))return false;
       if(state.rf.size && !state.rf.has(d.r))return false;
-      if(state.q){var hay=(d.n+" "+d.t+" "+d.c+" "+d.vt).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
+      if(state.af.size && !(d.det&&state.af.has(d.det.archetype)))return false;
+      if(state.q){var extra=d.det?(" "+(d.det.pros||[]).join(" ")+" "+(d.det.cons||[]).join(" ")+" "+(d.det.applications||[]).join(" ")+" "+(d.det.archetype||"")):"";
+        var hay=(d.n+" "+d.t+" "+d.c+" "+d.vt+extra).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
       return true;
     });
     rows.sort(function(a,b){
@@ -343,10 +370,17 @@
     var vbg="var("+(d.v==="deploy"?"--deploy-bg":d.v==="marginal"?"--marg-bg":"--rej-bg")+")";
     var m2=d.corr?('<div class="dm"><div class="k">상관 (vs 통합)</div><div class="val">'+d.corr+'</div></div>'):
       ('<div class="dm"><div class="k">카테고리</div><div class="val" style="font-size:14px">'+d.c+'</div></div>');
+    var det=d.det, play='';
+    if(det){
+      var sec=function(cls,title,arr){return (arr&&arr.length)?'<div class="play '+cls+'"><h4>'+title+'</h4><ul>'+arr.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>':'';};
+      play=sec('pros','장점',det.pros)+sec('cons','단점',det.cons)+sec('apps','활용방안',det.applications)+
+        (det.when_to_use?'<div class="whenrow"><b>언제 쓰나</b>'+det.when_to_use+'</div>':'');
+    }
+    var arche=(det&&det.archetype)?'<span class="arche">'+det.archetype+'</span>':'';
     detailEl.innerHTML=
       '<div class="dtop">'+
         '<div class="dbadges"><span class="vbadge '+d.v+'">'+VMETA[d.v].lab+'</span>'+
-          '<span class="rbadge">'+d.r+'</span><span class="rbadge">'+d.c+'</span></div>'+
+          '<span class="rbadge">'+d.r+'</span><span class="rbadge">'+d.c+'</span>'+arche+'</div>'+
         '<h2>'+d.n+'</h2>'+
         '<div class="dcat">'+d.ml+' · '+d.m+'</div>'+
       '</div>'+
@@ -358,10 +392,18 @@
       '<div class="dbody">'+
         '<p class="lbl">전략 개요</p><p>'+d.t+'</p>'+
         '<div class="verdict-line" style="--vbg:'+vbg+'"><b>판정 근거 —</b> '+d.vt+'</div>'+
+        play+
       '</div>';
   }
 
-  render();
+  // 플레이북(장단점·활용방안) 병합: data/strategy_detail.json 있으면 각 전략에 붙이고 아키타입 필터 생성
+  fetch('data/strategy_detail.json',{cache:'no-store'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(map){
+      if(map){ D.forEach(function(d){ if(map[d.n]) d.det=map[d.n]; }); buildArchetypeFilter(); }
+      render();
+    })
+    .catch(function(){ render(); });
 })();
 </script>
 <script>(function(){var r=document.documentElement,b=document.getElementById('themebtn');function c(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}b.addEventListener('click',function(){var n=c()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('yeouido-theme',n);}catch(e){}});try{var s=localStorage.getItem('yeouido-theme');if(s)r.setAttribute('data-theme',s);}catch(e){}})();</script>
