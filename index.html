@@ -48,7 +48,7 @@
 
   .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:40px 0 14px;display:flex;align-items:center;gap:10px}
 
-  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tools{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   a.tool{display:flex;flex-direction:column;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 24px 22px;box-shadow:var(--shadow);border-top:4px solid var(--edge,var(--accent));transition:transform .14s,border-color .14s,box-shadow .14s}
   a.tool:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 1px 2px rgba(20,28,26,.05),0 18px 40px -16px rgba(20,28,26,.32)}
   a.tool.dash{--edge:var(--champ)} a.tool.expl{--edge:var(--rp)} a.tool.stk{--edge:var(--deploy)}
@@ -86,8 +86,8 @@
   <header class="mast">
     <div class="eyebrow">Yeouido Quant Strategy Lab</div>
     <h1 class="title">여의도 전략 랩</h1>
-    <p class="lede"><b>실전 배포 가능한 진성 알파</b>를 찾는 퀀트 전략 리서치. 수백 개 아이디어를 비용·PIT·다에피소드·적대검증으로 걸러,
-      살아남은 소수의 결합만 배포합니다. 이 사이트는 그 <b>배포 포트폴리오</b>와 <b>전 조사 아카이브</b>를 공개합니다.</p>
+    <p class="lede"><b>실전 배포 가능한 진성 알파</b>를 찾는 퀀트 전략 리서치. 수백 개 아이디어를 비용·PIT·다에피소드·적대검증으로 걸러냅니다.
+      이 사이트는 두 가지 도구를 공개합니다 — <b>전략 탐색기</b>(전 조사 아카이브·장단점·활용방안)와 <b>종목 시그널</b>(NDX·SPX 테크니컬·매매 타이밍).</p>
     <div class="kstrip">
       <div class="k"><div class="fig pos tnum">1.42</div><div class="cap"><b>통합 Sharpe</b><br>gross·무비용·월말 (조달후 net 1.26)</div></div>
       <div class="k"><div class="fig tnum">t 3.31</div><div class="cap"><b>진성 알파</b><br>CAPM · 8팩터 통제 후 t3.88 생존</div></div>
@@ -98,22 +98,16 @@
 
   <p class="lbl">도구</p>
   <div class="tools">
-    <a class="tool dash" href="dashboard.html">
-      <span class="ico">🧭</span>
-      <h2>배포 대시보드</h2>
-      <p>지금 운용하는 통합 포트폴리오 — 슬리브 배분·현재 보유·리스크 경보·강건성 검증·성능 정직 사다리(gross→net→forward).</p>
-      <span class="go">지금 배분 보기</span>
-    </a>
     <a class="tool expl" href="explorer.html">
       <span class="ico">🔬</span>
       <h2>전략 탐색기</h2>
-      <p>10라운드에서 검증한 62개 전략을 클릭해서 성과·상관·판정과 그 근거를 둘러보기. 판정별·라운드별 필터와 검색.</p>
+      <p>10라운드에서 검증한 51개 전략을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 판정·라운드·활용 아키타입 필터와 검색.</p>
       <span class="go">전략 둘러보기</span>
     </a>
     <a class="tool stk" href="stocks.html">
       <span class="ico">📈</span>
       <h2>종목 시그널</h2>
-      <p>NDX·SPX 구성종목의 과매수/과매도·추세·모멘텀·변동성 — 가격 기반 테크니컬(RSI·MACD·볼린저·ADX…) + 상태플래그. 매 거래일 최신.</p>
+      <p>NDX·SPX 구성종목의 과매수/과매도·추세·모멘텀·변동성 + 매수/매도 타이밍 신호 — 가격 기반 테크니컬(RSI·MACD·볼린저·ADX…). 매 거래일 최신, 종목별 기간선택 차트.</p>
       <span class="go">종목 분석 열기</span>
     </a>
   </div>
@@ -133,9 +127,9 @@
   </div>
 
   <footer>
-    <span class="live" id="livechip">데이터 갱신 대기</span> · 기준일 <b class="tnum" id="asof">2026-07-15</b><br>
-    github.com/ydyoon4578/Yeouido · 백테스트 2016~2026 · 명시 없으면 무비용·월말(gross) 기준<br>
-    성과·RP 배분은 자동 갱신(yfinance) · 챔피언 보유·통합 배분은 월별 갱신(FactSet DB).
+    <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a><br>
+    github.com/ydyoon4578/Yeouido · 리서치 백테스트는 무비용·월말(gross) 기준 · 종목 시그널은 yfinance 매 거래일 갱신<br>
+    투자자문·매매권유 아님.
   </footer>
 </div>
 <script>
@@ -147,11 +141,6 @@
     try{localStorage.setItem('yeouido-theme',next);}catch(e){}
   });
   try{var s=localStorage.getItem('yeouido-theme'); if(s)root.setAttribute('data-theme',s);}catch(e){}
-  // 라이브 데이터 있으면 기준일·칩 갱신
-  fetch('data/live.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){
-    if(j&&j.as_of){document.getElementById('asof').textContent=j.as_of;
-      var c=document.getElementById('livechip'); c.textContent='라이브 데이터 연결됨';}
-  }).catch(function(){});
 })();
 </script>
 </body>
