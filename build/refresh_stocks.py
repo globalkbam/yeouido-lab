@@ -122,6 +122,38 @@ def signals_fired(o):
     return buy, sell, b_day, s_day
 
 
+def swing_pivot_signals(o, K=3):
+    """확정형 스윙 피봇 신호(랩 엔진 이식·K=3) — 차트 마커 + timing.
+    매수 = 상승추세(종가>SMA200)의 확정 피봇저점 전부(눌림매수, 게이트 없음).
+    매도 = 상승추세는 강과매수 천장(과매수컨센≥3 or %b>1 or RSI>70), 하락추세는 피봇 반등고점 전부.
+    확정형 = close[t]가 [t−K,t+K] 전체의 최저/최고(양쪽 K봉 모두 높/낮음) → 확정 K거래일 지연·날짜 불변(표류 없음).
+    ⚠ 진단용(예측 아님). 확정후 causal forward는 대개 베이스라인 수준."""
+    h = o["High"].dropna(); l = o["Low"].dropna(); c = o["Close"].dropna(); v = o["Volume"].dropna()
+    idx = c.index; h = h.reindex(idx); l = l.reindex(idx); v = v.reindex(idx)
+    z = pd.Series(False, index=idx)
+    if len(c) < 210: return z, z, "중립"
+    _, bu, bl, pb, _ = boll(c); r = rsi(c)
+    k = stoch_k(h, l, c); mf = mfi(h, l, c, v); wr = willr(h, l, c); cc = cci(h, l, c)
+    ob = ((r > 70).astype(int) + (k > 80).astype(int) + (mf > 80).astype(int)
+          + (wr > -20).astype(int) + (cc > 100).astype(int))   # 5종 과매수 컨센서스(RSI 이중계상 방지 위해 게이트는 별도)
+    s200 = sma(c, 200); up = c > s200
+    win = 2*K + 1   # 확정형 중심 피봇
+    piv_lo = (c == c.rolling(win, center=True, min_periods=win).min())
+    piv_hi = (c == c.rolling(win, center=True, min_periods=win).max())
+    strong_ob = (ob >= 3) | (pb > 1.0) | (r > 70)
+    BUY = piv_lo & up
+    SELL = (piv_hi & strong_ob & up) | (piv_hi & (~up))
+    lb = BUY[BUY].index.max() if bool(BUY.any()) else None
+    ls = SELL[SELL].index.max() if bool(SELL.any()) else None
+    tstate = "중립"
+    if not (lb is None and ls is None):
+        if ls is None or (lb is not None and lb >= ls): d0, dr = lb, "매수"
+        else: d0, dr = ls, "매도"
+        loc = c.index.get_loc(d0); days_ago = (len(c) - 1) - loc
+        tstate = dr if days_ago <= K + 5 else dr + "우세"   # 최근 확정=강, 지난 신호=우세
+    return BUY, SELL, tstate
+
+
 def zigzag(a, rsi_a, theta):
     """퍼센트 임계 지그재그 → 확정 스윙 전환점 [[idx,'H'/'L'],...] + 다이버전스('bull'/'bear'/None).
     theta = 반전 임계(소수). a=윈도 종가배열, rsi_a=동일길이 RSI."""
@@ -239,10 +271,10 @@ def main():
         r = indicators(px[t])
         if r is None: continue
         sig, c = r; sig["rs3m"] = (sig["roc3m"]/100 - spy3)*100 if sig.get("roc3m") == sig.get("roc3m") else np.nan
-        buy, sell, b_day, s_day = signals_fired(px[t])
-        nb, ns = len(buy), len(sell)
-        tstate = ("매수" if nb >= 4 else "매수우세") if (nb > ns and nb >= 2) else ("매도" if ns >= 4 else "매도우세") if (ns > nb and ns >= 2) else "중립"
-        raw[t] = {"sig": sig, "close": c, "buy": buy[:8], "sell": sell[:8], "timing": tstate, "b_day": b_day, "s_day": s_day}
+        buy, sell, b_day, s_day = signals_fired(px[t])   # 이벤트 태그(상세패널)·유지
+        BUYs, SELLs, tstate = swing_pivot_signals(px[t])  # 확정 피봇 스윙(마커·timing)
+        raw[t] = {"sig": sig, "close": c, "buy": buy[:8], "sell": sell[:8], "timing": tstate,
+                  "b_day": b_day, "s_day": s_day, "BUY": BUYs, "SELL": SELLs}
         d = c.index.max()
         if as_of is None or d > pd.Timestamp(as_of): as_of = str(pd.Timestamp(d).date())
     print(f"지표 {len(raw)}종목 · 기준일 {as_of}")
@@ -284,16 +316,15 @@ def main():
             theta = min(0.30, max(0.12, 6.0 * (sg.get("atrp") or 5) / 100))   # 감도↓↓ = 주요 전환점 3~4개만
             piv, dvg = zigzag(dser.values, wr, theta)
             if len(piv) >= 2: tp = {"zz": piv, "dvg": dvg}
-        # 매수/매도 타점(마커) — 일별 순매수/순매도 강신호(≥2, 우세)일을 표시
-        bd = raw[t]["b_day"].reindex(daily.index).fillna(0); sd = raw[t]["s_day"].reindex(daily.index).fillna(0)
-        bd = bd.to_numpy(); sd = sd.to_numpy()
-        braw = set(i for i in range(len(pxd_dates)) if bd[i] >= 2 and bd[i] > sd[i])
-        sraw = set(i for i in range(len(pxd_dates)) if sd[i] >= 2 and sd[i] > bd[i])
-        bstart = [i for i in sorted(braw) if (i - 1) not in braw]    # 클러스터 시작(진입)일
-        sstart = [i for i in sorted(sraw) if (i - 1) not in sraw]
-        # 강도: 발동 신호 3개+ = 강, 2개 = 약
-        bms = [i for i in bstart if bd[i] >= 3]; bmw = [i for i in bstart if bd[i] < 3]
-        sms = [i for i in sstart if sd[i] >= 3]; smw = [i for i in sstart if sd[i] < 3]
+        # 매수/매도 타점(마커) — 확정 스윙 피봇(K=3·SMA200 추세정렬). 확정에 3거래일 지연·날짜 불변.
+        BUYs = raw[t]["BUY"].reindex(daily.index).fillna(False).to_numpy()
+        SELLs = raw[t]["SELL"].reindex(daily.index).fillna(False).to_numpy()
+        s200d = sma(raw[t]["close"], 200).reindex(daily.index)
+        upd = (dser > s200d).reindex(daily.index).fillna(False).to_numpy() if dser is not None else np.zeros(len(pxd_dates), bool)
+        bms = [i for i in range(len(pxd_dates)) if BUYs[i]]                       # 강: 상승추세 확정 피봇저점
+        bmw = []                                                                  # (매수는 강/약 구분 없음)
+        sms = [i for i in range(len(pxd_dates)) if SELLs[i] and upd[i]]           # 강: 상승추세 강과매수 천장
+        smw = [i for i in range(len(pxd_dates)) if SELLs[i] and not upd[i]]       # 약: 하락추세 반등고점
         info = mem.get(t, {})
         fd = fund.get(t) or {}
         def r2(x): return round(float(x), 2) if x is not None and x == x else None
