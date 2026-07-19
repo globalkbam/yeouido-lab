@@ -140,10 +140,9 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         <input id="q" type="search" placeholder="전략 이름·설명 검색 (예: 상품, RP, 채권, 오버나이트)" aria-label="전략 검색">
       </label>
-      <button class="sortbtn" id="sort" aria-label="정렬 전환">정렬 ↓ 라운드</button>
+      <button class="sortbtn" id="sort" aria-label="정렬 전환">정렬 ↓ 판정</button>
     </div>
     <div class="chiprow" id="vfilters" role="group" aria-label="판정 필터"></div>
-    <div class="chiprow" id="rfilters" role="group" aria-label="라운드 필터"></div>
     <div class="chiprow" id="afilters" role="group" aria-label="활용 아키타입 필터"></div>
   </div>
 
@@ -156,7 +155,7 @@
   </div>
 
   <footer>
-    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · 10라운드·47개 조사 + 배포·이전 탐색 = 51개 전략 · 전부 구현→적대검증<br>
+    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · 적대검증 통과 <b>배포·marginal 16개 전략</b> (기각 35개는 아카이브) · 전부 구현→적대검증<br>
     수치는 백테스트(2016~2026, 명시 없으면 무비용·월말 gross) 기준 · <a href="index.html">홈</a> · <a href="stocks.html">종목 시그널</a>.
   </footer>
 </div>
@@ -164,85 +163,37 @@
 <script>
 (function(){
   // ── 데이터: 라운드·판정·성과 (v: deploy/marginal/reject) ──
-  var D=[
-    // 배포 코어
-    {n:"통합 포트폴리오 (챔피언 + 크로스에셋 RP)",r:"배포",c:"배포 코어",v:"deploy",m:"1.42",ml:"gross Sharpe",corr:null,t:"두 검증 슬리브를 슬리브간 리스크패리티(역변동성)로 결합 + 변동성타겟 13%. 저상관 분산효과로 각 단독을 넘어선다.",vt:"<b>배포 확정.</b> 진성알파 CAPM t=3.31(신용·스타일 8팩터 통제 후에도 t=3.88 생존). 정직한 눈금: gross 1.42 → 조달후 net 1.26 → 현실적 forward ~0.95. 위험감축형."},
-    {n:"챔피언 — EPS 리비전 드리프트 (PEAD)",r:"배포",c:"배포 코어",v:"deploy",m:"1.12",ml:"Sharpe",corr:null,t:"애널리스트가 향후 실적 추정치를 상향하는 나스닥100 종목 매수. 실적기대 개선이 그 방향으로 표류하는 PEAD 포착.",vt:"<b>배포 (슬리브 A·공격).</b> 이 랩이 수백 전략 중 유일하게 검증한 대형주 진성알파. 단독 CAPM α t=1.8(비유의)이나 결합서 RP와 분산효과로 유의."},
-    {n:"크로스에셋 리스크패리티 + vol타겟",r:"배포",c:"배포 코어",v:"deploy",m:"1.15",ml:"Sharpe",corr:null,t:"12개 자산군을 변동성 역가중 + 추세 꺾인 위험자산 제외 + 목표변동성 10% 레버 조절. 올웨더.",vt:"<b>배포 (슬리브 B·방어·분산).</b> 저회전·비용robust. MDD −19%. 추세게이트의 '존재'가 좌측꼬리 방어에 결정적(R5)."},
-
-    // R1 3슬리브①
-    {n:"상품 커브 캐리 (GLD/DBC)",r:"R1",c:"3슬리브 후보",v:"reject",m:"corr 0.26",ml:"vs 통합",corr:"0.26",t:"원자재 롤수익률 캐리. 통합과 저상관으로 유력했다 — 결합 Sharpe 1.42→1.51(w0.2).",vt:"<b>기각(초기 유력→하향).</b> 95%CI가 0 교차·유니버스 얕음, R2 재검서 서브기간 일관성 실패(2021-22 집중)로 weak 확정."},
-    {n:"CTA 멀티에셋 트렌드 (TSMOM)",r:"R1",c:"3슬리브 후보",v:"reject",m:"corr 0.43",ml:"vs 통합",corr:"0.43",t:"시계열 모멘텀. 여러 자산군의 추세를 롱숏.",vt:"<b>기각.</b> 통합의 RP 추세게이트와 정보 중복(corr 0.43)."},
-    {n:"테일 헤지 (long-vol)",r:"R1",c:"3슬리브 후보",v:"reject",m:"실패",ml:"위기방어",corr:null,t:"꼬리위험 대비 상시 롱볼 포지션.",vt:"<b>기각.</b> 상시 비용부담이 크고, 정작 위기에서도 기대만큼 방어 못함."},
-    {n:"방어형 퀄리티 롱숏",r:"R1",c:"3슬리브 후보",v:"reject",m:"무프리미엄",ml:"—",corr:null,t:"저변동·고퀄리티 롱, 반대 숏.",vt:"<b>기각.</b> 순 프리미엄 없음."},
-
-    // R2 3슬리브②
-    {n:"채권/금 레짐 스위칭",r:"R2",c:"3슬리브 후보",v:"reject",m:"개선無",ml:"—",corr:null,t:"레짐에 따라 채권↔금 전환.",vt:"<b>기각.</b> 무증분."},
-    {n:"인플레 헤지 바스켓",r:"R2",c:"3슬리브 후보",v:"reject",m:"무증분",ml:"—",corr:null,t:"TIPS·원자재·금 바스켓.",vt:"<b>기각.</b> 통합에 무증분."},
-    {n:"HRP 배분",r:"R2",c:"3슬리브 후보",v:"reject",m:"corr 0.56",ml:"vs 통합",corr:"0.56",t:"계층적 리스크패리티.",vt:"<b>기각.</b> 중복(0.56)."},
-    {n:"상품 광의 바스켓",r:"R2",c:"3슬리브 후보",v:"reject",m:"희석",ml:"—",corr:null,t:"넓은 원자재 바스켓.",vt:"<b>기각.</b> 분산이 오히려 희석."},
-
-    // R3 결합최적화
-    {n:"HRP 결합",r:"R3",c:"결합 최적화",v:"reject",m:"개선불가",ml:"수학적",corr:null,t:"계층 리스크패리티로 두 슬리브 결합.",vt:"<b>기각(수학적).</b> 2슬리브 ERC=역변동성이라 현 가중과 동일."},
-    {n:"min-CVaR",r:"R3",c:"결합 최적화",v:"reject",m:"개선無",ml:"—",corr:null,t:"조건부 꼬리위험 최소화 가중.",vt:"<b>기각.</b> 개선 없음."},
-    {n:"리스크 버짓",r:"R3",c:"결합 최적화",v:"reject",m:"개선無",ml:"—",corr:null,t:"위험예산 기반 배분.",vt:"<b>기각.</b> 현 가중이 이미 강건 교차점."},
-    {n:"레짐 조건부 (챔피언↔RP)",r:"R3",c:"결합 최적화",v:"reject",m:"반대틸트",ml:"—",corr:null,t:"레짐별로 슬리브 비중 스위칭.",vt:"<b>기각.</b> 서브기간이 반대로 틸트돼 상쇄."},
-    {n:"동적 vol타겟",r:"R3",c:"결합 최적화",v:"marginal",m:"MDD↓",ml:"리스크만",corr:null,t:"실현변동성에 적응하는 목표변동성.",vt:"<b>marginal.</b> MDD를 낮추나 수익증대는 없음 — 리스크 관리 목적."},
-    {n:"Kelly 스케일",r:"R3",c:"결합 최적화",v:"reject",m:"개선無",ml:"—",corr:null,t:"Kelly 기준 레버리지 스케일.",vt:"<b>기각.</b> 개선 없음."},
-
-    // R4 챔피언강건
-    {n:"SPX 챔피언",r:"R4",c:"챔피언 강건성",v:"reject",m:"t 0.73",ml:"증분 유의도",corr:null,t:"S&P500 유니버스로 챔피언 확장.",vt:"<b>기각.</b> SPX 증분이 통계적으로 비유의(paired-t 0.73)."},
-    {n:"NDX+SPX 결합 챔피언",r:"R4",c:"챔피언 강건성",v:"marginal",m:"semi 91→55%",ml:"탈집중",corr:null,t:"NDX∪SPX 유니버스로 종목 breadth 확대.",vt:"<b>marginal(유용).</b> 반도체 집중 91→55%·breadth 8→28종 탈집중, Sharpe는 parity. 집중 우려 시 옵션."},
-    {n:"리비전 구성 변형",r:"R4",c:"챔피언 강건성",v:"reject",m:"개선無",ml:"—",corr:null,t:"EPS 리비전 산식·랭킹 변형.",vt:"<b>기각.</b> 개선 없음."},
-    {n:"buy10/hold40 (밴드·보유기간)",r:"R4",c:"챔피언 강건성",v:"marginal",m:"회전 −52%",ml:"921→444%",corr:null,t:"진입 상위10·보유 상위40 밴드로 회전↓.",vt:"<b>marginal(유용).</b> 회전 절반으로 캐패시티↑, Sharpe parity. 대규모 운용 시 옵션."},
-    {n:"퀄리티·신선도 게이트",r:"R4",c:"챔피언 강건성",v:"reject",m:"≈0",ml:"기여",corr:null,t:"리비전 신선도·퀄리티 필터.",vt:"<b>기각.</b> 기여 ≈0."},
-    {n:"섹터 중립화",r:"R4",c:"챔피언 강건성",v:"reject",m:"−0.064",ml:"저베타틸트",corr:null,t:"섹터 노출 중립.",vt:"<b>기각.</b> 저베타 틸트가 −0.064 손해."},
-
-    // R5 RP강건
-    {n:"자산군 확장 RP (TIP·EMB·SLV)",r:"R5",c:"RP 강건성",v:"reject",m:"Δ −0.007",ml:"vs 1.42",corr:null,t:"CORE12에 물가채·신흥채·은 추가.",vt:"<b>기각.</b> 넓은 분산이 희석(Δ−0.007) — R2 글로벌RP 교훈 재확인."},
-    {n:"vol 추정창 (90/60)",r:"R5",c:"RP 강건성",v:"marginal",m:"회전 −24%",ml:"2.21→1.68/yr",corr:null,t:"역변동성·vol타겟 추정창 확대.",vt:"<b>marginal.</b> Sharpe 이득(+0.04)은 부트스트랩상 무의미(CI 0교차)이나, 회전↓·전 비용레벨 우위 = 저회전·캐패시티 실운영 개선."},
-    {n:"추세게이트 정의 (6M/멀티)",r:"R5",c:"RP 강건성",v:"marginal",m:"Δ +0.02",ml:"vs 1.42",corr:null,t:"12M 추세게이트를 6M·3M·멀티·이중으로 변형.",vt:"<b>marginal.</b> 게이트 '존재'가 결정적(제거시 붕괴), 호라이즌(6M/12M)은 노이즈 → 12M 최적근방."},
-    {n:"리밸 주기 (주간/격주/분기)",r:"R5",c:"RP 강건성",v:"marginal",m:"Δ −0.002",ml:"vs 1.42",corr:null,t:"월말 리밸을 다른 주기로 변형.",vt:"<b>marginal.</b> 격주가 회귀-내 동률, 월 캐던스가 사실상 최적."},
-    {n:"vol타겟 레벨·게이트 격자",r:"R5",c:"RP 강건성",v:"marginal",m:"격자 최대",ml:"vol10%",corr:null,t:"내부 vol타겟 8~15%×게이트 on/off 격자.",vt:"<b>marginal.</b> 현 vol10%/gate-ON이 격자 최대, gate-ON은 강건 필수."},
-
-    // R7 직교신호
-    {n:"신용레짐 게이트",r:"R7",c:"직교 신호",v:"reject",m:"Δ −0.12",ml:"오버레이",corr:null,t:"회사채vs국채 상대강도로 리스크온/오프.",vt:"<b>기각.</b> 추세게이트와 직교하나 '틀린' 정보 — 통합에 이미 추세방어 내장."},
-    {n:"VIX 기간구조",r:"R7",c:"직교 신호",v:"reject",m:"corr 0.988",ml:"vs 통합",corr:"0.988",t:"^VIX vs ^VIX3M 콘탱고/백워데이션 스위치.",vt:"<b>기각.</b> 실현-vol타겟과 중복(0.988), 2022 grind 약세장엔 콘탱고라 무개입."},
-    {n:"횡단면 분산·브레드스 오버레이",r:"R7",c:"직교 신호",v:"marginal",m:"MDD −21→−16%",ml:"낙폭축소",corr:null,t:"저분산=추세지속·고분산=붕괴전조를 익스포저 타이밍으로.",vt:"<b>marginal(유일 생존).</b> 월별·무비용호환, MDD 23%↓. 단 수익증대 아닌 낙폭축소·2021-26 집중·통계 무의미 → 선택적 리스크 오버레이."},
-    {n:"오버나이트 드리프트",r:"R7",c:"직교 신호",v:"reject",m:"corr 0.45",ml:"vs 통합",corr:"0.45",t:"종가→익일시가 지수 오버나이트 프리미엄.",vt:"<b>기각.</b> gross 저상관이나 종가매수/시가매도 일별 왕복이 신호의 본질 → 월말 컨벤션과 원천적 비양립(breakeven 2bp)."},
-
-    // R9 종결
-    {n:"머저 아비트리지 (MNA)",r:"R9",c:"이벤트 드리븐",v:"reject",m:"corr 0.32",ml:"vs 통합",corr:"0.32",t:"딜 성사 보험프리미엄. 마지막 미검 modality — '찾던 3번째 슬리브' 후보.",vt:"<b>기각(측정으로).</b> 단독 Sharpe 0.39·무조건 corr 0.32이나 위기 tail dependence 폭발(2020-03 −16.2%>통합) → 진짜 헤지 아님. 결합 Δ−0.003."},
-
-    // R10 채권게이팅
-    {n:"채권 추세게이트",r:"R10",c:"채권 게이팅",v:"marginal",m:"2022 +5.1%p",ml:"방어",corr:null,t:"상시보유 채권(TLT/IEF/LQD/HYG)에 12M 추세게이트 확장.",vt:"<b>marginal.</b> 2022 −17.2→−12.1% 방어 실재하나 정상기(2016-20) 희석 −0.172로 전기간 Sharpe 소폭 악화."},
-    {n:"듀레이션 스케일",r:"R10",c:"채권 게이팅",v:"marginal",m:"2022 +2.5%p",ml:"방어",corr:null,t:"금리추세로 듀레이션 익스포저 연속 스케일(0~1x).",vt:"<b>marginal.</b> no free lunch — 2022 방어와 정상기 희석최소를 동시 달성 불가. 선택적 리스크 오버레이."},
-    {n:"신용 게이트",r:"R10",c:"채권 게이팅",v:"reject",m:"2022 −0.2%p",ml:"무방어",corr:null,t:"HYG 추세·HY-IG 스프레드로 크레딧 축소.",vt:"<b>기각.</b> 2022 통증은 신용 아닌 듀레이션(TLT −29%) — 국채 분리한 신용게이트는 무방어, 축소분이 renormalize로 하락국채에 되돌아감."},
-    {n:"AGG 채권레짐 오버레이",r:"R10",c:"채권 게이팅",v:"marginal",m:"2022 +6.1%p",ml:"MDD −19→−16%",corr:null,t:"채권 애그리게이트 12M 추세로 전채권 on/off 단일신호.",vt:"<b>marginal(최선 채권방어).</b> 2022 −17→−11%·MDD −19→−16% 실질방어, 개별 4게이트보다 단순하고 대등. 단 정상기 희석 −0.118로 전기간 Sharpe −0.026 → 위험감축형 선택적 오버레이."},
-
-    // 이전 탐색 (하이라이트)
-    {n:"대형 모멘텀·200MA 추세",r:"이전",c:"이전 탐색",v:"reject",m:"1.2~1.27",ml:"gross",corr:null,t:"대형주 모멘텀·이동평균 추세추종.",vt:"<b>기각.</b> PIT 엄격 적용시 챔피언에 열위(0.83) — 증분 없음."},
-    {n:"소형 주간 반전 롱숏",r:"이전",c:"이전 탐색",v:"reject",m:"1.97",ml:"gross",corr:null,t:"소형주 주간 과매도 반전.",vt:"<b>기각(비용 신기루).</b> gross 1.97이나 50bp에서 −1.87 — 고회전 본질."},
-    {n:"소형 월간 반전/과매도 LS",r:"이전",c:"이전 탐색",v:"reject",m:"0.51@20bp",ml:"net",corr:null,t:"월간 과매도 종목 매수.",vt:"<b>기각.</b> 경비용에서만 생존."},
-    {n:"오버나잇 보유 (NDX)",r:"이전",c:"이전 탐색",v:"reject",m:"1.80",ml:"gross",corr:null,t:"장중 청산·야간만 보유.",vt:"<b>기각.</b> 수익은 오버나잇에 발생하나 일일회전으로 비용 소멸."},
-    {n:"섹터 모멘텀 top4",r:"이전",c:"이전 탐색",v:"marginal",m:"0.63",ml:"@10bp",corr:null,t:"상위 모멘텀 섹터 4개 로테이션.",vt:"<b>marginal.</b> 약하나 비용robust."},
-    {n:"지수 200MA 타이밍",r:"이전",c:"이전 탐색",v:"marginal",m:"리스크만",ml:"—",corr:null,t:"200일선 상/하로 지수 롱/플랫.",vt:"<b>marginal.</b> 알파 아닌 리스크 관리 오버레이."},
-    {n:"SUE PEAD (실측 서프라이즈)",r:"이전",c:"이전 탐색",v:"reject",m:"음성",ml:"—",corr:null,t:"실적 서프라이즈(SUE) 후 드리프트.",vt:"<b>기각.</b> 대·중·소형 전 유니버스 음성 — 소형효과는 어닝 아닌 가격반전."},
-    {n:"크로스에셋 캐리",r:"이전",c:"이전 탐색",v:"reject",m:"0.76",ml:"@10bp",corr:null,t:"자산군 캐리 하베스트.",vt:"<b>기각.</b> 60/40 '동률'은 GFC 08-11 산물, 이후 지배당함."},
-    {n:"VRP 숏볼",r:"이전",c:"이전 탐색",v:"reject",m:"0.84",ml:"@10bp",corr:null,t:"변동성 위험프리미엄.",vt:"<b>기각.</b> 초과수익=레버리지(위험조정 개선 0)."},
-    {n:"ML 지수 타이밍",r:"이전",c:"이전 탐색",v:"reject",m:"0.80",ml:"@10bp",corr:null,t:"머신러닝 지수 방향 예측.",vt:"<b>기각.</b> 적중 62%=base rate, B&H(0.90) 열위."},
-    {n:"듀얼모멘텀 (GEM)",r:"이전",c:"이전 탐색",v:"reject",m:"0.50",ml:"@10bp",corr:null,t:"글로벌 주식 모멘텀 스위칭.",vt:"<b>기각.</b> SPY·60/40 Sharpe 열위(낮은 MDD만 강점)."},
-    {n:"최소분산 (Ledoit-Wolf)",r:"이전",c:"이전 탐색",v:"reject",m:"착시",ml:"—",corr:null,t:"수축추정 공분산 최소분산.",vt:"<b>기각.</b> 무위험금리 착시 — excess Sharpe 0.62<60/40 0.67, 채권불장 의존."},
-    {n:"돈치안 브레이크아웃",r:"이전",c:"이전 탐색",v:"reject",m:"비용사망",ml:"—",corr:null,t:"채널 돌파 추세추종.",vt:"<b>기각.</b> 빠른채널 비용사망, 느린채널 CAGR 1.8%뿐."},
-    {n:"변동성 텀구조 (VIXY/VXZ)",r:"이전",c:"이전 탐색",v:"reject",m:"COVID의존",ml:"—",corr:null,t:"변동성 ETP 텀구조.",vt:"<b>기각.</b> 엣지 전부 COVID 2020 단일, ex-2020 SPY 동률."}
-  ];
+ var D=[
+  // 배포 코어
+  {n:"통합 포트폴리오 (EPS 리비전 + 크로스에셋 RP)",c:"배포 코어",v:"deploy",m:"1.42",ml:"gross Sharpe",corr:null,t:"두 검증 슬리브를 슬리브간 리스크패리티(역변동성)로 결합 + 변동성타겟 13%. 저상관 분산효과로 각 단독을 넘어선다.",vt:"<b>배포 확정.</b> 진성알파 CAPM t=3.31(신용·스타일 8팩터 통제 후에도 t=3.88 생존). 정직한 눈금: gross 1.42 → 조달후 net 1.26 → 현실적 forward ~0.95. 위험감축형."},
+  {n:"EPS 리비전 드리프트 (PEAD)",c:"배포 코어",v:"deploy",m:"1.12",ml:"Sharpe",corr:null,t:"애널리스트가 향후 실적 추정치를 상향하는 나스닥100 종목 매수. 실적기대 개선이 그 방향으로 표류하는 PEAD 포착.",vt:"<b>배포 (슬리브 A·공격).</b> 이 랩이 수백 전략 중 유일하게 검증한 대형주 진성알파. 단독 CAPM α t=1.8(비유의)이나 결합서 RP와 분산효과로 유의."},
+  {n:"크로스에셋 리스크패리티 + vol타겟",c:"배포 코어",v:"deploy",m:"1.15",ml:"Sharpe",corr:null,t:"12개 자산군을 변동성 역가중 + 추세 꺾인 위험자산 제외 + 목표변동성 10% 레버 조절. 올웨더.",vt:"<b>배포 (슬리브 B·방어·분산).</b> 저회전·비용robust. MDD −19%. 추세게이트의 '존재'가 좌측꼬리 방어에 결정적."},
+  // 결합 최적화
+  {n:"동적 vol타겟",c:"결합 최적화",v:"marginal",m:"MDD↓",ml:"리스크만",corr:null,t:"실현변동성에 적응하는 목표변동성.",vt:"<b>marginal.</b> MDD를 낮추나 수익증대는 없음 — 리스크 관리 목적."},
+  // EPS 리비전 강건성
+  {n:"NDX+SPX 결합 (EPS 리비전)",c:"EPS 리비전 강건성",v:"marginal",m:"semi 91→55%",ml:"탈집중",corr:null,t:"NDX∪SPX 유니버스로 종목 breadth 확대.",vt:"<b>marginal(유용).</b> 반도체 집중 91→55%·breadth 8→28종 탈집중, Sharpe는 parity. 집중 우려 시 옵션."},
+  {n:"buy10/hold40 (밴드·보유기간)",c:"EPS 리비전 강건성",v:"marginal",m:"회전 −52%",ml:"921→444%",corr:null,t:"진입 상위10·보유 상위40 밴드로 회전↓.",vt:"<b>marginal(유용).</b> 회전 절반으로 캐패시티↑, Sharpe parity. 대규모 운용 시 옵션."},
+  // RP 강건성
+  {n:"vol 추정창 (90/60)",c:"RP 강건성",v:"marginal",m:"회전 −24%",ml:"2.21→1.68/yr",corr:null,t:"역변동성·vol타겟 추정창 확대.",vt:"<b>marginal.</b> Sharpe 이득(+0.04)은 부트스트랩상 무의미(CI 0교차)이나, 회전↓·전 비용레벨 우위 = 저회전·캐패시티 실운영 개선."},
+  {n:"추세게이트 정의 (6M/멀티)",c:"RP 강건성",v:"marginal",m:"Δ +0.02",ml:"vs 1.42",corr:null,t:"12M 추세게이트를 6M·3M·멀티·이중으로 변형.",vt:"<b>marginal.</b> 게이트 '존재'가 결정적(제거시 붕괴), 호라이즌(6M/12M)은 노이즈 → 12M 최적근방."},
+  {n:"리밸 주기 (주간/격주/분기)",c:"RP 강건성",v:"marginal",m:"Δ −0.002",ml:"vs 1.42",corr:null,t:"월말 리밸을 다른 주기로 변형.",vt:"<b>marginal.</b> 격주가 회귀-내 동률, 월 캐던스가 사실상 최적."},
+  {n:"vol타겟 레벨·게이트 격자",c:"RP 강건성",v:"marginal",m:"격자 최대",ml:"vol10%",corr:null,t:"내부 vol타겟 8~15%×게이트 on/off 격자.",vt:"<b>marginal.</b> 현 vol10%/gate-ON이 격자 최대, gate-ON은 강건 필수."},
+  // 직교 신호
+  {n:"횡단면 분산·브레드스 오버레이",c:"직교 신호",v:"marginal",m:"MDD −21→−16%",ml:"낙폭축소",corr:null,t:"저분산=추세지속·고분산=붕괴전조를 익스포저 타이밍으로.",vt:"<b>marginal(유일 생존).</b> 월별·무비용호환, MDD 23%↓. 단 수익증대 아닌 낙폭축소·2021-26 집중·통계 무의미 → 선택적 리스크 오버레이."},
+  // 채권 게이팅
+  {n:"채권 추세게이트",c:"채권 게이팅",v:"marginal",m:"2022 +5.1%p",ml:"방어",corr:null,t:"상시보유 채권(TLT/IEF/LQD/HYG)에 12M 추세게이트 확장.",vt:"<b>marginal.</b> 2022 −17.2→−12.1% 방어 실재하나 정상기(2016-20) 희석 −0.172로 전기간 Sharpe 소폭 악화."},
+  {n:"듀레이션 스케일",c:"채권 게이팅",v:"marginal",m:"2022 +2.5%p",ml:"방어",corr:null,t:"금리추세로 듀레이션 익스포저 연속 스케일(0~1x).",vt:"<b>marginal.</b> no free lunch — 2022 방어와 정상기 희석최소를 동시 달성 불가. 선택적 리스크 오버레이."},
+  {n:"AGG 채권레짐 오버레이",c:"채권 게이팅",v:"marginal",m:"2022 +6.1%p",ml:"MDD −19→−16%",corr:null,t:"채권 애그리게이트 12M 추세로 전채권 on/off 단일신호.",vt:"<b>marginal(최선 채권방어).</b> 2022 −17→−11%·MDD −19→−16% 실질방어, 개별 4게이트보다 단순하고 대등. 단 정상기 희석 −0.118로 전기간 Sharpe −0.026 → 위험감축형 선택적 오버레이."},
+  // 이전 탐색
+  {n:"섹터 모멘텀 top4",c:"이전 탐색",v:"marginal",m:"0.63",ml:"@10bp",corr:null,t:"상위 모멘텀 섹터 4개 로테이션.",vt:"<b>marginal.</b> 약하나 비용robust."},
+  {n:"지수 200MA 타이밍",c:"이전 탐색",v:"marginal",m:"리스크만",ml:"—",corr:null,t:"200일선 상/하로 지수 롱/플랫.",vt:"<b>marginal.</b> 알파 아닌 리스크 관리 오버레이."},
+ ];
 
   var VMETA={deploy:{lab:"배포",col:"--deploy"},marginal:{lab:"marginal",col:"--marg"},reject:{lab:"기각",col:"--rej"}};
   var VORDER={deploy:0,marginal:1,reject:2};
-  var RORDER=["배포","R1","R2","R3","R4","R5","R7","R9","R10","이전"];
   D.forEach(function(d,i){d._i=i;});
 
-  var state={q:"",vf:new Set(),rf:new Set(),af:new Set(),sort:"round",sel:0};
+  var state={q:"",vf:new Set(),af:new Set(),sort:"verdict",sel:0};
   var ARCHE_ORDER=['배포코어','저상관분산','위기방어','인플레·실물헤지','레짐·리스크오버레이','저비용틸트','실행타이밍','모니터링시그널','학술적참고','중복·무용'];
   var ARCH_COLOR={'배포코어':'#0E8A54','저상관분산':'#2C6E8F','위기방어':'#C0392B','인플레·실물헤지':'#B9770E','레짐·리스크오버레이':'#8256B8','저비용틸트':'#1E8A80','실행타이밍':'#3E7CB1','모니터링시그널':'#4E8A6B','학술적참고':'#8A7A5C','중복·무용':'#9A9A9A'};
   function atag(a){if(!a)return '';var c=ARCH_COLOR[a]||'#888';return '<span class="atag" style="color:'+c+';background:color-mix(in srgb,'+c+' 16%,transparent);border-color:color-mix(in srgb,'+c+' 38%,transparent)">'+a+'</span>';}
@@ -257,9 +208,7 @@
     el('statline').innerHTML=
       '<span class="stat"><b>'+D.length+'</b> 전략</span>'+
       '<span class="stat deploy"><b>'+c.deploy+'</b> 배포</span>'+
-      '<span class="stat marg"><b>'+c.marginal+'</b> marginal</span>'+
-      '<span class="stat rej"><b>'+c.reject+'</b> 기각</span>'+
-      '<span class="stat"><b>10</b> 라운드</span>';
+      '<span class="stat marg"><b>'+c.marginal+'</b> marginal</span>';
   })();
 
   // build filter chips
@@ -275,20 +224,11 @@
       var cnt=D.filter(function(d){return d.v===v;}).length;
       vf.appendChild(chip('v-'+v,VMETA[v].lab,cnt,false,function(){toggle(state.vf,v);render();syncPressed();}));
     });
-    var rf=el('rfilters');
-    RORDER.forEach(function(r){
-      var cnt=D.filter(function(d){return d.r===r;}).length;
-      if(!cnt)return;
-      rf.appendChild(chip('r-'+r,r,cnt,false,function(){toggle(state.rf,r);render();syncPressed();}));
-    });
   })();
   function toggle(set,k){set.has(k)?set.delete(k):set.add(k);}
   function syncPressed(){
     document.querySelectorAll('#vfilters .fchip').forEach(function(b){
       var v=b.className.match(/v-(\w+)/)[1]; b.setAttribute('aria-pressed',state.vf.has(v));});
-    document.querySelectorAll('#rfilters .fchip').forEach(function(b){
-      var r=b.textContent.replace(/\s+\d+$/,'').trim();
-      b.setAttribute('aria-pressed',state.rf.has(r));});
     document.querySelectorAll('#afilters .fchip').forEach(function(b){
       var a=b.textContent.replace(/\s+\d+$/,'').trim();
       b.setAttribute('aria-pressed',state.af.has(a));});
@@ -304,24 +244,21 @@
 
   el('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase().trim();render();});
   el('sort').addEventListener('click',function(){
-    state.sort=state.sort==="round"?"verdict":state.sort==="verdict"?"arche":"round";
-    this.textContent="정렬 ↓ "+(state.sort==="round"?"라운드":state.sort==="verdict"?"판정":"특성");
+    state.sort=state.sort==="verdict"?"arche":"verdict";
+    this.textContent="정렬 ↓ "+(state.sort==="verdict"?"판정":"특성");
     render();
   });
 
   function filtered(){
     var rows=D.filter(function(d){
       if(state.vf.size && !state.vf.has(d.v))return false;
-      if(state.rf.size && !state.rf.has(d.r))return false;
       if(state.af.size && !(d.det&&state.af.has(d.det.archetype)))return false;
       if(state.q){var extra=d.det?(" "+(d.det.pros||[]).join(" ")+" "+(d.det.cons||[]).join(" ")+" "+(d.det.applications||[]).join(" ")+" "+(d.det.archetype||"")):"";
         var hay=(d.n+" "+d.t+" "+d.c+" "+d.vt+extra).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
       return true;
     });
     rows.sort(function(a,b){
-      if(state.sort==="verdict"){var vd=VORDER[a.v]-VORDER[b.v];if(vd)return vd;}
       if(state.sort==="arche"){var aa=a.det?ARCHE_ORDER.indexOf(a.det.archetype):99,ba=b.det?ARCHE_ORDER.indexOf(b.det.archetype):99;var adf=(aa<0?99:aa)-(ba<0?99:ba);if(adf)return adf;}
-      var rd=RORDER.indexOf(a.r)-RORDER.indexOf(b.r); if(rd)return rd;
       return VORDER[a.v]-VORDER[b.v];
     });
     return rows;
@@ -348,7 +285,7 @@
       b.style.setProperty('--vc','var('+VMETA[d.v].col+')');
       b.innerHTML='<span class="vdot"></span>'+
         '<span class="body"><span class="nm">'+d.n+'</span>'+
-        '<span class="sub"><span>'+d.r+'</span>'+(d.det&&d.det.archetype?atag(d.det.archetype):'<span>'+d.c+'</span>')+'</span></span>'+
+        '<span class="sub">'+(d.det&&d.det.archetype?atag(d.det.archetype):'')+'<span>'+d.c+'</span></span></span>'+
         '<span class="metric">'+d.m+'<small>'+(d.ml||'')+'</small></span>';
       b.addEventListener('click',function(){select(d);});
       listEl.appendChild(b);
@@ -373,7 +310,7 @@
     detailEl.innerHTML=
       '<div class="dtop">'+
         '<div class="dbadges"><span class="vbadge '+d.v+'">'+VMETA[d.v].lab+'</span>'+
-          '<span class="rbadge">'+d.r+'</span><span class="rbadge">'+d.c+'</span>'+arche+'</div>'+
+          '<span class="rbadge">'+d.c+'</span>'+arche+'</div>'+
         '<h2>'+d.n+'</h2>'+
         '<div class="dcat">'+d.ml+' · '+d.m+'</div>'+
       '</div>'+

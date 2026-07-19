@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="여의도 전략 랩 — 실전 배포 가능한 진성 알파를 찾는 퀀트 전략 리서치. 통합 포트폴리오 배포 대시보드와 47개 조사 전략 탐색기.">
+<meta name="description" content="여의도 전략 랩 — 실전 배포 가능한 진성 알파를 찾는 퀀트 전략 리서치. 전략 탐색기·종목 시그널·시장 국면 세 도구를 공개합니다.">
 <title>여의도 전략 랩</title>
 <script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
 <style>
@@ -48,10 +48,10 @@
 
   .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:40px 0 14px;display:flex;align-items:center;gap:10px}
 
-  .tools{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   a.tool{display:flex;flex-direction:column;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 24px 22px;box-shadow:var(--shadow);border-top:4px solid var(--edge,var(--accent));transition:transform .14s,border-color .14s,box-shadow .14s}
   a.tool:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 1px 2px rgba(20,28,26,.05),0 18px 40px -16px rgba(20,28,26,.32)}
-  a.tool.dash{--edge:var(--champ)} a.tool.expl{--edge:var(--rp)} a.tool.stk{--edge:var(--deploy)}
+  a.tool.reg{--edge:var(--champ)} a.tool.expl{--edge:var(--rp)} a.tool.stk{--edge:var(--deploy)}
   .tool .ico{font-size:30px;line-height:1}
   .tool h2{font-family:var(--mono);font-size:19px;font-weight:600;margin:14px 0 0;color:var(--ink);letter-spacing:-.01em}
   .tool p{margin:8px 0 0;font-size:14px;color:var(--ink-2);flex:1}
@@ -91,7 +91,7 @@
   .live{display:inline-flex;align-items:center;gap:6px;color:var(--deploy)}
   .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--deploy)}
 
-  @media(max-width:720px){.kstrip{grid-template-columns:repeat(2,1fr)}.tools{grid-template-columns:1fr}.ladder{flex-direction:column}.lstep,.lstep:first-child,.lstep:last-child{border-radius:12px}}
+  @media(max-width:860px){.tools{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -101,13 +101,7 @@
     <div class="eyebrow">Yeouido Quant Strategy Lab</div>
     <h1 class="title">여의도 전략 랩</h1>
     <p class="lede"><b>실전 배포 가능한 진성 알파</b>를 찾는 퀀트 전략 리서치. 수백 개 아이디어를 비용·PIT·다에피소드·적대검증으로 걸러냅니다.
-      이 사이트는 두 가지 도구를 공개합니다 — <b>전략 탐색기</b>(전 조사 아카이브·장단점·활용방안)와 <b>종목 시그널</b>(NDX·SPX 테크니컬·매매 타이밍).</p>
-    <div class="kstrip">
-      <div class="k"><div class="fig pos tnum">1.42</div><div class="cap"><b>통합 Sharpe</b><br>gross·무비용·월말 (조달후 net 1.26)</div></div>
-      <div class="k"><div class="fig tnum">t 3.31</div><div class="cap"><b>진성 알파</b><br>CAPM · 8팩터 통제 후 t3.88 생존</div></div>
-      <div class="k"><div class="fig tnum">−21<span style="font-size:14px">%</span></div><div class="cap"><b>최대낙폭</b><br>나스닥 −35% 대비 · 위험감축형</div></div>
-      <div class="k"><div class="fig tnum">47</div><div class="cap"><b>조사 · 10 라운드</b><br>전부 구현→적대검증</div></div>
-    </div>
+      이 사이트는 <b>세 가지 도구</b>를 공개합니다 — <b>전략 탐색기</b>(검증 전략 아카이브·장단점·활용방안), <b>종목 시그널</b>(NDX·SPX 테크니컬·매매 타이밍), <b>시장 국면</b>(FRED 매크로 레짐).</p>
   </header>
 
   <p class="lbl">도구</p>
@@ -115,7 +109,7 @@
     <a class="tool expl" href="explorer.html">
       <span class="ico">🔬</span>
       <h2>전략 탐색기</h2>
-      <p>10라운드에서 검증한 51개 전략을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 판정·라운드·활용 아키타입 필터와 검색.</p>
+      <p>적대검증을 통과한 <b>16개 전략</b>(배포 3·marginal 13)을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 못 써먹을 <b>기각 35개는 별도 아카이브</b>로.</p>
       <span class="go">전략 둘러보기</span>
     </a>
     <a class="tool stk" href="stocks.html">
@@ -124,12 +118,18 @@
       <p>NDX·SPX 구성종목의 과매수/과매도·추세·모멘텀·변동성 + 매수/매도 타이밍 신호 — 가격 기반 테크니컬(RSI·MACD·볼린저·ADX…). 매 거래일 최신, 종목별 기간선택 차트.</p>
       <span class="go">종목 분석 열기</span>
     </a>
+    <a class="tool reg" href="regime.html">
+      <span class="ico">🌐</span>
+      <h2>시장 국면</h2>
+      <p>FRED 무료 매크로로 현재 <b>시장 레짐</b>을 판별 — 수익률곡선·신용스프레드·실질금리·금융여건·Sahm 침체룰. 레짐별 자산·섹터 조건부 성과와 배포 포트폴리오 맥락.</p>
+      <span class="go">국면 보기</span>
+    </a>
   </div>
 
   <p class="lbl">추천 전략 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 전략 탐색기에서 배포급으로 검증된 것</span></p>
   <div class="reco-strat">
-    <a class="rs" href="explorer.html" style="--edge:var(--champ)"><div><span class="rt">통합 포트폴리오</span><span class="rr">배포코어</span></div><div class="rd">챔피언 + 크로스에셋 RP 리스크패리티 결합. 나스닥급 수익을 절반 변동성·절반 낙폭으로 — 위험조정 우위.</div></a>
-    <a class="rs" href="explorer.html" style="--edge:var(--deploy)"><div><span class="rt">챔피언 (EPS 리비전)</span><span class="rr">배포코어</span></div><div class="rd">애널리스트 실적 추정 상향 대형주 매수(PEAD). 랩 유일 대형주 진성 알파(CAPM t=3.31).</div></a>
+    <a class="rs" href="explorer.html" style="--edge:var(--champ)"><div><span class="rt">통합 포트폴리오</span><span class="rr">배포코어</span></div><div class="rd">EPS 리비전 드리프트 + 크로스에셋 RP 리스크패리티 결합. 나스닥급 수익을 절반 변동성·절반 낙폭으로 — 위험조정 우위.</div></a>
+    <a class="rs" href="explorer.html" style="--edge:var(--deploy)"><div><span class="rt">EPS 리비전 드리프트</span><span class="rr">배포코어</span></div><div class="rd">애널리스트 실적 추정 상향 대형주 매수(PEAD). 랩 유일 대형주 진성 알파(CAPM t=3.31).</div></a>
     <a class="rs" href="explorer.html" style="--edge:var(--rp)"><div><span class="rt">크로스에셋 RP</span><span class="rr">배포코어</span></div><div class="rd">12자산 역변동성 + 추세게이트 + vol타겟. 어떤 국면에도 견디는 올웨더 방어·분산 슬리브.</div></a>
   </div>
 
@@ -137,7 +137,7 @@
   <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <footer>
-    <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a><br>
+    <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="archive.html">기각 아카이브</a><br>
     github.com/ydyoon4578/Yeouido · 리서치 백테스트는 무비용·월말(gross) 기준 · 종목 시그널은 yfinance 매 거래일 갱신<br>
     투자자문·매매권유 아님.
   </footer>
@@ -157,14 +157,15 @@
     var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(d.as_of||'');
     var st=d.stocks||[];
     var buyAll=st.filter(function(s){return s.timing==='매수'||s.timing==='매수우세';});
-    var osAll=st.filter(function(s){return (s.flags||[]).indexOf('과매도')>=0;});
-    var buy=buyAll.slice().sort(function(a,b){return (b.comp.momentum||0)-(a.comp.momentum||0);}).slice(0,6);
-    var os=osAll.slice().sort(function(a,b){return (a.comp.overheat||0)-(b.comp.overheat||0);}).slice(0,6);
+    var sellAll=st.filter(function(s){return s.timing==='매도'||s.timing==='매도우세';});
+    // 매수·매도 모두 '과열도(overheat)' 단일 축으로 통일 — 매수는 낮은 과열도(과매도)순, 매도는 높은 과열도(과열)순
+    var buy=buyAll.slice().sort(function(a,b){return (a.comp.overheat||0)-(b.comp.overheat||0);}).slice(0,6);
+    var sell=sellAll.slice().sort(function(a,b){return (b.comp.overheat||0)-(a.comp.overheat||0);}).slice(0,6);
     function col(title,cnt,arr,mf){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
       (arr.length?arr.map(function(s){return '<a class="rstk" href="stocks.html"><span><span class="rk">'+s.t+'</span><span class="rn2">'+(s.name||'').slice(0,16)+'</span></span><span class="rv">'+mf(s)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
     document.getElementById('recostocks').innerHTML=
-      col('🟢 매수 타이밍 신호', buyAll.length, buy, function(s){return '모멘텀 '+Math.round(s.comp.momentum||0);})+
-      col('🔵 과매도 · 반등 후보', osAll.length, os, function(s){return 'RSI '+(s.sig&&s.sig.rsi?Math.round(s.sig.rsi.v):'—');});
+      col('🟢 매수 신호 top', buyAll.length, buy, function(s){return '과열도 '+Math.round(s.comp.overheat||0);})+
+      col('🔴 매도 신호 top', sellAll.length, sell, function(s){return '과열도 '+Math.round(s.comp.overheat||0);});
   }).catch(function(){});
 })();
 </script>

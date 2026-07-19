@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="여의도 전략 랩 — 구현·적대검증 후 배포 부적합으로 기각된 35개 전략의 아카이브. 같은 공간 재검을 막기 위한 기록.">
+<script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
+<title>여의도 · 기각 전략 아카이브</title>
+<style>
+  :root{
+    --ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;
+    --ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;--rej:#B0483C;--rej-bg:#f0ddd9;
+    --shadow:0 1px 2px rgba(20,28,26,.05),0 8px 24px -12px rgba(20,28,26,.18);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;
+    --ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;--rej:#E08575;--rej-bg:#2b1714;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+  }}
+  :root[data-theme="light"]{--ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;--ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;--rej:#B0483C;--rej-bg:#f0ddd9;--shadow:0 1px 2px rgba(20,28,26,.05),0 8px 24px -12px rgba(20,28,26,.18);}
+  :root[data-theme="dark"]{--ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;--ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;--rej:#E08575;--rej-bg:#2b1714;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);}
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Helvetica Neue",Arial,sans-serif}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;word-break:keep-all}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 70px}
+  header.mast{padding:64px 0 18px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:12px}
+  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
+  h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(23px,4vw,32px);line-height:1.14;letter-spacing:-.01em;margin:14px 0 0}
+  .lede{margin:12px 0 0;max-width:76ch;font-size:15px;color:var(--ink-2)} .lede b{color:var(--ink)}
+  .statline{margin:16px 0 0;display:flex;flex-wrap:wrap;gap:8px 10px;font-family:var(--mono);font-size:12px}
+  .stat{display:inline-flex;align-items:baseline;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--muted)}
+  .stat b{color:var(--ink);font-size:14px;font-weight:600}
+  .search{margin:20px 0 6px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;box-shadow:var(--shadow);max-width:420px}
+  .search input{border:0;background:transparent;color:var(--ink);font-family:var(--sans);font-size:14px;width:100%;outline:none}
+  .search svg{flex-shrink:0;color:var(--muted)}
+  .grp{margin-top:26px}
+  .grp h3{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;font-weight:700;color:var(--ink);margin:0 0 12px;display:flex;align-items:center;gap:10px}
+  .grp h3 .gc{font-weight:400;color:var(--muted);font-size:11px}
+  .grp h3::after{content:"";height:1px;flex:1;background:var(--line-soft)}
+  .rej{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--rej);border-radius:9px;padding:11px 15px;margin-bottom:8px;box-shadow:var(--shadow)}
+  .rej .rn{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--ink);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .rej .xb{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--rej);background:var(--rej-bg);border-radius:4px;padding:1px 6px}
+  .rej .rr{margin-top:5px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .empty{font-family:var(--mono);font-size:13px;color:var(--muted);padding:30px;text-align:center}
+  a.home,button.theme{position:fixed;top:14px;z-index:50;height:38px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);box-shadow:var(--shadow);border-radius:10px;cursor:pointer}
+  a.home{left:14px;display:flex;align-items:center;gap:6px;padding:0 13px;font-family:var(--mono);font-size:12px;font-weight:600;text-decoration:none}
+  button.theme{right:14px;width:38px;font-size:16px}
+  a.home:hover,button.theme:hover{border-color:var(--accent)}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.8}
+  footer a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<a class="home" href="index.html" title="홈">← 랩</a>
+<button class="theme" id="themebtn" title="라이트/다크 전환">◐</button>
+<div class="wrap">
+  <header class="mast">
+    <div class="eyebrow">여의도 전략 랩 · 기각 아카이브</div>
+    <h1 class="title">기각 전략 아카이브</h1>
+    <p class="lede">구현 → PIT·무비용·다에피소드·<b>적대검증</b>을 거쳐 <b>배포에 부적합</b>으로 판정된 전략들입니다. 지우지 않고 남겨두는 이유 —
+      <b>같은 공간을 다시 파지 않기 위해서</b>. 여기 있는 건 대부분 gross(무비용)에서도 통합 포트폴리오 대비 증분이 없거나, 비용·룩어헤드·단일에피소드 의존이 드러난 것들입니다.
+      쓸 만한 <b>16개(배포·marginal)</b>는 <a href="explorer.html" style="color:var(--accent)">전략 탐색기</a>에 있습니다.</p>
+    <div class="statline" id="statline"></div>
+  </header>
+  <label class="search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="q" type="search" placeholder="전략·기각 사유 검색 (예: 비용, 중복, 2022, 오버나이트)" aria-label="검색">
+  </label>
+  <div id="list"></div>
+  <footer>
+    여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a><br>
+    기각 = gross·월말·무비용 기준에서도 배포급 증분 없음 · 투자자문·매매권유 아님.
+  </footer>
+</div>
+<script>
+(function(){
+  var D=[{"n":"상품 커브 캐리 (GLD/DBC)","c":"3슬리브 후보","r":"기각(초기 유력→하향). 95%CI가 0 교차·유니버스 얕음, R2 재검서 서브기간 일관성 실패(2021-22 집중)로 weak 확정."},{"n":"CTA 멀티에셋 트렌드 (TSMOM)","c":"3슬리브 후보","r":"기각. 통합의 RP 추세게이트와 정보 중복(corr 0.43)."},{"n":"테일 헤지 (long-vol)","c":"3슬리브 후보","r":"기각. 상시 비용부담이 크고, 정작 위기에서도 기대만큼 방어 못함."},{"n":"방어형 퀄리티 롱숏","c":"3슬리브 후보","r":"기각. 순 프리미엄 없음."},{"n":"채권/금 레짐 스위칭","c":"3슬리브 후보","r":"기각. 무증분."},{"n":"인플레 헤지 바스켓","c":"3슬리브 후보","r":"기각. 통합에 무증분."},{"n":"HRP 배분","c":"3슬리브 후보","r":"기각. 중복(0.56)."},{"n":"상품 광의 바스켓","c":"3슬리브 후보","r":"기각. 분산이 오히려 희석."},{"n":"HRP 결합","c":"결합 최적화","r":"기각(수학적). 2슬리브 ERC=역변동성이라 현 가중과 동일."},{"n":"min-CVaR","c":"결합 최적화","r":"기각. 개선 없음."},{"n":"리스크 버짓","c":"결합 최적화","r":"기각. 현 가중이 이미 강건 교차점."},{"n":"레짐 조건부 (챔피언↔RP)","c":"결합 최적화","r":"기각. 서브기간이 반대로 틸트돼 상쇄."},{"n":"Kelly 스케일","c":"결합 최적화","r":"기각. 개선 없음."},{"n":"SPX 챔피언","c":"EPS 리비전 강건성","r":"기각. SPX 증분이 통계적으로 비유의(paired-t 0.73)."},{"n":"리비전 구성 변형","c":"EPS 리비전 강건성","r":"기각. 개선 없음."},{"n":"퀄리티·신선도 게이트","c":"EPS 리비전 강건성","r":"기각. 기여 ≈0."},{"n":"섹터 중립화","c":"EPS 리비전 강건성","r":"기각. 저베타 틸트가 −0.064 손해."},{"n":"자산군 확장 RP (TIP·EMB·SLV)","c":"RP 강건성","r":"기각. 넓은 분산이 희석(Δ−0.007) — R2 글로벌RP 교훈 재확인."},{"n":"신용레짐 게이트","c":"직교 신호","r":"기각. 추세게이트와 직교하나 '틀린' 정보 — 통합에 이미 추세방어 내장."},{"n":"VIX 기간구조","c":"직교 신호","r":"기각. 실현-vol타겟과 중복(0.988), 2022 grind 약세장엔 콘탱고라 무개입."},{"n":"오버나이트 드리프트","c":"직교 신호","r":"기각. gross 저상관이나 종가매수/시가매도 일별 왕복이 신호의 본질 → 월말 컨벤션과 원천적 비양립(breakeven 2bp)."},{"n":"머저 아비트리지 (MNA)","c":"이벤트 드리븐","r":"기각(측정으로). 단독 Sharpe 0.39·무조건 corr 0.32이나 위기 tail dependence 폭발(2020-03 −16.2%>통합) → 진짜 헤지 아님. 결합 Δ−0.003."},{"n":"신용 게이트","c":"채권 게이팅","r":"기각. 2022 통증은 신용 아닌 듀레이션(TLT −29%) — 국채 분리한 신용게이트는 무방어, 축소분이 renormalize로 하락국채에 되돌아감."},{"n":"대형 모멘텀·200MA 추세","c":"이전 탐색","r":"기각. PIT 엄격 적용시 EPS 리비전에 열위(0.83) — 증분 없음."},{"n":"소형 주간 반전 롱숏","c":"이전 탐색","r":"기각(비용 신기루). gross 1.97이나 50bp에서 −1.87 — 고회전 본질."},{"n":"소형 월간 반전/과매도 LS","c":"이전 탐색","r":"기각. 경비용에서만 생존."},{"n":"오버나잇 보유 (NDX)","c":"이전 탐색","r":"기각. 수익은 오버나잇에 발생하나 일일회전으로 비용 소멸."},{"n":"SUE PEAD (실측 서프라이즈)","c":"이전 탐색","r":"기각. 대·중·소형 전 유니버스 음성 — 소형효과는 어닝 아닌 가격반전."},{"n":"크로스에셋 캐리","c":"이전 탐색","r":"기각. 60/40 '동률'은 GFC 08-11 산물, 이후 지배당함."},{"n":"VRP 숏볼","c":"이전 탐색","r":"기각. 초과수익=레버리지(위험조정 개선 0)."},{"n":"ML 지수 타이밍","c":"이전 탐색","r":"기각. 적중 62%=base rate, B&H(0.90) 열위."},{"n":"듀얼모멘텀 (GEM)","c":"이전 탐색","r":"기각. SPY·60/40 Sharpe 열위(낮은 MDD만 강점)."},{"n":"최소분산 (Ledoit-Wolf)","c":"이전 탐색","r":"기각. 무위험금리 착시 — excess Sharpe 0.62<60/40 0.67, 채권불장 의존."},{"n":"돈치안 브레이크아웃","c":"이전 탐색","r":"기각. 빠른채널 비용사망, 느린채널 CAGR 1.8%뿐."},{"n":"변동성 텀구조 (VIXY/VXZ)","c":"이전 탐색","r":"기각. 엣지 전부 COVID 2020 단일, ex-2020 SPY 동률."}];
+  var el=function(i){return document.getElementById(i);};
+  var CATS=[]; D.forEach(function(d){if(CATS.indexOf(d.c)<0)CATS.push(d.c);});
+  el('statline').innerHTML='<span class="stat"><b>'+D.length+'</b> 기각 전략</span><span class="stat"><b>'+CATS.length+'</b> 카테고리</span><span class="stat">배포·marginal 16개는 탐색기</span>';
+  function render(q){
+    q=(q||'').toLowerCase().trim();
+    var list=el('list'); list.innerHTML='';
+    var shown=0;
+    CATS.forEach(function(c){
+      var items=D.filter(function(d){return d.c===c && (!q || (d.n+' '+d.r).toLowerCase().indexOf(q)>=0);});
+      if(!items.length)return;
+      shown+=items.length;
+      var g=document.createElement('div'); g.className='grp';
+      g.innerHTML='<h3>'+c+' <span class="gc">'+items.length+'</span></h3>'+
+        items.map(function(d){return '<div class="rej"><div class="rn">'+d.n+' <span class="xb">기각</span></div><div class="rr">'+d.r+'</div></div>';}).join('');
+      list.appendChild(g);
+    });
+    if(!shown)list.innerHTML='<div class="empty">검색 결과 없음</div>';
+  }
+  el('q').addEventListener('input',function(e){render(e.target.value);});
+  render('');
+  (function(){var r=document.documentElement,b=el('themebtn');function c(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}b.addEventListener('click',function(){var n=c()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('yeouido-theme',n);}catch(e){}});})();
+})();
+</script>
+</body>
+</html>

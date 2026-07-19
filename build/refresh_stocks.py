@@ -28,6 +28,7 @@ FACTORS = {
   "roc6m": ("6개월 수익률", "모멘텀", "강세"), "rs3m": ("상대강도(3M, vs SPY)", "모멘텀", "시장대비강"),
   "atrp": ("ATR%(변동성)", "변동성", "고변동"), "vol": ("실현변동성(연율)", "변동성", "고변동"),
   "bbw": ("볼린저 밴드폭", "변동성", "확장"),
+  "rvol": ("상대거래량(5일/60일)", "거래량", "급증"),
 }
 COMPOSITES = {
   "overheat": ["+rsi", "+stoch", "+mfi", "+willr", "+pctb", "+pos52"],
@@ -92,6 +93,7 @@ def indicators(o):
         "macdh": _f(mh), "aroon": _f(au)-_f(ad),
         "roc1m": rr(21)*100, "roc3m": rr(63)*100, "roc6m": rr(126)*100,
         "atrp": _f(atr(h, l, c)/c.iloc[-1]*100), "vol": _f(ret.tail(252).std()*np.sqrt(252)*100), "bbw": _f(bw),
+        "rvol": (_f(v.tail(5).mean()/v.tail(60).mean()) if float(v.tail(60).mean() or 0) > 0 else np.nan),
     }, c
 
 
@@ -129,6 +131,16 @@ def flags(s):
     return f
 
 
+def fetch_fund(t):
+    """yfinance .info에서 trailing/forward EPS·PE (무료). 실패시 None."""
+    try:
+        info = yf.Ticker(t).info
+        return t, {"teps": info.get("trailingEps"), "feps": info.get("forwardEps"),
+                   "tpe": info.get("trailingPE"), "fpe": info.get("forwardPE")}
+    except Exception:
+        return t, None
+
+
 def main():
     M = json.load(open(MEMBERS)); mem = M["members"]; tickers = sorted(mem.keys())
     print(f"멤버 {len(tickers)}종목 · yfinance…")
@@ -157,6 +169,13 @@ def main():
         d = c.index.max()
         if as_of is None or d > pd.Timestamp(as_of): as_of = str(pd.Timestamp(d).date())
     print(f"지표 {len(raw)}종목 · 기준일 {as_of}")
+    # 펀더멘털(trailing/forward EPS·PE) — yfinance .info 병렬 수집
+    from concurrent.futures import ThreadPoolExecutor
+    fund = {}
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        for t, f in ex.map(fetch_fund, list(raw.keys())):
+            if f: fund[t] = f
+    print(f"펀더멘털 {len(fund)}종목")
     vdf = pd.DataFrame({t: raw[t]["sig"] for t in raw}).T; pct = vdf.rank(pct=True)*100
     # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
     daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
@@ -171,6 +190,8 @@ def main():
         comps = {c2: comp(spec, rp) for c2, spec in COMPOSITES.items()}
         dser = daily[t] if t in daily.columns else None
         pxd = [None if dser is None or pd.isna(x) else round(float(x), 2) for x in (dser if dser is not None else [None]*len(pxd_dates))]
+        vser = px[t]["Volume"].reindex(daily.index) if t in px else None
+        vd = [None if vser is None or pd.isna(x) else int(round(float(x)/1e6)) for x in (vser if vser is not None else [None]*len(pxd_dates))]  # 백만주 단위
         # 매수/매도 타점(마커) — 일별 순매수/순매도 강신호(≥2, 우세)일을 표시
         bd = raw[t]["b_day"].reindex(daily.index).fillna(0); sd = raw[t]["s_day"].reindex(daily.index).fillna(0)
         bd = bd.to_numpy(); sd = sd.to_numpy()
@@ -182,13 +203,21 @@ def main():
         bms = [i for i in bstart if bd[i] >= 3]; bmw = [i for i in bstart if bd[i] < 3]
         sms = [i for i in sstart if sd[i] >= 3]; smw = [i for i in sstart if sd[i] < 3]
         info = mem.get(t, {})
+        fd = fund.get(t) or {}
+        def r2(x): return round(float(x), 2) if x is not None and x == x else None
+        fnd = {"teps": r2(fd.get("teps")), "feps": r2(fd.get("feps")), "tpe": r2(fd.get("tpe")), "fpe": r2(fd.get("fpe"))}
+        if fnd["teps"] and fnd["feps"] and fnd["teps"] != 0:
+            fnd["gr"] = round((fnd["feps"]/fnd["teps"] - 1)*100, 1)   # 12M 선행 EPS 성장률(%)
         stocks.append({"t": t, "name": info.get("name"), "sector": info.get("sector"), "idx": info.get("idx", []),
                        "comp": {k: v for k, v in comps.items() if v is not None}, "flags": flags(sg),
                        "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"],
-                       "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig, "pxd": pxd})
+                       "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
+                       "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": as_of} for k in FACTORS},
+           "fund_defs": {"teps": "주당순이익 TTM (최근 12개월 실적)", "feps": "선행 EPS (향후 12개월 애널리스트 추정)",
+                         "gr": "선행 EPS 성장률 (forward/trailing−1, %)", "tpe": "P/E (TTM)", "fpe": "선행 P/E (forward)"},
            "composite_defs": {"overheat": "과열도 — RSI·스토캐스틱·MFI·Williams·%b·52주", "trend": "추세강도 — ADX·이동평균·MACD·Aroon",
                               "momentum": "모멘텀 — 1/3/6M 수익률·상대강도", "volatility": "변동성 — ATR%·실현변동성"},
            "flag_defs": {"과매수": "RSI≥70 또는 %b≥0.95", "과매도": "RSI≤30 또는 %b≤0.05", "상승추세": "종가>50일선>200일선 & ADX≥20",

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="여의도 전략 랩 — FRED 무료 매크로로 판별하는 현재 시장 국면(레짐). 성장×물가×금융 3축 분류, 레짐별 자산 조건부 성과.">
+<script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
+<title>여의도 시장 국면 — 매크로 레짐</title>
+<style>
+  :root{
+    --ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;
+    --ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;
+    --hot:#A64B3B;--hot-bg:#f3e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dff0e6;--watch:#A76A12;--watch-bg:#f6ebd6;
+    --shadow:0 1px 2px rgba(20,28,26,.05),0 8px 24px -12px rgba(20,28,26,.18);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;
+    --ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;
+    --hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#E4A63F;--watch-bg:#2a2113;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+  }}
+  :root[data-theme="light"]{--ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;--ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;--hot:#A64B3B;--hot-bg:#f3e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dff0e6;--watch:#A76A12;--watch-bg:#f6ebd6;--shadow:0 1px 2px rgba(20,28,26,.05),0 8px 24px -12px rgba(20,28,26,.18);}
+  :root[data-theme="dark"]{--ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;--ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;--hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#E4A63F;--watch-bg:#2a2113;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);}
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Helvetica Neue",Arial,sans-serif}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;word-break:keep-all}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 70px}
+  header.mast{padding:64px 0 18px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:12px}
+  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
+  h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(23px,4vw,34px);line-height:1.14;letter-spacing:-.01em;margin:14px 0 0}
+  .lede{margin:12px 0 0;max-width:80ch;font-size:15px;color:var(--ink-2)} .lede b{color:var(--ink)}
+  .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:34px 0 12px}
+
+  .hero{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;border-left:5px solid var(--rc,var(--accent))}
+  .hrow{display:grid;grid-template-columns:auto 1fr;gap:20px;padding:24px 26px;align-items:center}
+  .hemoji{font-size:52px;line-height:1}
+  .hlab{font-family:var(--mono);font-size:clamp(24px,5vw,36px);font-weight:700;letter-spacing:-.01em;color:var(--rc,var(--ink))}
+  .hdesc{font-size:14.5px;color:var(--ink-2);margin-top:3px}
+  .haxes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .ax{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-2)}
+  .ax b{color:var(--muted);font-weight:400;margin-right:5px}
+  .hstrat{padding:14px 26px;border-top:1px solid var(--line-soft);background:var(--panel-2);font-size:13.5px;color:var(--ink-2)}
+  .hstrat b{color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:8px}
+
+  .grp h3{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--muted);margin:24px 0 11px;display:flex;align-items:center;gap:10px}
+  .grp h3::after{content:"";height:1px;flex:1;background:var(--line-soft)}
+  .icards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+  .ic{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px;box-shadow:var(--shadow)}
+  .ic .ictop{display:flex;align-items:baseline;gap:8px}
+  .ic .icl{font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .ic .icv{margin-left:auto;font-family:var(--mono);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+  .ic .icu{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:2px}
+  .stbadge{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;line-height:1.6;white-space:nowrap;margin-top:7px;display:inline-block}
+  .stbadge.hot{color:var(--hot);background:var(--hot-bg)} .stbadge.cold{color:var(--cold);background:var(--cold-bg)}
+  .stbadge.good{color:var(--good);background:var(--good-bg)} .stbadge.watch{color:var(--watch);background:var(--watch-bg)}
+  .stbadge.neut{color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft)}
+  .ic .icd{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:7px}
+
+  .histwrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px}
+  canvas{width:100%;display:block}
+  .leg{display:flex;gap:9px 14px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .leg span{display:inline-flex;align-items:center;gap:5px} .leg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  .tblwrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:560px}
+  th,td{padding:9px 11px;text-align:center;border-bottom:1px solid var(--line-soft);font-variant-numeric:tabular-nums}
+  th{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  td:first-child,th:first-child{text-align:left;font-family:var(--mono);font-weight:700;color:var(--ink-2);position:sticky;left:0;background:var(--panel)}
+  td.pv{font-family:var(--mono);font-weight:600}
+  th.cur,td.cur{background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+
+  a.home,button.theme{position:fixed;top:14px;z-index:50;height:38px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);box-shadow:var(--shadow);border-radius:10px;cursor:pointer}
+  a.home{left:14px;display:flex;align-items:center;gap:6px;padding:0 13px;font-family:var(--mono);font-size:12px;font-weight:600;text-decoration:none}
+  button.theme{right:14px;width:38px;font-size:16px}
+  a.home:hover,button.theme:hover{border-color:var(--accent)}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.8}
+  footer a{color:var(--accent);text-decoration:none}
+  .empty{font-family:var(--mono);font-size:13px;color:var(--muted);padding:30px;text-align:center}
+  @media(max-width:560px){.hrow{grid-template-columns:1fr;text-align:center}.hemoji{font-size:44px}}
+</style>
+</head>
+<body>
+<a class="home" href="index.html" title="홈">← 랩</a>
+<button class="theme" id="themebtn" title="라이트/다크 전환">◐</button>
+<div class="wrap">
+  <header class="mast">
+    <div class="eyebrow">여의도 전략 랩 · 시장 국면</div>
+    <h1 class="title">시장 국면 — 매크로 레짐</h1>
+    <p class="lede"><b>FRED 무료 매크로</b>로 현재 시장이 어떤 국면인지 판별합니다 — <b>성장 × 물가 × 금융</b> 3축 분류.
+      수익률곡선·신용스프레드·실질금리·금융여건·고용·Sahm 침체룰을 종합해 <b>7개 명명 레짐</b>(Goldilocks·Recovery·Overheating·SoftLanding·LateCycle·Stagflation·Recession)으로 라벨링하고, 레짐별 자산 조건부 성과를 보여줍니다.</p>
+    <div style="margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--muted)">기준일 <b id="asof" style="color:var(--ink)">—</b> · 출처 FRED + yfinance</div>
+  </header>
+
+  <div id="main"><div class="empty">불러오는 중…</div></div>
+
+  <footer>
+    여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="archive.html">기각 아카이브</a><br>
+    레짐 분류는 랩의 regime 3축(성장·물가·금융) 방법론을 FRED 공개데이터로 재현 · 지표 참고용, 투자자문·매매권유 아님.
+  </footer>
+</div>
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  var css=function(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();};
+  // 레짐 색상(라이트/다크 공통 계열, 실제 렌더는 hex)
+  var RC={Goldilocks:"#0E8A54",Recovery:"#1E8A80",SoftLanding:"#A76A12",LateCycle:"#C0722A",Overheating:"#B0483C",Stagflation:"#9A2F28",Recession:"#7A2620"};
+  var RORDER=["Goldilocks","Recovery","SoftLanding","LateCycle","Overheating","Stagflation","Recession"];
+  var RKO={Goldilocks:"골디락스",Recovery:"회복",SoftLanding:"연착륙",LateCycle:"후기사이클",Overheating:"과열",Stagflation:"스태그플레이션",Recession:"침체"};
+  var GKO={EXPANSION:"확장",SLOWING:"둔화",CONTRACTION:"수축",LOW:"저물가",MODERATE:"중간물가",HIGH:"고물가",EASY:"완화",NEUTRAL:"중립",ELEVATED:"경계",STRESSED:"스트레스"};
+  var DATA=null;
+
+  fetch('data/regime.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    if(!d){el('main').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
+    DATA=d; el('asof').textContent=d.as_of||'—';
+    render();
+    window.addEventListener('resize',drawHist);
+    new MutationObserver(drawHist).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  }).catch(function(){el('main').innerHTML='<div class="empty">데이터 로드 오류</div>';});
+
+  function render(){
+    var d=DATA, rg=d.regime, rc=RC[rg.label]||css('--accent');
+    // hero
+    var hero='<div class="hero" style="--rc:'+rc+'"><div class="hrow"><div class="hemoji">'+rg.emoji+'</div>'+
+      '<div><div class="hlab">'+rg.label+' · '+(RKO[rg.label]||'')+'</div><div class="hdesc">'+rg.desc+'</div>'+
+      '<div class="haxes"><span class="ax"><b>성장</b>'+(GKO[rg.growth]||rg.growth)+'</span><span class="ax"><b>물가</b>'+(GKO[rg.inflation]||rg.inflation)+'</span><span class="ax"><b>금융</b>'+(GKO[rg.financial]||rg.financial)+'</span></div></div></div>'+
+      '<div class="hstrat"><b>참고 전략</b>'+rg.strategy+'</div></div>';
+    // indicator groups
+    var groups=["성장","물가","금융"], ig='';
+    groups.forEach(function(g){
+      var items=d.indicators.filter(function(x){return x.group===g;});
+      if(!items.length)return;
+      ig+='<div class="grp"><h3>'+g+' 지표</h3><div class="icards">'+items.map(function(x){
+        var st=x.st||["",""];
+        return '<div class="ic"><div class="ictop"><span class="icl">'+x.label+'</span><span class="icv">'+(x.v!=null?x.v:'—')+'<span class="icu">'+(x.u||'')+'</span></span></div>'+
+          (st[0]?'<span class="stbadge '+st[1]+'">'+st[0]+'</span>':'')+'<div class="icd">'+x.d+'</div></div>';
+      }).join('')+'</div></div>';
+    });
+    // asset perf table
+    var perf=d.asset_perf||{}, assets=Object.keys(perf), cur=rg.label;
+    var ANM={SPY:"S&P500",QQQ:"나스닥100",TLT:"장기국채",GLD:"금",DBC:"원자재"};
+    var tbl='';
+    if(assets.length){
+      var cols=RORDER.filter(function(r){return assets.some(function(a){return perf[a][r]!=null;});});
+      tbl='<div class="lbl">레짐별 자산 조건부 성과 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 월평균 수익률(%), 2009~ · 현재 레짐 열 강조</span></div>'+
+        '<div class="tblwrap"><table><thead><tr><th>자산</th>'+cols.map(function(r){return '<th class="'+(r===cur?'cur':'')+'" title="'+(RKO[r]||r)+'">'+r+'</th>';}).join('')+'</tr></thead><tbody>'+
+        assets.map(function(a){return '<tr><td>'+(ANM[a]||a)+'</td>'+cols.map(function(r){
+          var v=perf[a][r]; if(v==null)return '<td class="'+(r===cur?'cur':'')+'">—</td>';
+          var mag=Math.min(1,Math.abs(v)/2.5), c=v>=0?'14,138,84':'166,75,59';
+          return '<td class="pv '+(r===cur?'cur':'')+'" style="background:rgba('+c+','+(mag*0.28)+');color:'+(v>=0?'var(--good)':'var(--hot)')+'">'+(v>0?'+':'')+v+'</td>';
+        }).join('')+'</tr>';}).join('')+'</tbody></table></div>';
+    }
+    el('main').innerHTML=hero+
+      '<div class="lbl">매크로 지표 현황</div>'+ig+
+      '<div class="lbl">레짐 히스토리 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 2009~ 월별</span></div>'+
+      '<div class="histwrap"><canvas id="histc" height="54"></canvas><div class="leg" id="leg"></div></div>'+
+      tbl;
+    el('leg').innerHTML=RORDER.map(function(r){return '<span><i style="background:'+RC[r]+'"></i>'+r+' · '+(RKO[r]||'')+'</span>';}).join('');
+    drawHist();
+  }
+
+  function drawHist(){
+    var cv=el('histc'); if(!cv||!DATA)return;
+    var h=DATA.history||[]; if(!h.length)return;
+    var dpr=window.devicePixelRatio||1, W=cv.clientWidth||800, H=54;
+    cv.width=W*dpr; cv.height=H*dpr; var ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    var n=h.length, bw=W/n, barH=H-16;
+    for(var i=0;i<n;i++){ctx.fillStyle=RC[h[i].r]||'#888';ctx.fillRect(i*bw,0,Math.ceil(bw)+0.5,barH);}
+    // 연도 라벨
+    ctx.font='9px ui-monospace,monospace';ctx.fillStyle=css('--muted');ctx.textAlign='center';
+    var lastY=null;
+    for(var i=0;i<n;i++){var y=h[i].dt.slice(0,4);if(y!==lastY&&y%2===0){var x=i*bw;ctx.strokeStyle=css('--line');ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,barH);ctx.stroke();ctx.fillText("'"+y.slice(2),x+bw*6,H-3);}lastY=y;}
+    // 현재(끝) 마커
+    ctx.fillStyle=css('--ink');ctx.fillRect(W-2,0,2,barH);
+  }
+
+  (function(){var r=document.documentElement,b=el('themebtn');function c(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}b.addEventListener('click',function(){var n=c()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('yeouido-theme',n);}catch(e){}});})();
+})();
+</script>
+</body>
+</html>
