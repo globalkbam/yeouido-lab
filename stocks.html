@@ -258,6 +258,7 @@
       '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = 교과서 매수/매도 신호 중 최근 5거래일 발동분. 차트 <b style="color:var(--good)">▲</b>/<b style="color:var(--hot)">▼</b> = 시그널 기준 과거 매수/매도 타점(순매수·순매도 강신호일). <b>백테스트(2016~26·무비용): 역추세형(오버솔드 반등)이 종목선택 엣지 우위, 돌파·추세추종형은 오히려 열위</b>였습니다 — 신호는 타이밍 참고용. 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위(100=최상). 전 지표 기준일 '+DATA.as_of+' · 출처 yfinance. 투자자문·매매권유 아님.</div></div>';
     renderChart(s);
   }
+  function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}
   function renderChart(s){
     var pxd=s.pxd||[],dates=DATA.pxd_dates||[];
     var n=Math.min(state.period, pxd.length);
@@ -269,17 +270,21 @@
     var cd=el('chgd');
     if(cd)cd.innerHTML=(l!=null?l.toLocaleString():'—')+(chg!=null?' <b style="color:'+(chg>=0?'var(--good)':'var(--hot)')+'">'+(chg>=0?'+':'')+chg.toFixed(1)+'%</b>':'')+' <span style="color:var(--muted);font-weight:400">· '+(sdates[0]||'')+' ~ '+(DATA.as_of||'')+'</span>';
     var off=pxd.length-n;
-    var bm=(s.bm||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});
-    var sm=(s.sm||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});
-    var ml=el('marklg');if(ml)ml.innerHTML='<span style="color:var(--good)">▲ 매수 '+bm.length+'</span> <span style="color:var(--hot)">▼ 매도 '+sm.length+'</span>';
-    drawChart(slice, sdates, bm, sm);
+    var sl=function(a){return (a||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});};
+    var mk={bms:sl(s.bms),bmw:sl(s.bmw),sms:sl(s.sms),smw:sl(s.smw)};
+    var nb=mk.bms.length+mk.bmw.length, ns=mk.sms.length+mk.smw.length;
+    var ma20=sma(pxd,20).slice(off), ma60=sma(pxd,60).slice(off);
+    var ml=el('marklg');if(ml)ml.innerHTML='<span style="color:var(--good)">▲매수 '+nb+'</span> <span style="color:var(--hot)">▼매도 '+ns+'</span> <span style="color:var(--muted)">(속=강·빈=약)</span> <span style="color:var(--cold)">━MA20</span> <span style="color:var(--watch)">━MA60</span>';
+    drawChart(slice, sdates, mk, ma20, ma60);
   }
-  function drawChart(arr, dates, bm, sm){
+  function drawChart(arr, dates, mk, ma20, ma60){
     var cv=el('pxc');if(!cv)return;var ctx=cv.getContext('2d');
     var pts=[];for(var i=0;i<arr.length;i++)if(arr[i]!=null)pts.push([i,arr[i]]);
     var dpr=window.devicePixelRatio||1,W=cv.clientWidth||560,H=132;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
     if(pts.length<2)return;
-    var pad=6,botb=16,n=arr.length,vs=pts.map(function(p){return p[1];}),mn=Math.min.apply(null,vs),mx=Math.max.apply(null,vs),rg=(mx-mn)||1;
+    var pad=6,botb=16,n=arr.length,vs=pts.map(function(p){return p[1];});
+    var allv=vs.slice();[ma20,ma60].forEach(function(m){if(m)m.forEach(function(x){if(x!=null)allv.push(x);});});
+    var mn=Math.min.apply(null,allv),mx=Math.max.apply(null,allv),rg=(mx-mn)||1;
     var X=function(i){return pad+(W-2*pad)*i/(n-1);},Y=function(v){return pad+(H-pad-botb)*(1-(v-mn)/rg);};
     ctx.font='9px ui-monospace,monospace';ctx.textBaseline='alphabetic';
     var short=n<=63, nt=Math.min(5,pts.length);
@@ -291,10 +296,17 @@
     ctx.lineTo(X(pts[pts.length-1][0]),H-botb);ctx.lineTo(X(pts[0][0]),H-botb);ctx.closePath();ctx.fillStyle=col+'22';ctx.fill();
     ctx.beginPath();ctx.moveTo(X(pts[0][0]),Y(pts[0][1]));pts.forEach(function(p){ctx.lineTo(X(p[0]),Y(p[1]));});
     ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+    // 이동평균선
+    function drawMA(m,color){if(!m)return;ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();var st=false;for(var i=0;i<m.length;i++){if(m[i]==null){st=false;continue;}var x=X(i),y=Y(m[i]);if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);}ctx.stroke();}
+    drawMA(ma20,css('--cold'));drawMA(ma60,css('--watch'));
     var lp=pts[pts.length-1];ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(lp[0]),Y(lp[1]),3,0,7);ctx.fill();
-    // 시그널 기준 매수(▲)/매도(▼) 타점
-    if(bm)bm.forEach(function(i){if(arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.fillStyle=css('--good');ctx.beginPath();ctx.moveTo(x,y+5);ctx.lineTo(x-3.5,y+11);ctx.lineTo(x+3.5,y+11);ctx.closePath();ctx.fill();});
-    if(sm)sm.forEach(function(i){if(arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.fillStyle=css('--hot');ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x-3.5,y-11);ctx.lineTo(x+3.5,y-11);ctx.closePath();ctx.fill();});
+    // 강/약 매수(▲)/매도(▼) 타점 — 속=강, 빈=약
+    function tri(i,up,strong,color){if(i>=arr.length||arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.beginPath();
+      if(up){ctx.moveTo(x,y+5);ctx.lineTo(x-4,y+12);ctx.lineTo(x+4,y+12);}else{ctx.moveTo(x,y-5);ctx.lineTo(x-4,y-12);ctx.lineTo(x+4,y-12);}
+      ctx.closePath();if(strong){ctx.fillStyle=color;ctx.fill();}else{ctx.fillStyle=css('--panel');ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.stroke();}}
+    if(mk){var g=css('--good'),h=css('--hot');
+      mk.bms.forEach(function(i){tri(i,true,true,g);});mk.bmw.forEach(function(i){tri(i,true,false,g);});
+      mk.sms.forEach(function(i){tri(i,false,true,h);});mk.smw.forEach(function(i){tri(i,false,false,h);});}
   }
 
   fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){

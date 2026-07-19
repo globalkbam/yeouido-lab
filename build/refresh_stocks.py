@@ -176,13 +176,16 @@ def main():
         bd = bd.to_numpy(); sd = sd.to_numpy()
         braw = set(i for i in range(len(pxd_dates)) if bd[i] >= 2 and bd[i] > sd[i])
         sraw = set(i for i in range(len(pxd_dates)) if sd[i] >= 2 and sd[i] > bd[i])
-        buy_marks = sorted(i for i in braw if (i - 1) not in braw)   # 클러스터 시작(진입)일만
-        sell_marks = sorted(i for i in sraw if (i - 1) not in sraw)
+        bstart = [i for i in sorted(braw) if (i - 1) not in braw]    # 클러스터 시작(진입)일
+        sstart = [i for i in sorted(sraw) if (i - 1) not in sraw]
+        # 강도: 발동 신호 3개+ = 강, 2개 = 약
+        bms = [i for i in bstart if bd[i] >= 3]; bmw = [i for i in bstart if bd[i] < 3]
+        sms = [i for i in sstart if sd[i] >= 3]; smw = [i for i in sstart if sd[i] < 3]
         info = mem.get(t, {})
         stocks.append({"t": t, "name": info.get("name"), "sector": info.get("sector"), "idx": info.get("idx", []),
                        "comp": {k: v for k, v in comps.items() if v is not None}, "flags": flags(sg),
                        "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"],
-                       "bm": buy_marks, "sm": sell_marks, "sig": sig, "pxd": pxd})
+                       "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig, "pxd": pxd})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": as_of} for k in FACTORS},

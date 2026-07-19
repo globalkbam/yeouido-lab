@@ -72,6 +72,20 @@
   .lstep:first-child .lf{color:var(--deploy)} .lstep:last-child .lf{color:var(--marg)}
   .lstep .lc{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.4}
 
+  .reco-strat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  a.rs{display:block;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);border-top:3px solid var(--edge,var(--deploy));transition:border-color .12s,transform .12s}
+  a.rs:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .rs .rt{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
+  .rs .rr{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--deploy);background:var(--deploy-bg);padding:1px 6px;border-radius:5px;margin-left:7px;vertical-align:middle}
+  .rs .rd{font-size:12px;color:var(--ink-2);margin-top:7px;line-height:1.5}
+  .reco-stocks{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .rcol{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;box-shadow:var(--shadow)}
+  .rcol h4{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin:0 0 8px;display:flex;justify-content:space-between}
+  a.rstk{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;text-decoration:none}
+  a.rstk:last-child{border-bottom:none} a.rstk:hover .rk{color:var(--accent)}
+  .rstk .rk{font-family:var(--mono);font-weight:700;color:var(--ink)}
+  .rstk .rn2{color:var(--muted);font-size:10.5px;font-weight:400;margin-left:5px}
+  .rstk .rv{font-family:var(--mono);font-size:11px;color:var(--ink-2);white-space:nowrap}
   footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:12px;line-height:1.9}
   footer a{color:var(--accent);text-decoration:none} footer a:hover{text-decoration:underline}
   .live{display:inline-flex;align-items:center;gap:6px;color:var(--deploy)}
@@ -112,19 +126,15 @@
     </a>
   </div>
 
-  <p class="lbl">핵심 결론</p>
-  <div class="find">
-    <div class="row"><span class="rn">1</span><span class="rt"><b>강건한 3번째 저상관 슬리브는 존재하지 않는다.</b> 머저 아비트리지(마지막 미검 modality)까지 실측 기각 — 통합(챔피언 EPS리비전 + 크로스에셋 RP)이 분산 수확을 완료했고, 이 2-슬리브 결합이 도달 가능한 최선.</span></div>
-    <div class="row"><span class="rn">2</span><span class="rt"><b>초과수익은 진성 알파다.</b> CAPM α +10.2%/yr(t=3.31), 신용·모멘텀·퀄리티 8팩터 통제 후에도 +9.3%/t3.88 생존. 과최적화 아님(파라미터 108셀 고원·워크포워드 OOS 앵커의 94~97%).</span></div>
-    <div class="row"><span class="rn">3</span><span class="rt"><b>성격은 위험감축형이다.</b> 나스닥급 수익을 절반 변동성·절반 낙폭으로. 레버리지 조달비용 반영 시 절대수익은 나스닥 소폭 하회, <b>위험조정 우위(Sharpe·MDD)만 견고</b>하게 남는다.</span></div>
+  <p class="lbl">추천 전략 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 전략 탐색기에서 배포급으로 검증된 것</span></p>
+  <div class="reco-strat">
+    <a class="rs" href="explorer.html" style="--edge:var(--champ)"><div><span class="rt">통합 포트폴리오</span><span class="rr">배포코어</span></div><div class="rd">챔피언 + 크로스에셋 RP 리스크패리티 결합. 나스닥급 수익을 절반 변동성·절반 낙폭으로 — 위험조정 우위.</div></a>
+    <a class="rs" href="explorer.html" style="--edge:var(--deploy)"><div><span class="rt">챔피언 (EPS 리비전)</span><span class="rr">배포코어</span></div><div class="rd">애널리스트 실적 추정 상향 대형주 매수(PEAD). 랩 유일 대형주 진성 알파(CAPM t=3.31).</div></a>
+    <a class="rs" href="explorer.html" style="--edge:var(--rp)"><div><span class="rt">크로스에셋 RP</span><span class="rr">배포코어</span></div><div class="rd">12자산 역변동성 + 추세게이트 + vol타겟. 어떤 국면에도 견디는 올웨더 방어·분산 슬리브.</div></a>
   </div>
 
-  <p class="lbl">성능의 정직한 눈금</p>
-  <div class="ladder">
-    <div class="lstep"><div class="lf tnum">1.42</div><div class="lc"><b>gross Sharpe</b> — 무비용·월말 (하우스 컨벤션·헤드라인)</div></div>
-    <div class="lstep"><div class="lf tnum">1.26</div><div class="lc"><b>조달비용 net</b> — 레버 차입이자 반영 (Δ−0.16)</div></div>
-    <div class="lstep"><div class="lf tnum">~0.95</div><div class="lc"><b>현실적 forward</b> — 최근 국면·실현오차까지</div></div>
-  </div>
+  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 종목 시그널에서 · <span id="stkasof"></span></span></p>
+  <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <footer>
     <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a><br>
@@ -141,6 +151,21 @@
     try{localStorage.setItem('yeouido-theme',next);}catch(e){}
   });
   try{var s=localStorage.getItem('yeouido-theme'); if(s)root.setAttribute('data-theme',s);}catch(e){}
+  // 주목 종목 — 종목 시그널에서
+  fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    if(!d)return;
+    var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(d.as_of||'');
+    var st=d.stocks||[];
+    var buyAll=st.filter(function(s){return s.timing==='매수'||s.timing==='매수우세';});
+    var osAll=st.filter(function(s){return (s.flags||[]).indexOf('과매도')>=0;});
+    var buy=buyAll.slice().sort(function(a,b){return (b.comp.momentum||0)-(a.comp.momentum||0);}).slice(0,6);
+    var os=osAll.slice().sort(function(a,b){return (a.comp.overheat||0)-(b.comp.overheat||0);}).slice(0,6);
+    function col(title,cnt,arr,mf){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
+      (arr.length?arr.map(function(s){return '<a class="rstk" href="stocks.html"><span><span class="rk">'+s.t+'</span><span class="rn2">'+(s.name||'').slice(0,16)+'</span></span><span class="rv">'+mf(s)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
+    document.getElementById('recostocks').innerHTML=
+      col('🟢 매수 타이밍 신호', buyAll.length, buy, function(s){return '모멘텀 '+Math.round(s.comp.momentum||0);})+
+      col('🔵 과매도 · 반등 후보', osAll.length, os, function(s){return 'RSI '+(s.sig&&s.sig.rsi?Math.round(s.sig.rsi.v):'—');});
+  }).catch(function(){});
 })();
 </script>
 </body>
