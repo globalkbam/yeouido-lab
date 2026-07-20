@@ -2,7 +2,8 @@ name: Refresh market regime (FRED)
 
 on:
   schedule:
-    - cron: '0 23 * * 1-5'   # 평일 23:00 UTC (KST 익일 08:00)
+    - cron: '5 23 * * *'     # 매일 08:05 KST (23:05 UTC 전일) — 정시 부하 회피
+    - cron: '40 23 * * *'    # 08:40 KST 백업 (첫 슬롯 드롭 대비, 변경 없으면 스킵)
   workflow_dispatch:
 
 permissions:
