@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
-<title>여의도 전략 탐색기 — 51개 전략 성과 브라우저</title>
+<title>여의도 전략 탐색기 — 57개 전략 성과 브라우저</title>
 <style>
   :root{
     --ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;
@@ -128,9 +128,9 @@
   <header class="mast">
     <div class="eyebrow">여의도 전략 랩 · 리서치 아카이브</div>
     <h1 class="title">전략 탐색기</h1>
-    <p class="lede">10시간 자율 리서치가 적대적으로 검증한 <b>모든 전략</b>을 클릭해서 둘러봅니다. 왼쪽에서 전략을 고르면 오른쪽에 성과·판정과 함께
-      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 대부분은 <b>기각</b>됐지만 — 기각된 전략도 <b>잔존가치</b>(전술 국면·시그널·실행 타이밍·모니터링)가 있습니다.
-      아래 <b>활용 아키타입</b> 칩으로 목적별(위기방어·인플레헤지·모니터링시그널·실행타이밍 등)로도 걸러 볼 수 있습니다.</p>
+    <p class="lede">10시간 자율 리서치가 적대적으로 검증해 <b>통과시킨 전략</b>을 클릭해서 둘러봅니다. 왼쪽에서 전략을 고르면 오른쪽에 성과·판정과 함께
+      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 여기 담긴 건 배포·marginal 판정을 받은 것들 — <b>기각된 40개</b>는 사유와 함께 <a href="archive.html" style="color:var(--accent)">기각 아카이브</a>에서 볼 수 있습니다.
+      아래 <b>활용 아키타입</b> 칩으로 목적별(배포코어·위기방어·레짐 오버레이·실행타이밍 등)로도 걸러 볼 수 있습니다.</p>
     <div class="statline" id="statline"></div>
   </header>
 
@@ -155,7 +155,7 @@
   </div>
 
   <footer>
-    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · 적대검증 통과 <b>배포·marginal 16개 전략</b> (기각 35개는 아카이브) · 전부 구현→적대검증<br>
+    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · 적대검증 통과 <b>배포·marginal 17개 전략</b> (기각 40개는 아카이브) · 전부 구현→적대검증<br>
     수치는 백테스트(2016~2026, 명시 없으면 무비용·월말 gross) 기준 · <a href="index.html">홈</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="archive.html">기각 아카이브</a>.
   </footer>
 </div>
@@ -225,6 +225,7 @@
     var vf=el('vfilters');
     ['deploy','marginal','reject'].forEach(function(v){
       var cnt=D.filter(function(d){return d.v===v;}).length;
+      if(!cnt)return; // 개수 0인 판정(기각 등)은 칩 생성 안 함 — 죽은 필터 방지
       vf.appendChild(chip('v-'+v,VMETA[v].lab,cnt,false,function(){toggle(state.vf,v);render();syncPressed();}));
     });
   })();
