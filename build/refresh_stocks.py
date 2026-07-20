@@ -81,6 +81,13 @@ def _f(x):
     except Exception: return np.nan
 
 
+def overheat_series(h, l, c, v):
+    """봉별 과열도 0~100 (오실레이터 평균: RSI·스토캐스틱·MFI·Williams·볼린저%b). 낮음=과매도(저점 근처)·높음=과매수(고점 근처)."""
+    r = rsi(c); k = stoch_k(h, l, c); m = mfi(h, l, c, v); w = willr(h, l, c) + 100
+    _, _, _, pb, _ = boll(c); pbc = (pb.clip(0, 1) * 100)
+    return pd.concat([r, k, m, w, pbc], axis=1).mean(axis=1)
+
+
 def indicators(o):
     h, l, c, v = o["High"], o["Low"], o["Close"], o["Volume"]
     c = c.dropna(); h = h.reindex(c.index); l = l.reindex(c.index); v = v.reindex(c.index)
@@ -274,6 +281,8 @@ def main():
             except Exception: pass
     spy = px.get("SPY", {}).get("Close") if "SPY" in px else None
     spy3 = _f(spy.iloc[-1]/spy.iloc[-1-63]-1) if spy is not None and len(spy) > 63 else 0.0
+    # 시장 국면: SPY가 200MA 위=리스크온(눌림매수 관대·매도 엄격), 아래=리스크오프(매수 엄격·매도 관대)
+    spy_riskon = bool(spy.iloc[-1] > sma(spy, 200).iloc[-1]) if spy is not None and len(spy) > 200 else True
     raw = {}; as_of = None
     for t in tickers:
         if t not in px: continue
@@ -303,24 +312,19 @@ def main():
         fl = (fund.get(t) or {}).get("float")
         if s.get("sish") and fl: raw[t]["sig"]["sipct"] = float(s["sish"]) / float(fl) * 100
     vdf = pd.DataFrame({t: raw[t]["sig"] for t in raw}).T; pct = vdf.rank(pct=True)*100
-    # ── 추세정렬 매수/매도 스코어(크로스섹션) — index 상위 랭킹용 ──
-    def zc(col):
-        if col not in vdf: return pd.Series(0.0, index=vdf.index)
-        x = vdf[col]; sd = x.std(ddof=0)
-        return ((x - x.mean())/sd).fillna(0.0) if sd and sd == sd else pd.Series(0.0, index=vdf.index)
-    zr3, zr6, zrs, zp52, zr1, zd2 = zc("roc3m"), zc("roc6m"), zc("rs3m"), zc("pos52"), zc("roc1m"), zc("d200")
-    bdf = pd.DataFrame({t: raw[t]["tb"] for t in raw}).T
-    def bcol(name):
-        return bdf[name].astype(float).fillna(0.0) if name in bdf.columns else pd.Series(0.0, index=bdf.index)
-    def rk(s): return s.rank(pct=True)
-    ohcols = [c2 for c2 in ("rsi", "stoch", "mfi", "willr", "pctb", "pos52") if c2 in pct.columns]
-    oh = pct[ohcols].mean(axis=1).reindex(vdf.index).fillna(50.0)   # 과열도(0~100)
-    # 매수 랭킹 = 전환 신선도 + 상대강도 − 과열 추격.  (순수 모멘텀은 이미 급등주 추격 → 억제)
-    #   백테스트: 바스켓 중앙 roc3m +46%→+14%(추격 완화)·초과수익 +2.1%·하락장 꼬리 −14%(칼회피 유지)
-    turn = 1.5*bcol("reclaim") + 1.2*bcol("golden") + 1.0*bcol("macd_bull") + 0.6*bcol("adx_up")  # 하락→상승 전환 신선도
-    ext = zd2 + zp52 + zr3                                                             # 과열도(200MA 이격·52주위치·3M수익)
-    buy_score = rk(turn) + rk(zrs + zr1) - 0.5*rk(ext)                                 # 상승측 랭킹(↑=건강한 전환 매수후보)
-    sell_score = oh/50.0 + 1.5*bcol("lose") + 1.0*bcol("death") + 0.8*bcol("macd_bear") - zrs  # 하락측 랭킹(↑=강한 약세주의)
+    # ── 매수/매도 랭킹 스코어 = 과열도·추세·모멘텀·변동성 조합 + 섹터 상대(크로스섹션) — index 상위 랭킹용 ──
+    def cser(keys):
+        cols = [k for k in keys if k in pct.columns]
+        return pct[cols].mean(axis=1).reindex(vdf.index).fillna(50.0) if cols else pd.Series(50.0, index=vdf.index)
+    oh_c = cser(["rsi", "stoch", "mfi", "willr", "pctb", "pos52"])   # 과열도(↑=과매수)
+    tr_c = cser(["adx", "d50", "d200", "macdh", "aroon"])            # 추세강도
+    mo_c = cser(["roc1m", "roc3m", "roc6m", "rs3m"])                 # 모멘텀
+    vo_c = cser(["atrp", "vol"])                                     # 변동성
+    sect = pd.Series({t: (mem.get(t, {}) or {}).get("sector") or "?" for t in vdf.index}, index=vdf.index)
+    oh_rel = (oh_c - oh_c.groupby(sect).transform("median") + 50.0).clip(0, 100)   # 섹터 상대 과열도(피어 대비)
+    # 매수(저점) = 섹터상대 과매도 + 건강한 추세·모멘텀 − 고변동.  매도(고점) = 섹터상대 과매수 + 약한 추세·모멘텀 + 고변동.
+    buy_score = (100 - oh_rel) + 0.6*tr_c + 0.6*mo_c - 0.3*vo_c
+    sell_score = oh_rel + 0.6*(100 - tr_c) + 0.6*(100 - mo_c) + 0.3*vo_c
     # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
     daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
     pxd_dates = [d.strftime("%Y-%m-%d") for d in daily.index]
@@ -343,17 +347,29 @@ def main():
             theta = min(0.30, max(0.12, 6.0 * (sg.get("atrp") or 5) / 100))   # 감도↓↓ = 주요 전환점 3~4개만
             piv, dvg = zigzag(dser.values, wr, theta)
             if len(piv) >= 2: tp = {"zz": piv, "dvg": dvg}
-        # 매수/매도 타점(마커) — 추세정렬(K=3 확정 피봇·SMA200 게이트). 확정에 3거래일 지연·날짜 불변.
-        BUYs = raw[t]["BUY"].reindex(daily.index).fillna(False).to_numpy()
-        SELLs = raw[t]["SELL"].reindex(daily.index).fillna(False).to_numpy()
-        # 교차 이벤트를 교대·디바운스 → 진입→이탈 round-trip만(밀집·휩쏘 제거). 같은 방향 연속·10봉내 재신호 억제.
-        bms, sms, _st, _last = [], [], 0, -99
-        for i in range(len(pxd_dates)):
-            if BUYs[i] and _st <= 0 and (i - _last) >= 10:
-                bms.append(i); _st = 1; _last = i
-            elif SELLs[i] and _st >= 0 and (i - _last) >= 10:
-                sms.append(i); _st = -1; _last = i
-        bmw = []; smw = []
+        # 매수/매도 타점(마커) — 스윙 저점≈매수·고점≈매도(지그재그 전환점), 과열도·추세·모멘텀·변동성으로 필터 + 국면 조정.
+        #   저점 매수: 깊은 붕괴(200MA −KNIFE 아래 & 6M<−15%)·아직 과매수(oh>65)면 제외 → 떨어지는 칼 회피.
+        #   고점 매도: 강세 지속(상승추세 & 모멘텀↑ & oh<70)·아직 과매도(oh<35)면 제외 → 강세종목 조기매도 회피.
+        bms, sms = [], []
+        if tp and dser is not None and t in px:
+            cf = raw[t]["close"]; hf = px[t]["High"].reindex(cf.index); lf = px[t]["Low"].reindex(cf.index); vf = px[t]["Volume"].reindex(cf.index)
+            ohb = overheat_series(hf, lf, cf, vf).reindex(daily.index)
+            s2b = sma(cf, 200).reindex(daily.index); r6b = cf.pct_change(126).reindex(daily.index)
+            _, _, mhb = macd(cf); mhb = mhb.reindex(daily.index)
+            dv = dser.to_numpy(); KNIFE = 0.10 if spy_riskon else 0.05
+            for pos, typ in tp["zz"]:
+                if pos < 0 or pos >= len(pxd_dates): continue
+                oh = _f(ohb.iloc[pos])
+                if oh != oh: continue
+                s2 = _f(s2b.iloc[pos]); r6 = _f(r6b.iloc[pos]); pxp = _f(dv[pos])
+                if typ == "L":
+                    knife = (s2 == s2 and pxp == pxp and pxp < s2*(1 - KNIFE)) and (r6 == r6 and r6 < -0.15)
+                    if (not knife) and oh <= 65: bms.append(pos)
+                else:
+                    rising = (_f(mhb.iloc[pos]) >= _f(mhb.iloc[pos-3])) if pos >= 3 else True
+                    strength = (s2 == s2 and pxp == pxp and pxp > s2) and rising and oh < 70
+                    if (not strength) and oh >= 35: sms.append(pos)
+        bmw = []; smw = []   # timing(라벨·리스트)은 trend_signals의 추세기반 유지 · 스윙 마커는 차트 전용
         info = mem.get(t, {})
         fd = fund.get(t) or {}
         def r2(x): return round(float(x), 2) if x is not None and x == x else None
