@@ -136,10 +136,10 @@
   .sigsub .sigsublbl .sn{font-weight:400;color:var(--muted);letter-spacing:0;margin-left:4px}
   .sigs{display:flex;flex-wrap:wrap;gap:4px}
   .sigbadge{font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:5px;line-height:1.5}
-  .sigbadge.rev{color:var(--good);background:var(--good-bg)}   /* 역추세 매수 (백테스트 우위) */
-  .sigbadge.brk{color:var(--watch);background:var(--watch-bg)} /* 돌파 매수 (역사적 열위) */
-  .sigbadge.soh{color:var(--hot);background:var(--hot-bg)}     /* 과매수 매도 */
-  .sigbadge.sbrk{color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft)} /* 추세붕괴 매도 */
+  .sigbadge.brk{color:var(--good);background:var(--good-bg)}   /* 추세 전환·돌파 매수 — 추세정렬 우선(백테스트 우위) */
+  .sigbadge.rev{color:var(--watch);background:var(--watch-bg)} /* 역추세 반등 매수 — 추세 미확인시 위험(떨어지는 칼) */
+  .sigbadge.sbrk{color:var(--hot);background:var(--hot-bg)}    /* 추세 이탈·붕괴 매도 — 약세 주의 */
+  .sigbadge.soh{color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft)} /* 과매수 — 상승추세면 매도 아님 */
   .signone{font-size:11px;color:var(--muted)}
   .siglegend{margin-top:9px;font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .siglegend span{display:inline-flex;align-items:center;gap:4px}
@@ -157,13 +157,13 @@
 </head>
 <body>
 <a class="home" href="index.html" title="홈">← 랩</a>
-<button class="theme" id="themebtn" title="라이트/다크 전환">◐</button>
+<button class="theme" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
 <div class="wrap">
   <header class="mast">
     <div class="eyebrow">여의도 전략 랩 · 종목 테크니컬</div>
     <h1 class="title">NDX · SPX 종목 시그널</h1>
     <p class="lede">나스닥100·S&amp;P500 구성종목의 <b>과매수/과매도·추세·모멘텀·변동성·거래량·공매도 포지셔닝</b>을 종목별로 — 가격 기반 <b>테크니컬</b>(RSI·MACD·볼린저·ADX…) + <b>EPS 펀더멘털</b>(yfinance) + <b>공매도잔량</b>(FINRA).
-      프리셋으로 <b>과매수·과매도·눌림목·52주돌파·과밀숏</b>을 즉시 스크리닝하고, 종목 클릭 시 가격·거래량 차트와 지표별 <b>값·현재 상태(과매수/과매도·강세/약세)·한 줄 설명</b>이 뜹니다.</p>
+      프리셋으로 <b>매수 신호·약세 주의·과매수·과매도·눌림목·52주돌파·과밀숏</b>을 즉시 스크리닝하고, 종목 클릭 시 가격·거래량 차트와 지표별 <b>값·상태·한 줄 설명</b>이 뜹니다. 매매 타이밍은 <b>추세정렬</b> — 상승추세에서만 매수, 하락추세에서만 매도(약세 주의)로 <b>떨어지는 칼 잡기를 피합니다</b>(백테스트 검증).</p>
     <div class="statline" id="statline"></div>
   </header>
 
@@ -185,14 +185,14 @@
 
   <footer>
     여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="regime.html">시장 국면</a> · <a href="archive.html">기각 아카이브</a><br>
-    가격·테크니컬·EPS: yfinance · 공매도잔량: FINRA(격주) · 테크니컬은 전 지표 동일 기준일 · <span id="asof"></span> · 투자자문·매매권유 아님
+    가격·테크니컬·EPS: yfinance · 공매도잔량: FINRA(격주, <span id="siasof">기준일 별도</span>) · 테크니컬은 전 지표 동일 기준일 · <span id="asof"></span> · 투자자문·매매권유 아님
   </footer>
 </div>
 <script>
 (function(){
   var el=function(i){return document.getElementById(i);};
   var listEl=el('list'), detailEl=el('detail');
-  var DATA=null,F=null;
+  var DATA=null,F=null,SI_ASOF=null;
   var GROUPS=[["과매수·과매도","hot"],["추세","good"],["모멘텀","accent"],["변동성","watch"],["거래량","cold"],["포지셔닝","accent"]];
   var COMPS=[["overheat","과열도","hot"],["trend","추세","good"],["momentum","모멘텀","accent"],["volatility","변동성","watch"]];
   // 지표별 상태 분류(과매수/과매도·강세/약세 등) + 한 줄 설명. v=원값, p=퍼센타일. tone: hot/cold/good/watch/neut
@@ -231,8 +231,8 @@
     return "";}
   // preset: [key,label,comp,asc,flag,timingSet]
   var PRESETS=[
-    ["buy","🟢 매수 신호","overheat",true,null,["매수","매수우세"]],
-    ["sell","🔴 매도 신호","overheat",false,null,["매도","매도우세"]],
+    ["buy","🟢 매수 신호","momentum",false,null,["매수","매수우세"]],
+    ["sell","🟠 약세 주의","momentum",true,null,["매도","매도우세"]],
     ["oh","과매수","overheat",false,"과매수",null],["os","과매도","overheat",true,"과매도",null],
     ["dip","눌림목","trend",false,"눌림목",null],["brk","52주 돌파","momentum",false,"52주돌파",null],
     ["squeeze","🩳 과밀숏","positioning",false,"과밀숏",null],
@@ -256,15 +256,15 @@
     // ① 과매수·과매도 지표 종합 read
     var oh=0,os=0,tot=0;
     ["rsi","stoch","mfi","willr","cci","pctb","pos52"].forEach(function(k){if(!s.sig[k]||!META[k])return;tot++;var tn=META[k].s(s.sig[k].v,s.sig[k].pct)[1];if(tn==="hot")oh++;else if(tn==="cold")os++;});
-    var read=oh>os+1?["과열 우위","--hot"]:os>oh+1?["침체 — 반등 여지","--cold"]:["혼조·중립","--muted"];
+    var read=oh>os+1?["과열 우위","--hot"]:os>oh+1?["침체 — 추세 확인 필요","--cold"]:["혼조·중립","--muted"];
     var summary=tot?'<div class="tsum">과매수·과매도 지표 <b>'+tot+'</b>개 종합 → <b style="color:var('+read[1]+')">과매수 '+oh+' · 과매도 '+os+'</b> · '+read[0]+'</div>':'';
     // ② 발동 신호를 성격별로 체계화
     var revB=(s.buy||[]).filter(function(x){return REV_BUY[x];}), brkB=(s.buy||[]).filter(function(x){return !REV_BUY[x];});
     var ohS=(s.sell||[]).filter(function(x){return OH_SELL[x];}), brkS=(s.sell||[]).filter(function(x){return !OH_SELL[x];});
     function bd(a,c){return a.map(function(x){return '<span class="sigbadge '+c+'">'+x+'</span>';}).join('');}
     function sub(lbl,note,a,c){return a.length?'<div class="sigsub"><div class="sigsublbl">'+lbl+(note?'<span class="sn">'+note+'</span>':'')+'</div><div class="sigs">'+bd(a,c)+'</div></div>':'';}
-    var buys=sub("역추세·반등형","↑ 백테스트 우위",revB,"rev")+sub("돌파·추세형","↓ 역사적 열위",brkB,"brk");
-    var sells=sub("과매수 되돌림","",ohS,"soh")+sub("추세 이탈","",brkS,"sbrk");
+    var buys=sub("추세 전환·돌파형","추세정렬 · 우선",brkB,"brk")+sub("역추세 반등형","추세 미확인 시 위험",revB,"rev");
+    var sells=sub("추세 이탈·붕괴","약세 주의",brkS,"sbrk")+sub("과매수 되돌림","상승추세면 매도 아님",ohS,"soh");
     var block='';
     if(buys)block+='<div class="sigrow"><span class="sigl buy">매수</span><div class="sigcol">'+buys+'</div></div>';
     if(sells)block+='<div class="sigrow"><span class="sigl sell">매도</span><div class="sigcol">'+sells+'</div></div>';
@@ -281,7 +281,11 @@
       var dvgHtml=s.tp.dvg==='bull'?'<span class="dvgbadge bull">강세 다이버전스</span>':s.tp.dvg==='bear'?'<span class="dvgbadge bear">약세 다이버전스</span>':'';
       tpHtml='<div class="tpbox"><div class="tphd"><span>스윙 전환점 구조</span>'+dvgHtml+'</div><div class="pivrow">'+fmtPiv(lastH,'최근 고점','var(--hot)')+fmtPiv(lastL,'최근 저점','var(--good)')+'</div></div>';
     }
-    return '<div class="timing"><div class="timhd"><span class="timstate" style="color:var('+col+')">타이밍 · '+t+'</span><span class="timsub">최근 5거래일 발동 신호</span></div>'+summary+tpHtml+block+'</div>';
+    var TRIGKO={reclaim:"200MA 회복",golden:"골든크로스",macd_bull:"MACD 상향",lose:"200MA 이탈",death:"데드크로스",macd_bear:"MACD 하향"};
+    var trigs=(s.trig||[]).map(function(x){return TRIGKO[x]||x;});
+    var trigHtml=trigs.length?'<div class="tsum">추세 트리거 · <b style="color:var('+col+')">'+trigs.join(' · ')+'</b></div>':'';
+    var side=t.indexOf('매수')>=0?'상승추세 정렬':t.indexOf('매도')>=0?'하락추세 · 약세 주의':'추세 불명확';
+    return '<div class="timing"><div class="timhd"><span class="timstate" style="color:var('+col+')">타이밍 · '+t+'</span><span class="timsub">'+side+'</span></div>'+summary+trigHtml+tpHtml+block+'</div>';
   }
   function chip(txt,cnt,onclick){var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');b.innerHTML=txt+(cnt!=null?' <span style="opacity:.65">'+cnt+'</span>':'');b.addEventListener('click',onclick);return b;}
   function curP(){for(var i=0;i<PRESETS.length;i++)if(PRESETS[i][0]===state.preset)return PRESETS[i];return SHOWN[0];}
@@ -295,7 +299,10 @@
       if(state.q){var hay=(s.t+' '+(s.name||'')+' '+(s.sector||'')).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
       return s.comp[comp]!=null;
     });
-    rows.sort(function(a,b){var d=(a.comp[comp]||0)-(b.comp[comp]||0);return asc?d:-d;});
+    // 매수/약세주의 프리셋은 추세정렬 스코어(bscore/sscore)로 랭킹 — 나머지는 컴포짓 정렬
+    if(p[0]==='buy')rows.sort(function(a,b){return (b.bscore||0)-(a.bscore||0);});
+    else if(p[0]==='sell')rows.sort(function(a,b){return (b.sscore||0)-(a.sscore||0);});
+    else rows.sort(function(a,b){var d=(a.comp[comp]||0)-(b.comp[comp]||0);return asc?d:-d;});
     return {rows:rows,comp:comp};
   }
   function render(){
@@ -346,7 +353,7 @@
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+fundHtml+
-      '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = 교과서 매수/매도 신호 중 최근 5거래일 발동분. 차트 <b style="color:var(--good)">●</b>저점/<b style="color:var(--hot)">●</b>고점 = 확정 <b>스윙 전환점</b>(지그재그, 변동성 적응 임계) — 실제 고점/저점 구조를 표시. <b style="color:var(--good)">▲</b>/<b style="color:var(--hot)">▼</b> = 교과서 매수/매도 타점. <b>정직 고지: 과거 시계열 검증상 전환점·다이버전스의 종목선택 예측력은 통계적으로 미미(시장통제 후 t≈1, 2021년 이후 소멸) — 구조 파악·참고용이지 예측 신호가 아닙니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량은 FINRA 격주(종목별 표기) · 출처 yfinance·FINRA. 투자자문·매매권유 아님.</div></div>';
+      '<div class="dbody">'+timing(s)+body+'<div class="note">매매 타이밍 = <b>추세정렬 신호</b>(2026-07 재설계). <b>상승추세(종가&gt;200MA)에서만 매수</b>(눌림저점·200MA 회복·골든크로스·MACD 상향), <b>하락추세(종가&lt;200MA)에서만 매도(약세 주의)</b>(반등고점·200MA 이탈·데드크로스) — 하락추세 과매도를 함부로 매수(떨어지는 칼)하거나 상승추세 과열을 매도하지 않습니다. 차트 <b style="color:var(--good)">●</b>저점/<b style="color:var(--hot)">●</b>고점 = 확정 <b>스윙 전환점</b>(지그재그). <b style="color:var(--good)">▲</b>매수/<b style="color:var(--hot)">▼</b>매도 타점. <b>백테스트(512종목·5년·주간 리밸): 추세정렬 매수 top이 구 \'과매도순\'보다 fwd20 초과수익 +1.2%→+3.3%, 하락장 꼬리손실 −24%→−15%로 떨어지는 칼을 회피. 다만 종목선택 예측력은 여전히 제한적 — 매도는 \'확실한 하락\'이 아니라 약세·비중축소 주의이며, 참고용이지 매매권유가 아닙니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA. 투자자문·매매권유 아님.</div></div>';
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}
@@ -427,8 +434,11 @@
   fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d){detailEl.innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;F=d.factor_defs;
+    // 공매도잔량(FINRA) 기준일 — 가격·테크니컬 기준일보다 오래됨(격주). 정직 고지용으로 데이터에서 추출.
+    (function(){for(var i=0;i<d.stocks.length;i++){var dt=d.stocks[i].sig&&d.stocks[i].sig.dtc&&d.stocks[i].sig.dtc.dt;if(dt){SI_ASOF=dt;break;}}})();
     el('statline').innerHTML='<span class="stat"><b>'+d.n_stocks+'</b> 종목</span><span class="stat">NDX+SPX</span><span class="stat">테크니컬 <b>'+Object.keys(F).length+'</b>개</span><span class="stat">기준일 <b>'+(d.as_of||'—')+'</b></span>';
     el('asof').textContent='기준일 '+(d.as_of||'—')+' (전 지표 동일, yfinance 최신 거래일)';
+    var sia=el('siasof');if(sia&&SI_ASOF)sia.textContent='기준일 '+SI_ASOF;
     var pf=el('presets');SHOWN=[];PRESETS.forEach(function(p){
       var cnt=null;
       if(p[4])cnt=d.stocks.filter(function(s){return (s.flags||[]).indexOf(p[4])>=0;}).length;

@@ -118,13 +118,13 @@
     <a class="tool expl" href="explorer.html">
       <span class="ico">🔬</span>
       <h2>전략 탐색기</h2>
-      <p>적대검증을 통과한 <b>16개 전략</b>(배포 3·marginal 13)을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 못 써먹을 <b>기각 35개는 별도 아카이브</b>로.</p>
+      <p>적대검증을 통과한 <b>17개 전략</b>(배포 3·marginal 14)을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 못 써먹을 <b>기각 40개는 별도 아카이브</b>로.</p>
       <span class="go">전략 둘러보기</span>
     </a>
     <a class="tool stk" href="stocks.html">
       <span class="ico">📈</span>
       <h2>종목 시그널</h2>
-      <p>NDX·SPX 구성종목의 과매수/과매도·추세·모멘텀·변동성 + 매수/매도 타이밍 신호 — 가격 기반 테크니컬(RSI·MACD·볼린저·ADX…). 매 거래일 최신, 종목별 기간선택 차트.</p>
+      <p>NDX·SPX 구성종목의 과매수/과매도·추세·모멘텀·변동성 + <b>추세정렬 매매 타이밍</b>(상승추세만 매수·하락추세만 매도) — 가격 기반 테크니컬(RSI·MACD·볼린저·ADX…). 매 거래일 최신, 종목별 기간선택 차트.</p>
       <span class="go">종목 분석 열기</span>
     </a>
     <a class="tool reg" href="regime.html">
@@ -142,7 +142,7 @@
     <a class="rs" href="explorer.html" style="--edge:var(--rp)"><div><span class="rt">크로스에셋 RP</span><span class="rr">배포코어</span></div><div class="rd">12자산 역변동성 + 추세게이트 + vol타겟. 어떤 국면에도 견디는 올웨더 방어·분산 슬리브.</div></a>
   </div>
 
-  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 종목 시그널에서 · <span id="stkasof"></span></span></p>
+  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 추세정렬 신호 · 매수=상승추세 강도·전환 상위 · 약세주의=하락추세 이탈 상위 · <span id="stkasof"></span></span></p>
   <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <footer>
@@ -173,14 +173,17 @@
     var st=d.stocks||[];
     var buyAll=st.filter(function(s){return s.timing==='매수'||s.timing==='매수우세';});
     var sellAll=st.filter(function(s){return s.timing==='매도'||s.timing==='매도우세';});
-    // 매수·매도 모두 '과열도(overheat)' 단일 축으로 통일 — 매수는 낮은 과열도(과매도)순, 매도는 높은 과열도(과열)순
-    var buy=buyAll.slice().sort(function(a,b){return (a.comp.overheat||0)-(b.comp.overheat||0);}).slice(0,6);
-    var sell=sellAll.slice().sort(function(a,b){return (b.comp.overheat||0)-(a.comp.overheat||0);}).slice(0,6);
+    // 추세정렬 랭킹 — 매수는 bscore(추세강도+전환) 높은순, 약세주의는 sscore(하락+이탈) 높은순.
+    // (구 '과매도순 매수/과열순 매도'는 역추세라 폐기 — 백테스트상 롱숏 스프레드 −0.4%→+2.9%)
+    var buy=buyAll.slice().sort(function(a,b){return (b.bscore||0)-(a.bscore||0);}).slice(0,6);
+    var sell=sellAll.slice().sort(function(a,b){return (b.sscore||0)-(a.sscore||0);}).slice(0,6);
     function col(title,cnt,arr,mf){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
       (arr.length?arr.map(function(s){return '<a class="rstk" href="stocks.html"><span><span class="rk">'+s.t+'</span><span class="rn2">'+(s.name||'').slice(0,16)+'</span></span><span class="rv">'+mf(s)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
+    function rsv(s){var x=s.sig&&s.sig.rs3m?s.sig.rs3m.v:null;return x!=null?('RS '+(x>=0?'+':'')+Math.round(x)+'%'):'추세정렬';}
+    function d2v(s){var x=s.sig&&s.sig.d200?s.sig.d200.v:null;return x!=null?('200MA '+(x>=0?'+':'')+Math.round(x)+'%'):'하락추세';}
     document.getElementById('recostocks').innerHTML=
-      col('🟢 매수 신호 top', buyAll.length, buy, function(s){return '과열도 '+Math.round(s.comp.overheat||0);})+
-      col('🔴 매도 신호 top', sellAll.length, sell, function(s){return '과열도 '+Math.round(s.comp.overheat||0);});
+      col('🟢 매수 신호 top', buyAll.length, buy, rsv)+
+      col('🟠 약세 주의 top', sellAll.length, sell, d2v);
   }).catch(function(){});
 })();
 </script>

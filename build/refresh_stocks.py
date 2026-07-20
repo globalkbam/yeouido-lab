@@ -122,36 +122,40 @@ def signals_fired(o):
     return buy, sell, b_day, s_day
 
 
-def swing_pivot_signals(o, K=3):
-    """확정형 스윙 피봇 신호(랩 엔진 이식·K=3) — 차트 마커 + timing.
-    매수 = 상승추세(종가>SMA200)의 확정 피봇저점 전부(눌림매수, 게이트 없음).
-    매도 = 상승추세는 강과매수 천장(과매수컨센≥3 or %b>1 or RSI>70), 하락추세는 피봇 반등고점 전부.
-    확정형 = close[t]가 [t−K,t+K] 전체의 최저/최고(양쪽 K봉 모두 높/낮음) → 확정 K거래일 지연·날짜 불변(표류 없음).
-    ⚠ 진단용(예측 아님). 확정후 causal forward는 대개 베이스라인 수준."""
-    h = o["High"].dropna(); l = o["Low"].dropna(); c = o["Close"].dropna(); v = o["Volume"].dropna()
-    idx = c.index; h = h.reindex(idx); l = l.reindex(idx); v = v.reindex(idx)
+def trend_signals(o, K=3, trig_win=7):
+    """추세정렬 매매 신호(재설계 2026-07) — 역추세 매매 폐기.
+    핵심: 상승추세(종가>200MA)에서만 매수, 하락추세(종가<200MA)에서만 매도(약세 주의).
+      · 하락추세 과매도를 함부로 매수(떨어지는 칼)하지 않고, 상승추세 과열을 함부로 매도하지 않음.
+      · 매수 트리거 = 200MA 회복·골든크로스·MACD 상향돌파·상승추세 눌림저점·저RSI 반등(하락→상승 전환).
+      · 매도 트리거 = 200MA 이탈·데드크로스·MACD 하향·하락추세 과열 되돌림.
+    반환 BUY/SELL = 차트 마커(확정 피봇저점·골든 / 반등고점·데드), tstate = timing, B = 스코어링용 불리언.
+    백테스트(512종목·5y·주간): 롱숏 스프레드 −0.4%→+2.9%, 하락장 꼬리 −24%→−15%(떨어지는 칼 회피),
+      매수 top6 fwd20 초과수익 +1.2%→+3.3%. ⚠ 참고용(배포 알파 주장 아님) — 매도는 '약세/비중축소 주의'."""
+    h = o["High"].dropna(); l = o["Low"].dropna(); c = o["Close"].dropna()
+    idx = c.index; h = h.reindex(idx); l = l.reindex(idx)
     z = pd.Series(False, index=idx)
-    if len(c) < 210: return z, z, "중립"
-    _, bu, bl, pb, _ = boll(c); r = rsi(c)
-    k = stoch_k(h, l, c); mf = mfi(h, l, c, v); wr = willr(h, l, c); cc = cci(h, l, c)
-    ob = ((r > 70).astype(int) + (k > 80).astype(int) + (mf > 80).astype(int)
-          + (wr > -20).astype(int) + (cc > 100).astype(int))   # 5종 과매수 컨센서스(RSI 이중계상 방지 위해 게이트는 별도)
-    s200 = sma(c, 200); up = c > s200
-    win = 2*K + 1   # 확정형 중심 피봇
+    if len(c) < 260: return z, z, "중립", {"up": False}
+    s50, s200 = sma(c, 50), sma(c, 200); _, _, mh = macd(c); r = rsi(c); ax, _, _ = adx(h, l, c)
+    up = c > s200
+    reclaim = up & (c.shift(10) < s200.shift(10)); lose = (~up) & (c.shift(10) >= s200.shift(10))
+    golden = (s50 > s200) & (s50.shift(20) <= s200.shift(20)); death = (s50 < s200) & (s50.shift(20) >= s200.shift(20))
+    macd_bull = (mh > 0) & (mh.shift(5) <= 0); macd_bear = (mh < 0) & (mh.shift(5) >= 0)
+    adx_up = ax > ax.shift(10); rsi_up = r > r.shift(3)
+    win = 2*K + 1   # 확정형 중심 피봇(K거래일 지연·날짜 불변)
     piv_lo = (c == c.rolling(win, center=True, min_periods=win).min())
     piv_hi = (c == c.rolling(win, center=True, min_periods=win).max())
-    strong_ob = (ob >= 3) | (pb > 1.0) | (r > 70)
-    BUY = piv_lo & up
-    SELL = (piv_hi & strong_ob & up) | (piv_hi & (~up))
-    lb = BUY[BUY].index.max() if bool(BUY.any()) else None
-    ls = SELL[SELL].index.max() if bool(SELL.any()) else None
-    tstate = "중립"
-    if not (lb is None and ls is None):
-        if ls is None or (lb is not None and lb >= ls): d0, dr = lb, "매수"
-        else: d0, dr = ls, "매도"
-        loc = c.index.get_loc(d0); days_ago = (len(c) - 1) - loc
-        tstate = dr if days_ago <= K + 5 else dr + "우세"   # 최근 확정=강, 지난 신호=우세
-    return BUY, SELL, tstate
+    BUY = (piv_lo & up) | golden               # 상승추세 눌림저점 + 골든크로스(하락→상승 전환)
+    SELL = (piv_hi & (~up)) | death            # 하락추세 반등고점 + 데드크로스 (상승추세엔 매도 없음)
+    buy_trig = bool((reclaim | golden | macd_bull | (piv_lo & up) | (rsi_up & (r < 45))).tail(trig_win).any())
+    sell_trig = bool(((lose | death | macd_bear | (r > 60)) & (~up)).tail(trig_win).any())
+    up_now = bool(up.iloc[-1]); d200 = _f(c.iloc[-1]/s200.iloc[-1] - 1)*100; adx_now = _f(ax.iloc[-1])
+    if abs(d200) < 2 and (adx_now != adx_now or adx_now < 18): tstate = "중립"   # 200MA 부근 저추세 = 방향성 없음
+    elif up_now: tstate = "매수" if buy_trig else "매수우세"
+    else: tstate = "매도" if sell_trig else "매도우세"
+    B = {k: bool(s.iloc[-1]) for k, s in [("reclaim", reclaim), ("golden", golden), ("macd_bull", macd_bull),
+         ("adx_up", adx_up), ("lose", lose), ("death", death), ("macd_bear", macd_bear)]}
+    B["up"] = up_now
+    return BUY, SELL, tstate, B
 
 
 def zigzag(a, rsi_a, theta):
@@ -272,9 +276,9 @@ def main():
         if r is None: continue
         sig, c = r; sig["rs3m"] = (sig["roc3m"]/100 - spy3)*100 if sig.get("roc3m") == sig.get("roc3m") else np.nan
         buy, sell, b_day, s_day = signals_fired(px[t])   # 이벤트 태그(상세패널)·유지
-        BUYs, SELLs, tstate = swing_pivot_signals(px[t])  # 확정 피봇 스윙(마커·timing)
+        BUYs, SELLs, tstate, tb = trend_signals(px[t])    # 추세정렬 신호(마커·timing·스코어 불리언)
         raw[t] = {"sig": sig, "close": c, "buy": buy[:8], "sell": sell[:8], "timing": tstate,
-                  "b_day": b_day, "s_day": s_day, "BUY": BUYs, "SELL": SELLs}
+                  "b_day": b_day, "s_day": s_day, "BUY": BUYs, "SELL": SELLs, "tb": tb}
         d = c.index.max()
         if as_of is None or d > pd.Timestamp(as_of): as_of = str(pd.Timestamp(d).date())
     print(f"지표 {len(raw)}종목 · 기준일 {as_of}")
@@ -294,6 +298,21 @@ def main():
         fl = (fund.get(t) or {}).get("float")
         if s.get("sish") and fl: raw[t]["sig"]["sipct"] = float(s["sish"]) / float(fl) * 100
     vdf = pd.DataFrame({t: raw[t]["sig"] for t in raw}).T; pct = vdf.rank(pct=True)*100
+    # ── 추세정렬 매수/매도 스코어(크로스섹션) — index 상위 랭킹용 ──
+    def zc(col):
+        if col not in vdf: return pd.Series(0.0, index=vdf.index)
+        x = vdf[col]; sd = x.std(ddof=0)
+        return ((x - x.mean())/sd).fillna(0.0) if sd and sd == sd else pd.Series(0.0, index=vdf.index)
+    zr3, zr6, zrs, zp52, zr1 = zc("roc3m"), zc("roc6m"), zc("rs3m"), zc("pos52"), zc("roc1m")
+    bdf = pd.DataFrame({t: raw[t]["tb"] for t in raw}).T
+    def bcol(name):
+        return bdf[name].astype(float).fillna(0.0) if name in bdf.columns else pd.Series(0.0, index=bdf.index)
+    ohcols = [c2 for c2 in ("rsi", "stoch", "mfi", "willr", "pctb", "pos52") if c2 in pct.columns]
+    oh = pct[ohcols].mean(axis=1).reindex(vdf.index).fillna(50.0)   # 과열도(0~100)
+    mom_z = (zr3 + zr6 + zrs + zp52)                                                  # 모멘텀(강세매수)
+    rev_z = (zrs + zr1) + 1.5*bcol("reclaim") + 1.0*bcol("golden") + 0.8*(bcol("macd_bull")*bcol("up")) + 0.5*bcol("adx_up")  # 하락→상승 전환
+    buy_score = (mom_z.rank(pct=True) + rev_z.rank(pct=True))                          # 상승측 랭킹(↑=강한 매수후보)
+    sell_score = oh/50.0 + 1.5*bcol("lose") + 1.0*bcol("death") + 0.8*bcol("macd_bear") - zrs  # 하락측 랭킹(↑=강한 약세주의)
     # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
     daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
     pxd_dates = [d.strftime("%Y-%m-%d") for d in daily.index]
@@ -316,25 +335,25 @@ def main():
             theta = min(0.30, max(0.12, 6.0 * (sg.get("atrp") or 5) / 100))   # 감도↓↓ = 주요 전환점 3~4개만
             piv, dvg = zigzag(dser.values, wr, theta)
             if len(piv) >= 2: tp = {"zz": piv, "dvg": dvg}
-        # 매수/매도 타점(마커) — 확정 스윙 피봇(K=3·SMA200 추세정렬). 확정에 3거래일 지연·날짜 불변.
+        # 매수/매도 타점(마커) — 추세정렬(K=3 확정 피봇·SMA200 게이트). 확정에 3거래일 지연·날짜 불변.
         BUYs = raw[t]["BUY"].reindex(daily.index).fillna(False).to_numpy()
         SELLs = raw[t]["SELL"].reindex(daily.index).fillna(False).to_numpy()
-        s200d = sma(raw[t]["close"], 200).reindex(daily.index)
-        upd = (dser > s200d).reindex(daily.index).fillna(False).to_numpy() if dser is not None else np.zeros(len(pxd_dates), bool)
-        bms = [i for i in range(len(pxd_dates)) if BUYs[i]]                       # 강: 상승추세 확정 피봇저점
-        bmw = []                                                                  # (매수는 강/약 구분 없음)
-        sms = [i for i in range(len(pxd_dates)) if SELLs[i] and upd[i]]           # 강: 상승추세 강과매수 천장
-        smw = [i for i in range(len(pxd_dates)) if SELLs[i] and not upd[i]]       # 약: 하락추세 반등고점
+        bms = [i for i in range(len(pxd_dates)) if BUYs[i]]   # 매수: 상승추세 눌림저점 + 골든크로스
+        bmw = []
+        sms = [i for i in range(len(pxd_dates)) if SELLs[i]]  # 매도(약세 주의): 하락추세 반등고점 + 데드크로스
+        smw = []                                              # (상승추세엔 매도 마커 없음)
         info = mem.get(t, {})
         fd = fund.get(t) or {}
         def r2(x): return round(float(x), 2) if x is not None and x == x else None
         fnd = {"teps": r2(fd.get("teps")), "feps": r2(fd.get("feps")), "tpe": r2(fd.get("tpe")), "fpe": r2(fd.get("fpe"))}
         if fnd["teps"] and fnd["feps"] and fnd["teps"] != 0:
             fnd["gr"] = round((fnd["feps"]/fnd["teps"] - 1)*100, 1)   # 12M 선행 EPS 성장률(%)
+        trig = [k for k in ("reclaim", "golden", "macd_bull", "lose", "death", "macd_bear") if raw[t]["tb"].get(k)]
         stocks.append({"t": t, "name": info.get("name"), "sector": info.get("sector"), "idx": info.get("idx", []),
                        "comp": {k: v for k, v in comps.items() if v is not None}, "flags": flags(sg),
                        "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"],
-                       "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
+                       "bscore": round(float(buy_score.get(t, 0.0)), 3), "sscore": round(float(sell_score.get(t, 0.0)), 3),
+                       "trig": trig, "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
                        "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd,
                        **({"tp": tp} if tp else {})})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
