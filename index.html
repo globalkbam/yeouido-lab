@@ -142,7 +142,7 @@
     <a class="rs" href="explorer.html" style="--edge:var(--rp)"><div><span class="rt">크로스에셋 RP</span><span class="rr">배포코어</span></div><div class="rd">12자산 역변동성 + 추세게이트 + vol타겟. 어떤 국면에도 견디는 올웨더 방어·분산 슬리브.</div></a>
   </div>
 
-  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 추세정렬 신호 · 매수=상승 전환·초입(급등 추격 아님) · 약세주의=하락추세 이탈 · <span id="stkasof"></span></span></p>
+  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 추세정렬 신호 · 매수=상승 전환·초입(급등 추격 아님) · 매도=하락추세 이탈 · <span id="stkasof"></span></span></p>
   <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <footer>
@@ -183,7 +183,7 @@
     function d2v(s){var x=s.sig&&s.sig.d200?s.sig.d200.v:null;return x!=null?('200MA '+(x>=0?'+':'')+Math.round(x)+'%'):'하락추세';}
     document.getElementById('recostocks').innerHTML=
       col('🟢 매수 신호 top', buyAll.length, buy, rsv)+
-      col('🟠 약세 주의 top', sellAll.length, sell, d2v);
+      col('🔴 매도 신호 top', sellAll.length, sell, d2v);
   }).catch(function(){});
 })();
 </script>

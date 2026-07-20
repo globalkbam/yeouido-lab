@@ -141,11 +141,16 @@ def trend_signals(o, K=3, trig_win=7):
     golden = (s50 > s200) & (s50.shift(20) <= s200.shift(20)); death = (s50 < s200) & (s50.shift(20) >= s200.shift(20))
     macd_bull = (mh > 0) & (mh.shift(5) <= 0); macd_bear = (mh < 0) & (mh.shift(5) >= 0)
     adx_up = ax > ax.shift(10); rsi_up = r > r.shift(3)
-    win = 2*K + 1   # 확정형 중심 피봇(K거래일 지연·날짜 불변)
+    win = 2*K + 1   # 확정형 중심 피봇(timing 트리거용) — 마커엔 미사용
     piv_lo = (c == c.rolling(win, center=True, min_periods=win).min())
     piv_hi = (c == c.rolling(win, center=True, min_periods=win).max())
-    BUY = (piv_lo & up) | golden               # 상승추세 눌림저점 + 골든크로스(하락→상승 전환)
-    SELL = (piv_hi & (~up)) | death            # 하락추세 반등고점 + 데드크로스 (상승추세엔 매도 없음)
+    # 차트 매수/매도 타점(▲▼) = 추세 전환 이벤트만(당일 크로스) — 희소·유의미. 잔파동 눌림/반등엔 안 찍음.
+    xup200 = up & (c.shift(1) <= s200.shift(1))              # 200MA 상향 돌파(당일)
+    xdn200 = (~up) & (c.shift(1) >= s200.shift(1))           # 200MA 하향 이탈(당일)
+    gcross = (s50 > s200) & (s50.shift(1) <= s200.shift(1))  # 골든크로스(50/200, 당일)
+    dcross = (s50 < s200) & (s50.shift(1) >= s200.shift(1))  # 데드크로스(당일)
+    BUY = xup200 | gcross      # 매수 타점 = 200MA 돌파 · 골든크로스 (추세 진입)
+    SELL = xdn200 | dcross     # 매도 타점 = 200MA 이탈 · 데드크로스 (추세 이탈)
     buy_trig = bool((reclaim | golden | macd_bull | (piv_lo & up) | (rsi_up & (r < 45))).tail(trig_win).any())
     sell_trig = bool(((lose | death | macd_bear | (r > 60)) & (~up)).tail(trig_win).any())
     up_now = bool(up.iloc[-1]); d200 = _f(c.iloc[-1]/s200.iloc[-1] - 1)*100; adx_now = _f(ax.iloc[-1])
@@ -341,10 +346,14 @@ def main():
         # 매수/매도 타점(마커) — 추세정렬(K=3 확정 피봇·SMA200 게이트). 확정에 3거래일 지연·날짜 불변.
         BUYs = raw[t]["BUY"].reindex(daily.index).fillna(False).to_numpy()
         SELLs = raw[t]["SELL"].reindex(daily.index).fillna(False).to_numpy()
-        bms = [i for i in range(len(pxd_dates)) if BUYs[i]]   # 매수: 상승추세 눌림저점 + 골든크로스
-        bmw = []
-        sms = [i for i in range(len(pxd_dates)) if SELLs[i]]  # 매도(약세 주의): 하락추세 반등고점 + 데드크로스
-        smw = []                                              # (상승추세엔 매도 마커 없음)
+        # 교차 이벤트를 교대·디바운스 → 진입→이탈 round-trip만(밀집·휩쏘 제거). 같은 방향 연속·10봉내 재신호 억제.
+        bms, sms, _st, _last = [], [], 0, -99
+        for i in range(len(pxd_dates)):
+            if BUYs[i] and _st <= 0 and (i - _last) >= 10:
+                bms.append(i); _st = 1; _last = i
+            elif SELLs[i] and _st >= 0 and (i - _last) >= 10:
+                sms.append(i); _st = -1; _last = i
+        bmw = []; smw = []
         info = mem.get(t, {})
         fd = fund.get(t) or {}
         def r2(x): return round(float(x), 2) if x is not None and x == x else None

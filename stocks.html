@@ -163,7 +163,7 @@
     <div class="eyebrow">여의도 전략 랩 · 종목 테크니컬</div>
     <h1 class="title">NDX · SPX 종목 시그널</h1>
     <p class="lede">나스닥100·S&amp;P500 구성종목의 <b>과매수/과매도·추세·모멘텀·변동성·거래량·공매도 포지셔닝</b>을 종목별로 — 가격 기반 <b>테크니컬</b>(RSI·MACD·볼린저·ADX…) + <b>EPS 펀더멘털</b>(yfinance) + <b>공매도잔량</b>(FINRA).
-      프리셋으로 <b>매수 신호·약세 주의·과매수·과매도·눌림목·52주돌파·과밀숏</b>을 즉시 스크리닝하고, 종목 클릭 시 가격·거래량 차트와 지표별 <b>값·상태·한 줄 설명</b>이 뜹니다. 매매 타이밍은 <b>추세정렬</b> — 상승추세에서만 매수, 하락추세에서만 매도(약세 주의)로 <b>떨어지는 칼 잡기를 피합니다</b>(백테스트 검증).</p>
+      프리셋으로 <b>매수 신호·매도 신호·과매수·과매도·눌림목·52주돌파·과밀숏</b>을 즉시 스크리닝하고, 종목 클릭 시 가격·거래량 차트와 지표별 <b>값·상태·한 줄 설명</b>이 뜹니다. 매매 타이밍은 <b>추세정렬</b> — 상승추세에서만 매수, 하락추세에서만 매도(약세 주의)로 <b>떨어지는 칼 잡기를 피합니다</b>(백테스트 검증).</p>
     <div class="statline" id="statline"></div>
   </header>
 
@@ -232,7 +232,7 @@
   // preset: [key,label,comp,asc,flag,timingSet]
   var PRESETS=[
     ["buy","🟢 매수 신호","momentum",false,null,["매수","매수우세"]],
-    ["sell","🟠 약세 주의","momentum",true,null,["매도","매도우세"]],
+    ["sell","🔴 매도 신호","momentum",true,null,["매도","매도우세"]],
     ["oh","과매수","overheat",false,"과매수",null],["os","과매도","overheat",true,"과매도",null],
     ["dip","눌림목","trend",false,"눌림목",null],["brk","52주 돌파","momentum",false,"52주돌파",null],
     ["squeeze","과밀숏","positioning",false,"과밀숏",null],
@@ -284,7 +284,7 @@
     var TRIGKO={reclaim:"200MA 회복",golden:"골든크로스",macd_bull:"MACD 상향",lose:"200MA 이탈",death:"데드크로스",macd_bear:"MACD 하향"};
     var trigs=(s.trig||[]).map(function(x){return TRIGKO[x]||x;});
     var trigHtml=trigs.length?'<div class="tsum">추세 트리거 · <b style="color:var('+col+')">'+trigs.join(' · ')+'</b></div>':'';
-    var side=t.indexOf('매수')>=0?'상승추세 정렬':t.indexOf('매도')>=0?'하락추세 · 약세 주의':'추세 불명확';
+    var side=t.indexOf('매수')>=0?'상승추세 정렬':t.indexOf('매도')>=0?'하락추세 이탈':'추세 불명확';
     return '<div class="timing"><div class="timhd"><span class="timstate" style="color:var('+col+')">타이밍 · '+t+'</span><span class="timsub">'+side+'</span></div>'+summary+trigHtml+tpHtml+block+'</div>';
   }
   function chip(txt,cnt,onclick){var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');b.innerHTML=txt+(cnt!=null?' <span style="opacity:.65">'+cnt+'</span>':'');b.addEventListener('click',onclick);return b;}
