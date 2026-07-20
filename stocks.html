@@ -415,13 +415,13 @@
         ctx.strokeStyle=lo?css('--good'):css('--hot');ctx.lineWidth=1.5;ctx.stroke();});
     }
     var lp=pts[pts.length-1];ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(lp[0]),Y(lp[1]),3,0,7);ctx.fill();
-    // 강/약 매수(▲)/매도(▼) 타점 — 속=강, 빈=약
-    function tri(i,up,strong,color){if(i>=arr.length||arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.beginPath();
+    // 매수(▲)/매도(▼) 타점 — 강/약 구분 없이 전부 채운 삼각형으로 통일
+    function tri(i,up,color){if(i>=arr.length||arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.beginPath();
       if(up){ctx.moveTo(x,y+5);ctx.lineTo(x-4,y+12);ctx.lineTo(x+4,y+12);}else{ctx.moveTo(x,y-5);ctx.lineTo(x-4,y-12);ctx.lineTo(x+4,y-12);}
-      ctx.closePath();if(strong){ctx.fillStyle=color;ctx.fill();}else{ctx.fillStyle=css('--panel');ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.stroke();}}
+      ctx.closePath();ctx.fillStyle=color;ctx.fill();}
     if(mk){var g=css('--good'),h=css('--hot');
-      mk.bms.forEach(function(i){tri(i,true,true,g);});mk.bmw.forEach(function(i){tri(i,true,false,g);});
-      mk.sms.forEach(function(i){tri(i,false,true,h);});mk.smw.forEach(function(i){tri(i,false,false,h);});}
+      mk.bms.concat(mk.bmw).forEach(function(i){tri(i,true,g);});
+      mk.sms.concat(mk.smw).forEach(function(i){tri(i,false,h);});}
   }
 
   fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
