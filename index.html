@@ -11,17 +11,17 @@
   :root{
     --ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;
     --ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;--accent-2:#14504C;
-    --deploy:#0E8A54;--deploy-bg:#dff0e6;--marg:#A76A12;--champ:#2C6E8F;--rp:#7A5AA6;
+    --deploy:#0E8A54;--deploy-bg:#dff0e6;--marg:#A76A12;--champ:#2C6E8F;--rp:#7A5AA6;--hot:#A64B3B;
     --shadow:0 1px 2px rgba(20,28,26,.05),0 10px 30px -14px rgba(20,28,26,.2);
   }
   @media (prefers-color-scheme:dark){:root{
     --ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;
     --ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;--accent-2:#7bd0c7;
-    --deploy:#38D083;--deploy-bg:#12291f;--marg:#E4A63F;--champ:#6BB0D6;--rp:#B79AE0;
+    --deploy:#38D083;--deploy-bg:#12291f;--marg:#E4A63F;--champ:#6BB0D6;--rp:#B79AE0;--hot:#E5806A;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);
   }}
-  :root[data-theme="light"]{--ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;--ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;--accent-2:#14504C;--deploy:#0E8A54;--deploy-bg:#dff0e6;--marg:#A76A12;--champ:#2C6E8F;--rp:#7A5AA6;--shadow:0 1px 2px rgba(20,28,26,.05),0 10px 30px -14px rgba(20,28,26,.2);}
-  :root[data-theme="dark"]{--ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;--ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;--accent-2:#7bd0c7;--deploy:#38D083;--deploy-bg:#12291f;--marg:#E4A63F;--champ:#6BB0D6;--rp:#B79AE0;--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);}
+  :root[data-theme="light"]{--ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;--ink:#141C1A;--ink-2:#35423F;--muted:#5C6B67;--accent:#1E6F6A;--accent-2:#14504C;--deploy:#0E8A54;--deploy-bg:#dff0e6;--marg:#A76A12;--champ:#2C6E8F;--rp:#7A5AA6;--hot:#A64B3B;--shadow:0 1px 2px rgba(20,28,26,.05),0 10px 30px -14px rgba(20,28,26,.2);}
+  :root[data-theme="dark"]{--ground:#0C110F;--panel:#141B19;--panel-2:#19221F;--line:#263130;--line-soft:#1e2725;--ink:#E7EDEA;--ink-2:#C0CBC7;--muted:#8A9591;--accent:#52B8AE;--accent-2:#7bd0c7;--deploy:#38D083;--deploy-bg:#12291f;--marg:#E4A63F;--champ:#6BB0D6;--rp:#B79AE0;--hot:#E5806A;--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);}
   *,*::before,*::after{box-sizing:border-box}
   :root{--mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Helvetica Neue",Arial,sans-serif}
   html{-webkit-text-size-adjust:100%}
@@ -171,19 +171,20 @@
       if(rg.as_of && rg.as_of!==d.as_of && note){note.textContent='종목시그널 '+d.as_of+' · 시장국면 '+rg.as_of+' · 공매도잔량 격주(FINRA)';}
     }).catch(function(){});
     var st=d.stocks||[];
-    var buyAll=st.filter(function(s){return s.timing==='매수'||s.timing==='매수우세';});
-    var sellAll=st.filter(function(s){return s.timing==='매도'||s.timing==='매도우세';});
-    // 추세정렬 랭킹 — 매수는 bscore(추세강도+전환) 높은순, 약세주의는 sscore(하락+이탈) 높은순.
-    // (구 '과매도순 매수/과열순 매도'는 역추세라 폐기 — 백테스트상 롱숏 스프레드 −0.4%→+2.9%)
-    var buy=buyAll.slice().sort(function(a,b){return (b.bscore||0)-(a.bscore||0);}).slice(0,6);
-    var sell=sellAll.slice().sort(function(a,b){return (b.sscore||0)-(a.sscore||0);}).slice(0,6);
-    function col(title,cnt,arr,mf){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
-      (arr.length?arr.map(function(s){return '<a class="rstk" href="stocks.html"><span><span class="rk">'+s.t+'</span><span class="rn2">'+(s.name||'').slice(0,16)+'</span></span><span class="rv">'+mf(s)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
-    function rsv(s){var x=s.sig&&s.sig.rs3m?s.sig.rs3m.v:null;return x!=null?('RS '+(x>=0?'+':'')+Math.round(x)+'%'):'추세정렬';}
-    function d2v(s){var x=s.sig&&s.sig.d200?s.sig.d200.v:null;return x!=null?('200MA '+(x>=0?'+':'')+Math.round(x)+'%'):'하락추세';}
+    var dts=d.pxd_dates||[], N=dts.length, WIN=10;   // 최근 10거래일 내 스윙 마커
+    function lastMk(s,keys){var m=-1;keys.forEach(function(k){(s[k]||[]).forEach(function(i){if(i>m)m=i;});});return m;}
+    function within(s,keys){var mi=lastMk(s,keys);return mi>=0&&(N-1-mi)<=WIN;}
+    // 스윙 저점매수(bms/bmw)·고점매도(sms/smw) — 가장 최근 마커순
+    var buyAll=st.filter(function(s){return within(s,['bms','bmw']);});
+    var sellAll=st.filter(function(s){return within(s,['sms','smw']);});
+    var buy=buyAll.slice().sort(function(a,b){return lastMk(b,['bms','bmw'])-lastMk(a,['bms','bmw']);}).slice(0,6);
+    var sell=sellAll.slice().sort(function(a,b){return lastMk(b,['sms','smw'])-lastMk(a,['sms','smw']);}).slice(0,6);
+    function col(title,cnt,arr,keys,tri,tricol){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
+      (arr.length?arr.map(function(s){var mi=lastMk(s,keys),dt=(dts[mi]||'').slice(5),ago=N-1-mi;
+        return '<a class="rstk" href="stocks.html"><span><span style="color:'+tricol+';margin-right:5px;font-size:11px">'+tri+'</span><span class="rk">'+s.t+'</span><span class="rn2">'+(s.name||'').slice(0,16)+'</span></span><span class="rv">'+dt+' · '+(ago<=0?'당일':ago+'일전')+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
     document.getElementById('recostocks').innerHTML=
-      col('🟢 매수 신호 top', buyAll.length, buy, rsv)+
-      col('🔴 매도 신호 top', sellAll.length, sell, d2v);
+      col('스윙 저점매수', buyAll.length, buy, ['bms','bmw'], '▲', 'var(--deploy)')+
+      col('스윙 고점매도', sellAll.length, sell, ['sms','smw'], '▼', 'var(--hot)');
   }).catch(function(){});
 })();
 </script>
