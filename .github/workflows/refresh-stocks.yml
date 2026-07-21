@@ -29,9 +29,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # ⚠ 생성기는 stocks.json과 home_reco.json 둘 다 쓴다 — 하나만 커밋하면 홈이 낡은 채로 고착된다
-          if [ -n "$(git status --porcelain data/stocks.json data/home_reco.json)" ]; then
-            git add data/stocks.json data/home_reco.json
+          # ⚠ 생성기 산출물 전부 커밋: stocks.json(슬림)·home_reco.json·data/sd/(종목별 상세, 삭제 포함)
+          #   하나라도 빠지면 해당 화면이 낡은 채 고착된다(home_reco 누락 사고의 교훈)
+          if [ -n "$(git status --porcelain data/stocks.json data/home_reco.json data/sd)" ]; then
+            git add data/stocks.json data/home_reco.json data/sd
             git commit -m "chore(data): 종목 테크니컬 시그널 자동 갱신"
             # regime 워크플로와 같은 main에 push → 경합 시 리베이스 후 1회 재시도(강제 push 금지)
             git push || (git pull --rebase origin main && git push)

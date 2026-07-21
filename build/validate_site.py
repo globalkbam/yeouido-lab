@@ -146,10 +146,30 @@ if "hours=9" not in sel:
 
 # 홈은 home_reco.json만 fetch하므로 stocks.json과 기준일이 어긋나면 홈이 낡은 채 고착된다(워크플로가 한쪽만 커밋한 사고)
 try:
-    _s = json.load(io.open(os.path.join(ROOT, "data", "stocks.json"), encoding="utf-8")).get("as_of")
+    _sj = json.load(io.open(os.path.join(ROOT, "data", "stocks.json"), encoding="utf-8"))
+    _s = _sj.get("as_of")
     _h = json.load(io.open(os.path.join(ROOT, "data", "home_reco.json"), encoding="utf-8")).get("as_of")
     if _s and _h and _s != _h:
         errors.append(f"기준일 불일치: stocks.json {_s} vs home_reco.json {_h} — 워크플로가 두 파일을 함께 커밋하는지 확인")
+    # 상세 분리 불변식: ①슬림 본체에 상세 필드가 재유입되면 페이로드가 도로 1.9MB로 부푼다
+    #                 ②종목별 상세 파일이 없거나 기준일이 어긋나면 상세 패널이 낡거나 빈다
+    _sd = os.path.join(ROOT, "data", "sd")
+    _fat = [s["t"] for s in _sj.get("stocks", []) if any(k in s for k in ("sig", "pxd", "vd"))]
+    if _fat:
+        errors.append(f"stocks.json 슬림 위반: {len(_fat)}종목에 상세 필드(sig/pxd/vd) 잔존 (예: {_fat[:3]}) — 생성기 분리 로직 확인")
+    _miss, _stale = [], []
+    for s in _sj.get("stocks", []):
+        p = os.path.join(_sd, s["t"] + ".json")
+        if not os.path.exists(p):
+            _miss.append(s["t"]); continue
+        try:
+            _d = json.load(io.open(p, encoding="utf-8"))
+            if _d.get("as_of") != _s: _stale.append(s["t"])
+            if not _d.get("sig"): _miss.append(s["t"])
+        except Exception:
+            _miss.append(s["t"])
+    if _miss: errors.append(f"data/sd 상세 결측/손상 {len(_miss)}종목 (예: {_miss[:5]}) — 워크플로가 data/sd를 커밋하는지 확인")
+    if _stale: errors.append(f"data/sd 기준일 불일치 {len(_stale)}종목 (예: {_stale[:5]}) — 슬림과 상세가 다른 날짜")
 except Exception as e:
     errors.append(f"기준일 교차검증 실패: {e}")
 if qj is None or qp is None: errors.append("선별 상수(QUOTA)를 찾지 못함")

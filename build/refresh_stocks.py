@@ -405,8 +405,23 @@ def main():
         _prev = 0
     if _prev and len(stocks) < _prev * 0.9:
         raise SystemExit(f"커버 종목 급감 {_prev}→{len(stocks)} (yfinance 부분 장애 의심) — 갱신 중단, 이전본 유지")
+    # ── 상세 분리(지연 로드): sig·pxd·vd·tp(페이로드의 72%)는 종목별 data/sd/<티커>.json으로, 본체는 슬림하게 ──
+    # ⚠ 워크플로 커밋 대상에 data/sd 포함 필수(home_reco 누락 사고와 동일 함정) · stocks.html이 선택 시 fetch.
+    SD_DIR = os.path.join(HERE, "..", "data", "sd")
+    os.makedirs(SD_DIR, exist_ok=True)
+    _keep = set()
+    for s in stocks:
+        det = {"as_of": as_of, "t": s["t"]}
+        for k in ("sig", "pxd", "vd", "tp"):
+            v = s.pop(k, None)
+            if v is not None: det[k] = v
+        fn = s["t"] + ".json"; _keep.add(fn)
+        json.dump(det, open(os.path.join(SD_DIR, fn), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    for fn in os.listdir(SD_DIR):   # 유니버스에서 빠진 종목의 잔존 상세 파일 제거(스테일 방지)
+        if fn.endswith(".json") and fn not in _keep:
+            os.remove(os.path.join(SD_DIR, fn))
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print(f"→ {OUT} ({len(stocks)}종목 · {os.path.getsize(OUT)//1024}KB · 기준일 {as_of})")
+    print(f"→ {OUT} ({len(stocks)}종목 · 슬림 {os.path.getsize(OUT)//1024}KB · 상세 {len(_keep)}파일 · 기준일 {as_of})")
     # ── 홈 전용 초소형 요약(주목종목) — 홈이 대형 stocks.json 대신 이것만 fetch(LCP 개선) ──
     try:
         _dts = out["pxd_dates"]; _N = len(_dts); _WIN = 10

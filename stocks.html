@@ -363,8 +363,36 @@
     for(var i=0;i<items.length;i++)items[i].setAttribute('aria-selected',i===ix);drawDetail(s);
     detailEl.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'nearest'});}
 
+  // 상세 데이터(sig·pxd·vd·tp = 전체 페이로드의 72%)는 종목별 파일(data/sd/<티커>.json)에서 선택 시 지연 로드.
+  // 슬림 stocks.json(~150KB)만으로 목록·필터·랭킹이 즉시 뜬다. 병합 후 재호출; 구버전 전체 파일이면 fetch 생략.
+  var _sdReq=0;
+  function ensureDetail(s){
+    if(s.sig||s._sdFail)return true;               // 이미 있음(구버전 포함) 또는 실패 확정
+    if(s._sdLoading)return false;
+    s._sdLoading=1;var my=++_sdReq;
+    fetch('data/sd/'+encodeURIComponent(s.t)+'.json',{cache:'no-cache'})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(x){
+        s._sdLoading=0;
+        if(x&&x.sig){s.sig=x.sig;s.pxd=x.pxd;s.vd=x.vd;if(x.tp)s.tp=x.tp;}
+        else{s._sdFail=1;}
+        if(my===_sdReq&&state.sel===s)drawDetail(s);   // 최신 요청 + 여전히 선택 중일 때만 재렌더
+      })
+      .catch(function(){s._sdLoading=0;s._sdFail=1;if(state.sel===s)drawDetail(s);});
+    return false;
+  }
   function drawDetail(s){
     if(!s){detailEl.innerHTML='';return;}
+    if(!ensureDetail(s)){
+      detailEl.innerHTML='<div class="dhead"><div><span class="dtk">'+s.t+'</span><span class="dnm">'+esc(s.name||'')+'</span></div></div>'+
+        '<div class="dbody"><div class="empty">상세 지표·차트 로딩 중…</div></div>';
+      return;
+    }
+    if(!s.sig){   // 상세 파일 로드 실패 — 목록 정보만이라도 보여준다
+      detailEl.innerHTML='<div class="dhead"><div><span class="dtk">'+s.t+'</span><span class="dnm">'+esc(s.name||'')+'</span></div></div>'+
+        '<div class="dbody"><div class="empty">상세 데이터를 불러오지 못했습니다 (data/sd/'+esc(s.t)+'.json). 새로고침 해보세요.</div></div>';
+      return;
+    }
     var comps=COMPS.map(function(c){var v=s.comp[c[0]];return '<div class="cmp"><div class="cl">'+c[1]+'</div><div class="cv" style="color:'+cc(c[0])+'">'+(v!=null?Math.round(v):'—')+'</div><div class="cu">'+(v!=null?'pct':'')+'</div></div>';}).join('');
     var byG={};Object.keys(F).forEach(function(k){var d=F[k];if(s.sig[k]==null)return;(byG[d.group]=byG[d.group]||[]).push([k,d,s.sig[k]]);});
     var body=GROUPS.map(function(g){
@@ -481,7 +509,9 @@
     if(!d){detailEl.innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;F=d.factor_defs;
     // 공매도잔량(FINRA) 기준일 — 가격·테크니컬 기준일보다 오래됨(격주). 정직 고지용으로 데이터에서 추출.
-    (function(){for(var i=0;i<d.stocks.length;i++){var dt=d.stocks[i].sig&&d.stocks[i].sig.dtc&&d.stocks[i].sig.dtc.dt;if(dt){SI_ASOF=dt;break;}}})();
+    // 슬림 파일엔 종목별 sig가 없다 — FINRA 기준일은 factor_defs.dtc.as_of가 정본(생성기가 동일 값 기록)
+    SI_ASOF=(d.factor_defs&&d.factor_defs.dtc&&d.factor_defs.dtc.as_of)||null;
+    if(!SI_ASOF){for(var i=0;i<d.stocks.length;i++){var dt=d.stocks[i].sig&&d.stocks[i].sig.dtc&&d.stocks[i].sig.dtc.dt;if(dt){SI_ASOF=dt;break;}}}
     el('statline').innerHTML='<span class="stat"><b>'+d.n_stocks+'</b> 종목</span><span class="stat">NDX+SPX</span><span class="stat">테크니컬 <b>'+Object.keys(F).length+'</b>개</span><span class="stat">기준일 <b>'+(d.as_of||'—')+'</b></span>'+staleStat(d.as_of);
     el('asof').textContent='기준일 '+(d.as_of||'—')+' (전 지표 동일, yfinance 최신 거래일)';
     var sia=el('siasof');if(sia&&SI_ASOF)sia.textContent='기준일 '+SI_ASOF;
