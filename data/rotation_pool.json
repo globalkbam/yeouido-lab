@@ -73,7 +73,13 @@
     "Navigating Market Turbulence: The Power of Minimum-Volatility Strategies — STOXX Whitepaper (2025)",
     "In Volatile Equity Markets, Low Vol Index Strategies Have Shone — UBS Asset Management (2025)"
    ],
-   "id": "A4"
+   "id": "A4",
+   "lab": {
+    "v": "기각",
+    "t": "최소분산 (Ledoit-Wolf)",
+    "why": "무위험금리 착시 — excess Sharpe 0.62 < 60/40 0.67, 채권 불장에 의존.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "A",
@@ -92,7 +98,13 @@
     "Equity Factor Investing Report 2026 Q1: Value Leadership Continues — Russell Investments",
     "Factor Views 2Q 2026 — J.P. Morgan Asset Management"
    ],
-   "id": "A5"
+   "id": "A5",
+   "lab": {
+    "v": "기각",
+    "t": "대형 모멘텀·200MA 추세",
+    "why": "PIT 엄격 적용 시 EPS 리비전 드리프트에 열위(0.83) — 증분 없음.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "A",
@@ -150,7 +162,13 @@
    "sources": [
     "Do Analyst Estimate Revisions (Still) Help Forecast Relative Stock Returns?, Mill Street Research (2024)",
     "Earnings Forecasts and Revisions, Price Momentum, and Fundamental Data, Guerard, FactSet (2023)"
-   ]
+   ],
+   "lab": {
+    "v": "배포",
+    "t": "EPS 리비전 드리프트",
+    "why": "랩의 챔피언 전략. 유일하게 강건하게 살아남은 알파(벤치 +10.46%p).",
+    "href": "explorer.html"
+   }
   },
   {
    "id": "B2",
@@ -167,7 +185,13 @@
    "sources": [
     "Nasdaq-100 Technical Breakdown: Key Levels, Volume, and 2026 Price Targets, AInvest (2026)",
     "The 52-Week High Breakout Strategy, StockAlarm Pro (2025)"
-   ]
+   ],
+   "lab": {
+    "v": "기각",
+    "t": "돈치안 브레이크아웃",
+    "why": "빠른 채널은 거래비용에 사망, 느린 채널은 CAGR 1.8%에 그침.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "B",
@@ -238,7 +262,13 @@
     "Time Series Momentum, Moskowitz, Ooi & Pedersen, Journal of Financial Economics (2012), 104(2), 228-250",
     "Dual Momentum GEM 2000-2026 backtest, Extrategic Dashboard (2026) [검증 불가 내부 출처]"
    ],
-   "id": "B6"
+   "id": "B6",
+   "lab": {
+    "v": "기각",
+    "t": "듀얼모멘텀 (GEM)",
+    "why": "SPY·60/40 대비 Sharpe 열위 — 낮은 MDD만 강점.",
+    "href": "archive.html"
+   }
   },
   {
    "id": "C1",
@@ -308,7 +338,13 @@
     "'Night Effect' ETFs to Shut Down With Overnight Stock Returns Elusive, Bloomberg (2023-07-19); NightShares 500 (NSPY) liquidated Aug 2023 (재보도: WealthManagement.com)",
     "Overnight Returns and the Timing of Trading Volume (a.k.a. Overnight Return Momentum and the Timing of Trading Volume), Perreten & Wallmeier, SSRN (2024) — 팬데믹 후 오버나이트 효과 소멸"
    ],
-   "id": "C4"
+   "id": "C4",
+   "lab": {
+    "v": "기각",
+    "t": "오버나이트 드리프트",
+    "why": "종가매수/시가매도 일별 왕복이 신호의 본질 → 비용 breakeven 2bp.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "C",
@@ -326,7 +362,13 @@
     "Fads, Martingales, and Market Efficiency (weekly reversal), Lehmann, Quarterly Journal of Economics 105(1), 1-28 (1990)",
     "Short Term Trading Strategies That Work (RSI-2), Connors & Alvarez (2008); RSI 2 Strategy Guide, QuantifiedStrategies.com"
    ],
-   "id": "C5"
+   "id": "C5",
+   "lab": {
+    "v": "기각",
+    "t": "소형 반전 롱숏(주간·월간)",
+    "why": "gross Sharpe 1.97이나 50bp 비용에서 −1.87 — 고회전 본질.",
+    "href": "archive.html"
+   }
   },
   {
    "id": "D1",
@@ -343,7 +385,13 @@
    "sources": [
     "Conditional Volatility Targeting, Financial Analysts Journal (2020)",
     "The Impact of Volatility Targeting, Harvey et al., Journal of Portfolio Management (2018)"
-   ]
+   ],
+   "lab": {
+    "v": "marginal",
+    "t": "변동성 관리 (vol-managed)",
+    "why": "단일 팩터로 검증 통과했으나 증분은 제한적(marginal).",
+    "href": "explorer.html"
+   }
   },
   {
    "cat": "D",
@@ -362,7 +410,13 @@
     "Portfolio Optimization: Risk Parity Portfolios (Ch.11), portfoliooptimizationbook.com (Palomar, Cambridge University Press 2025)",
     "Qian, E. (2005) Risk Parity Portfolios: Efficient Portfolios through True Diversification, PanAgora Asset Management"
    ],
-   "id": "D2"
+   "id": "D2",
+   "lab": {
+    "v": "배포",
+    "t": "크로스에셋 리스크 패리티",
+    "why": "배포 코어 3슬리브 중 하나. 추세 게이트와 결합해 운용.",
+    "href": "explorer.html"
+   }
   },
   {
    "cat": "D",
@@ -380,7 +434,13 @@
     "Active Dual Momentum GTAA Strategy, QuantPedia",
     "Asset Class Trend-Following, Quantpedia (OOS through Mar 2025)"
    ],
-   "id": "D3"
+   "id": "D3",
+   "lab": {
+    "v": "기각",
+    "t": "CTA 멀티에셋 트렌드 (TSMOM)",
+    "why": "통합 포트폴리오의 RP 추세 게이트와 정보 중복(corr 0.43).",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "D",
@@ -398,7 +458,13 @@
     "Mark Spitznagel, Wikipedia (Universa 2008/2020 성과)",
     "The Tail Hedge Debate: Spitznagel vs AQR, Leptokurtic series (Carrone)"
    ],
-   "id": "D4"
+   "id": "D4",
+   "lab": {
+    "v": "기각",
+    "t": "테일 헤지 (long-vol)",
+    "why": "상시 비용부담이 크고, 정작 위기에서도 기대만큼 방어하지 못함.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "D",
@@ -434,7 +500,13 @@
     "The Turbulence Index, Kritzman & Li (2010) — Portfolio Optimizer blog",
     "Regime-Based Portfolio Allocation Using HMM and Reinforcement Learning, arXiv:2605.27848 (2026)"
    ],
-   "id": "D6"
+   "id": "D6",
+   "lab": {
+    "v": "기각",
+    "t": "레짐 조건부 배분 (챔피언↔RP)",
+    "why": "서브기간이 서로 반대로 틸트돼 효과가 상쇄됨.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "D",
@@ -503,7 +575,13 @@
    "sources": [
     "Time Series Momentum, Moskowitz Ooi & Pedersen, Journal of Financial Economics (2012)",
     "Time Series Momentum Effect, Quantpedia (2025)"
-   ]
+   ],
+   "lab": {
+    "v": "기각",
+    "t": "CTA 멀티에셋 트렌드 (TSMOM)",
+    "why": "통합 포트폴리오의 RP 추세 게이트와 정보 중복(corr 0.43).",
+    "href": "archive.html"
+   }
   },
   {
    "id": "E2",
@@ -539,7 +617,13 @@
     "Equity Factor Report 2026 Q1: Value Leadership Continues, Russell Investments (2026)",
     "Factor Views 2Q 2026, J.P. Morgan Asset Management (2026)"
    ],
-   "id": "E3"
+   "id": "E3",
+   "lab": {
+    "v": "기각",
+    "t": "Book-to-Price 단일 팩터",
+    "why": "검증 단일팩터 중 열위로 기각.",
+    "href": "explorer.html"
+   }
   },
   {
    "cat": "E",
@@ -557,7 +641,13 @@
     "Rest in Peace Post-Earnings Announcement Drift, Martineau, Critical Finance Review (2022)",
     "Beyond the Last Surprise: Reviving PEAD with Machine Learning and Historical Earnings, Kaczmarek & Zaremba, Finance Research Letters, Vol.86, 108751 (2025)"
    ],
-   "id": "E4"
+   "id": "E4",
+   "lab": {
+    "v": "기각",
+    "t": "SUE PEAD (실측 서프라이즈)",
+    "why": "대·중·소형 전 유니버스 음성 — 소형 효과는 어닝이 아닌 가격 반전.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "E",
@@ -575,7 +665,13 @@
     "The Market Turbulence and Carry Trade Unwind of August 2024, BIS Bulletin No. 90 (2024)",
     "The Yen Carry Trade Unwind, Wellington Management (2024-2025)"
    ],
-   "id": "E5"
+   "id": "E5",
+   "lab": {
+    "v": "기각",
+    "t": "크로스에셋 캐리",
+    "why": "60/40 '동률'은 GFC 08-11의 산물, 이후 구간에선 지배당함.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "E",
@@ -593,7 +689,13 @@
     "Merger Arbitrage Rebound: 2025 Performance, LPL Research (2025)",
     "Global M&A Rebound Fueled by AI in 2026, BCG (2026)"
    ],
-   "id": "E6"
+   "id": "E6",
+   "lab": {
+    "v": "기각",
+    "t": "머저 아비트리지 (MNA)",
+    "why": "단독 Sharpe 0.39이나 위기에서 tail dependence 폭발(2020-03 −16.2%) — 헤지 아님.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "E",
@@ -665,7 +767,13 @@
     "Quantpedia, 'Volatility Risk Premium Effect' — https://quantpedia.com/strategies/volatility-risk-premium-effect",
     "ainvest (2026), '0DTE Volatility Drives Market Strategies in 2026' — https://www.ainvest.com/news/0dte-volatility-drives-market-strategies-2026-2602/"
    ],
-   "id": "E9"
+   "id": "E9",
+   "lab": {
+    "v": "기각",
+    "t": "VRP 숏볼",
+    "why": "초과수익의 정체가 레버리지 — 위험조정 개선 0.",
+    "href": "archive.html"
+   }
   },
   {
    "cat": "E",

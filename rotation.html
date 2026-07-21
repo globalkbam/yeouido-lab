@@ -57,6 +57,13 @@
   .stop h3{font-size:17px;margin:0;font-weight:700;letter-spacing:-.01em}
   .stop .stag{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
   .todaybadge{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:5px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 38%,transparent)}
+  /* 우리 랩이 유사 개념을 실제 구현·적대검증한 판정 — 웹 주장과 대비해 보여주는 게 이 사이트의 요점 */
+  .labbadge{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .lab-d{color:var(--good);background:color-mix(in srgb,var(--good) 13%,transparent);border:1px solid color-mix(in srgb,var(--good) 38%,transparent)}
+  .lab-m{color:var(--watch);background:color-mix(in srgb,var(--watch) 13%,transparent);border:1px solid color-mix(in srgb,var(--watch) 38%,transparent)}
+  .lab-r{color:var(--hot);background:color-mix(in srgb,var(--hot) 13%,transparent);border:1px solid color-mix(in srgb,var(--hot) 38%,transparent)}
+  .srow.labrow{background:color-mix(in srgb,var(--panel-2) 70%,transparent);margin:0 -14px;padding:9px 14px}
+  .srow.labrow a{color:var(--accent)}
   .srow{display:grid;grid-template-columns:88px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--line-soft)}
   .srow:first-of-type{border-top:none}
   .srow .sk{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.03em;color:var(--muted);text-transform:uppercase;padding-top:2px}
@@ -101,7 +108,8 @@
     <div class="eyebrow">여의도 전략 랩 · 로테이션</div>
     <h1 class="title">오늘의 로테이션 전략</h1>
     <p class="lede">시장 초과성과·타이밍·리스크관리 전략 풀에서 <b>날짜별로 9선</b>을 선별해 제시합니다. 각 전략은 목적·핵심원리·진입기준·성과·최근동향·출처로 정리됩니다.</p>
-    <div class="warn"><b>⚠ 웹 리서치 기반 · 외부 출처 · 미검증</b> — 이 전략들은 공개 문헌·기사에서 수집한 것으로, 랩이 자체 백테스트로 검증한 <a href="explorer.html" style="color:var(--accent)">전략 탐색기</a>의 전략과 다릅니다. 성과 수치는 원 출처 인용이며 재현·검증되지 않았습니다. <b>참고용 · 투자자문·매매권유 아님.</b></div>
+    <div class="warn"><b>⚠ 웹 리서치 기반 · 외부 출처 · 미검증</b> — 이 전략들은 공개 문헌·기사에서 수집한 것으로, 랩이 자체 백테스트로 검증한 <a href="explorer.html" style="color:var(--accent)">전략 탐색기</a>의 전략과 다릅니다. 성과 수치는 원 출처 인용이며 재현·검증되지 않았습니다. <b>참고용 · 투자자문·매매권유 아님.</b><br>
+      단, <b>랩이 유사 개념을 이미 구현·적대검증한 전략</b>에는 카드에 <span class="labbadge lab-r">랩 검증 기각</span> <span class="labbadge lab-m">marginal</span> <span class="labbadge lab-d">배포</span> 배지와 그 사유를 붙였습니다 — <b>웹의 주장과 자체 검증 결과를 나란히</b> 보라는 뜻입니다.</div>
     <div class="statline" id="statline"></div>
   </header>
   <div class="controls">
@@ -148,10 +156,18 @@
     var tb=isToday?'<span class="todaybadge">오늘의 9선</span>':'';
     function row(k,v,cls){return v?'<div class="srow '+(cls||'')+'"><span class="sk">'+k+'</span><p>'+esc(v)+'</p></div>':'';}
     var src=(s.sources||[]).map(function(x){return linkify(esc(x));}).join(' · ');
+    // 랩 자체 검증 결과(있는 경우) — 배지 + 전용 행. 검증 대상은 '랩의 특정 구현'이므로 카드 규칙과 동일하지 않을 수 있음을 명시.
+    var L=s.lab, lb='', lrow='';
+    if(L){
+      var cls=L.v==='배포'?'lab-d':(L.v==='marginal'?'lab-m':'lab-r');
+      lb='<span class="labbadge '+cls+'">랩 검증 '+esc(L.v)+'</span>';
+      lrow='<div class="srow labrow"><span class="sk">우리 랩 검증</span><p><b class="'+cls+'" style="background:none;border:0;padding:0">'+esc(L.v)+'</b> — 랩에서 <a href="'+esc(L.href||'archive.html')+'">'+esc(L.t)+'</a> 형태로 구현·적대검증한 결과: '+esc(L.why)+
+        ' <span style="color:var(--muted);font-size:12px">검증한 것은 랩의 특정 구현이므로 이 카드의 규칙과 완전히 같지는 않습니다.</span></p></div>';
+    }
     return '<div class="scard" id="s-'+esc(s.id||'')+'"><div class="stop"><span class="cid" style="background:'+col+'">'+esc(s.id||s.cat)+'</span>'+
-      '<h3>'+esc(s.name)+'</h3>'+tb+'<span class="stag">'+esc(s.type||'')+(s.target?' · 타겟: '+esc(s.target):'')+'</span></div>'+
+      '<h3>'+esc(s.name)+'</h3>'+tb+lb+'<span class="stag">'+esc(s.type||'')+(s.target?' · 타겟: '+esc(s.target):'')+'</span></div>'+
       row('목적·타겟',s.purpose,'purpose')+row('핵심 원리',s.principle)+row('진입 기준',s.entry)+
-      row('성과',s.performance)+
+      row('성과',s.performance)+lrow+
       row('최근 동향'+(s.recent_at?'<span style="display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:9.5px;margin-top:2px">'+esc(s.recent_at)+' 갱신</span>':''),s.recent)+
       (src?'<div class="ssrc"><b>출처</b> · '+src+'</div>':'')+'</div>';
   }
@@ -166,7 +182,8 @@
     var q=state.q;
     return S.filter(function(s){
       if(state.cats.size && !state.cats.has(s.cat))return false;
-      if(q){var hay=(s.id+' '+s.name+' '+s.type+' '+s.target+' '+s.purpose+' '+s.principle+' '+s.performance+' '+s.recent+' '+(s.sources||[]).join(' ')).toLowerCase();if(hay.indexOf(q)<0)return false;}
+      if(q){var lb=s.lab?(' 랩검증 '+s.lab.v+' '+s.lab.t+' '+s.lab.why):'';
+        var hay=(s.id+' '+s.name+' '+s.type+' '+s.target+' '+s.purpose+' '+s.principle+' '+s.performance+' '+s.recent+lb+' '+(s.sources||[]).join(' ')).toLowerCase();if(hay.indexOf(q)<0)return false;}
       return true;
     });
   }
@@ -199,6 +216,7 @@
     el('statline').innerHTML='<span class="stat"><b>9</b> 오늘의 전략</span>'+
       '<span class="stat">풀 <b>'+d.strategies.length+'</b>종</span>'+
       '<span class="stat">기준일 <b>'+today()+'</b></span>'+
+      '<span class="stat">랩 검증 대조 <b>'+d.strategies.filter(function(s){return s.lab;}).length+'</b>종</span>'+
       '<span class="stat">갱신 '+esc(d.generated||'—')+'</span>'+staleStat(d.generated);
     // 카테고리 필터 칩(개수 포함)
     var cf=el('catf');
