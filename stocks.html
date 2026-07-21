@@ -261,7 +261,8 @@
   var state={q:"",preset:"swingbuy",idx:new Set(),sel:null,period:252};
   function cc(k){return 'var('+({overheat:'--hot',trend:'--good',momentum:'--accent',volatility:'--watch'}[k]||'--accent')+')';}
   function gc(g){return 'var('+({hot:'--hot',good:'--good',accent:'--accent',watch:'--watch',cold:'--cold',muted:'--muted'}[g]||'--accent')+')';}
-  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  var _cssC={};   // 테마별 CSS변수 캐시 — getComputedStyle 반복호출/리플로우 축소
+  function css(v){if(v in _cssC)return _cssC[v];return _cssC[v]=getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
   function flagHtml(f){return '<span class="flag '+(FLAGCLS[f]||'')+'">'+f+'</span>';}
   var REV_BUY={"RSI<30":1,"Stoch %K<20 골든":1,"CCI<-100":1,"Williams<-80":1,"MFI<20":1,"BB %b<0":1};
   var OH_SELL={"RSI>70":1,"Stoch %K>80 데드":1,"CCI>+100":1,"Williams>-20":1,"MFI>80":1,"BB %b>1":1};
@@ -481,7 +482,7 @@
     var ixf=el('idxf');['NDX','SPX'].forEach(function(x){var cnt=d.stocks.filter(function(s){return (s.idx||[]).indexOf(x)>=0;}).length;ixf.appendChild(chip(x,cnt,function(){state.idx.has(x)?state.idx.delete(x):state.idx.add(x);syncP();render();}));});
     syncP();render();
     window.addEventListener('resize',function(){if(state.sel)renderChart(state.sel);});
-    new MutationObserver(function(){if(state.sel)renderChart(state.sel);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+    new MutationObserver(function(){_cssC={};if(state.sel)renderChart(state.sel);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   }).catch(function(){detailEl.innerHTML='<div class="empty">데이터 로드 오류</div>';});
   function syncP(){var pb=el('presets').querySelectorAll('.fchip');SHOWN.forEach(function(p,i){if(pb[i])pb[i].setAttribute('aria-pressed',state.preset===p[0]);});
     var ib=el('idxf').querySelectorAll('.fchip');['NDX','SPX'].forEach(function(x,j){if(ib[j])ib[j].setAttribute('aria-pressed',state.idx.has(x));});}
