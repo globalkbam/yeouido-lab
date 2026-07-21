@@ -141,6 +141,9 @@
   .sitcol.g h5{color:var(--deploy)} .sitcol.b h5{color:var(--rej)}
   .sitcol ul{margin:0;padding-left:17px} .sitcol li{font-size:12.5px;color:var(--ink-2);line-height:1.55;margin-bottom:4px}
   /* MDD 타일 아래 벤치 낙폭 병기 — '이 전략이 지수보다 덜 빠졌나'를 한 줄로 */
+  .holdstale{margin:6px 0 2px;padding:8px 12px;border-radius:9px;font-size:11.5px;line-height:1.6;color:var(--ink-2);
+             background:color-mix(in srgb,var(--marg) 9%,transparent);border:1px solid color-mix(in srgb,var(--marg) 38%,transparent)}
+  .holdstale b{color:var(--marg)}
   .btm .bsub{margin-top:3px;font-family:var(--mono);font-size:9px;line-height:1.35;color:var(--muted);white-space:nowrap}
   .pptblwrap{overflow-x:auto;margin:2px 0 8px}
   .pptbl{border-collapse:collapse;width:100%;font-size:12px}
@@ -470,13 +473,26 @@
   function esc(x){return (x==null?'':String(x)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   // 현재 기준 포트폴리오 구성 — 백테스트와 같은 규칙으로 뽑은 '최근 리밸런스 시점' 보유.
   // ⚠ 실시간 호가·실제 계좌가 아니라 리서치 재현 결과이며, 리밸 시점 이후 가격 변동은 반영되지 않는다.
+  // 리밸 기준일이 '직전 완료 월말'보다 오래됐는지 — 소스 데이터 미적재로 폴백된 경우를 드러낸다
+  function holdStale(asof){
+    if(!asof)return '';
+    var p=asof.split('-'); if(p.length!==3)return '';
+    var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])), now=new Date(Date.now()+9*3600e3);
+    // 직전 완료 월말 = 이번 달 1일의 하루 전
+    var lastME=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),1)-864e5);
+    var miss=(lastME.getUTCFullYear()-d.getUTCFullYear())*12+(lastME.getUTCMonth()-d.getUTCMonth());
+    if(miss<1)return '';
+    var y=lastME.getUTCFullYear(), m=('0'+(lastME.getUTCMonth()+1)).slice(-2);
+    return '<div class="holdstale">⚠ 이 구성은 <b>'+asof+'</b> 기준입니다 — 직전 월말('+y+'-'+m+')까지 '+miss+
+      '개월 뒤처져 있습니다. 산출에 쓰는 팩터 데이터가 아직 갱신되지 않아 마지막으로 계산 가능한 시점의 구성을 그대로 보여줍니다.</div>';
+  }
   function holdSection(h,vc){
     if(!h)return '';
     var ex=h.extra?Object.keys(h.extra).map(function(k){
       return '<span class="hx"><b>'+esc(k)+'</b> '+esc(String(h.extra[k]))+'</span>';}).join(''):'';
     if(h.private||!h.positions||!h.positions.length){   // 종목 비공개 전략 — 요약 칩 + 사유만
       if(!h.private)return '';
-      return '<div class="btsec"><h4><span>현재 포트폴리오 구성</span><small>기준일 '+esc(h.as_of||'—')+'</small></h4>'+
+      return '<div class="btsec"><h4><span>현재 포트폴리오 구성</span><small>기준일 '+esc(h.as_of||'—')+'</small></h4>'+holdStale(h.as_of)+
         (ex?'<div class="hxrow">'+ex+'</div>':'')+
         (h.note?'<div class="btnote">'+esc(h.note)+'</div>':'')+
         '<div class="btnote"><b>보유 종목 리스트는 비공개</b> — 라이선스 데이터(FactSet) 파생 결과이며 배포 전략 보호 목적. '+
@@ -493,7 +509,7 @@
     }).join('');
     var sum=h.positions.reduce(function(a,p){return a+(p.w||0);},0);
     return '<div class="btsec"><h4><span>현재 포트폴리오 구성</span><small>기준일 '+esc(h.as_of||'—')+' · '+
-      h.positions.length+kindLab+' · 합계 '+(sum*100).toFixed(1)+'%</small></h4>'+
+      h.positions.length+kindLab+' · 합계 '+(sum*100).toFixed(1)+'%</small></h4>'+holdStale(h.as_of)+
       (ex?'<div class="hxrow">'+ex+'</div>':'')+
       '<div class="htblwrap"><table class="htbl"><caption class="vh">현재 보유 구성</caption><tbody>'+rows+'</tbody></table></div>'+
       (h.note?'<div class="btnote">'+esc(h.note)+'</div>':'')+
@@ -572,8 +588,9 @@
   fetch('data/updates.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(u){
     if(!u||!u.events)return;
     var e=u.events.filter(function(x){return x.target===TGT;})[0]; if(!e)return;
-    var t=new Date(e.dt+'T00:00:00+09:00'), now=new Date(Date.now()+9*3600e3);
-    var days=Math.floor((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate()))/864e5);
+    // dt를 UTC 자정으로 파싱해야 getUTC*와 기준이 맞는다(+09:00로 만들면 UTC상 전날이 되어 하루씩 밀림)
+    var t=new Date(e.dt+'T00:00:00Z'), now=new Date(Date.now()+9*3600e3);
+    var days=Math.round((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-t.getTime())/864e5);
     var ago=days<=0?'오늘':days===1?'어제':days+'일 전';
     var h=document.querySelector('header.mast'); if(!h)return;
     var d=document.createElement('div');

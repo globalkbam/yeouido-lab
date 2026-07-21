@@ -287,8 +287,9 @@
            regime:['시장 국면','regime.html','var(--champ)'],sentiment:['시장 심리','regime.html','var(--champ)'],
            holdings:['포트폴리오','explorer.html','var(--rp)']};
   function agoTxt(d){
-    var t=new Date(d+'T00:00:00+09:00'), now=new Date(Date.now()+9*3600e3);
-    var days=Math.floor((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate()))/864e5);
+    // dt를 UTC 자정으로 파싱(+09:00이면 UTC상 전날이 되어 '오늘'이 '어제'로 밀린다)
+    var t=new Date(d+'T00:00:00Z'), now=new Date(Date.now()+9*3600e3);
+    var days=Math.round((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-t.getTime())/864e5);
     return days<=0?'오늘':days===1?'어제':days+'일 전';
   }
   fetch('data/updates.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(u){

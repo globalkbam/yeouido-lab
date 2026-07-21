@@ -292,8 +292,9 @@
   fetch('data/updates.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(u){
     if(!u||!u.events)return;
     var e=u.events.filter(function(x){return x.target===TGT;})[0]; if(!e)return;
-    var t=new Date(e.dt+'T00:00:00+09:00'), now=new Date(Date.now()+9*3600e3);
-    var days=Math.floor((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate()))/864e5);
+    // dt를 UTC 자정으로 파싱해야 getUTC*와 기준이 맞는다(+09:00로 만들면 UTC상 전날이 되어 하루씩 밀림)
+    var t=new Date(e.dt+'T00:00:00Z'), now=new Date(Date.now()+9*3600e3);
+    var days=Math.round((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-t.getTime())/864e5);
     var ago=days<=0?'오늘':days===1?'어제':days+'일 전';
     var h=document.querySelector('header.mast'); if(!h)return;
     var d=document.createElement('div');
