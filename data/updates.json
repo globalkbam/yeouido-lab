@@ -3,12 +3,45 @@
  "schema": "events[] = {dt: YYYY-MM-DD, target: rotation|explorer|archive|stocks|regime|sentiment|holdings, title: 한 줄 요약}",
  "updated": "2026-07-22",
  "events": [
-  {"dt": "2026-07-22", "target": "archive", "title": "기각 아카이브 41번째 등재 — 강세추세 과매도 스냅백(선행 타점)"},
-  {"dt": "2026-07-21", "target": "rotation", "title": "전략 풀 63 → 71종 — 미국 지수 밖 8종(글로벌·채권·통화·대체) 추가"},
-  {"dt": "2026-07-21", "target": "explorer", "title": "22개 전략에 '어떤 상황에서 쓰나'(유리·불리·결합) 추가"},
-  {"dt": "2026-07-21", "target": "explorer", "title": "기간별 성과 표(3M·6M·YTD·1Y·3Y) + SPX·NDX 총수익 이중 벤치마크"},
-  {"dt": "2026-07-21", "target": "explorer", "title": "전략별 현재 포트폴리오 구성(종목·비중) 공개"},
-  {"dt": "2026-07-21", "target": "stocks", "title": "종목별 '왜 이 신호인가' 근거 표시 + 스윙 타점 확대"},
-  {"dt": "2026-07-21", "target": "sentiment", "title": "시장 심리 지수 신설 — VIX·기간구조·MOVE 합성"}
+  {
+   "dt": "2026-07-22",
+   "target": "stocks",
+   "title": "펀더멘털 스크리닝 6종 신설 — 저평가 우량주·성장주·배당 인컴·현금창출력·GARP·저변동 방어"
+  },
+  {
+   "dt": "2026-07-22",
+   "target": "archive",
+   "title": "기각 아카이브 41번째 등재 — 강세추세 과매도 스냅백(선행 타점)"
+  },
+  {
+   "dt": "2026-07-21",
+   "target": "rotation",
+   "title": "전략 풀 63 → 71종 — 미국 지수 밖 8종(글로벌·채권·통화·대체) 추가"
+  },
+  {
+   "dt": "2026-07-21",
+   "target": "explorer",
+   "title": "22개 전략에 '어떤 상황에서 쓰나'(유리·불리·결합) 추가"
+  },
+  {
+   "dt": "2026-07-21",
+   "target": "explorer",
+   "title": "기간별 성과 표(3M·6M·YTD·1Y·3Y) + SPX·NDX 총수익 이중 벤치마크"
+  },
+  {
+   "dt": "2026-07-21",
+   "target": "explorer",
+   "title": "전략별 현재 포트폴리오 구성(종목·비중) 공개"
+  },
+  {
+   "dt": "2026-07-21",
+   "target": "stocks",
+   "title": "종목별 '왜 이 신호인가' 근거 표시 + 스윙 타점 확대"
+  },
+  {
+   "dt": "2026-07-21",
+   "target": "sentiment",
+   "title": "시장 심리 지수 신설 — VIX·기간구조·MOVE 합성"
+  }
  ]
 }

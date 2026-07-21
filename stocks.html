@@ -139,6 +139,10 @@
   .tpnote ul{margin:5px 0 0;padding-left:15px} .tpnote li{margin-bottom:2px}
   @media(max-width:440px){.tpbar{margin:0 2px 6px;height:46px}.tplb{font-size:8.5px}.tplb i{display:none}}
   /* 스크롤 컨테이너인데 내부에 포커스 가능한 요소가 없어 키보드로 스크롤 불가 → tabindex 부여 */
+  /* 펀더멘털 스크린 설명 — 검증된 신호가 아님을 같은 자리에서 못박는다 */
+  .screennote{margin:0 0 9px;padding:10px 13px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line-soft);font-size:12px;line-height:1.6;color:var(--ink-2)}
+  .screennote b{color:var(--ink);margin-right:4px}
+  .screennote .scwarn{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line-soft);font-size:10.5px;color:var(--marg)}
   .whybox{margin:0 0 14px;padding:12px 15px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px}
   .whybox h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
   .whyrow{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:6px 0;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-2);line-height:1.55}
@@ -254,7 +258,7 @@
   </div>
 
   <div class="board">
-    <div><div class="rowcount" id="rowcount" role="status" aria-live="polite"></div><div class="listwrap" id="list" role="listbox" aria-label="종목 목록"></div></div>
+    <div><div class="screennote" id="screennote" hidden></div><div class="rowcount" id="rowcount" role="status" aria-live="polite"></div><div class="listwrap" id="list" role="listbox" aria-label="종목 목록"></div></div>
     <div class="detail" id="detail" aria-live="polite"></div>
   </div>
 
@@ -325,10 +329,19 @@
     ["vsg","거래량 급증","momentum",false,"거래급증",null,"s"],
     ["sqz","변동성 수축","volatility",true,"변동수축",null,"s"],
     ["rss","시장 대비 강세","momentum",false,"시장강세",null,"s"],
-    ["tgt","목표주가","momentum",false,null,null,"s"]];
+    ["tgt","목표주가","momentum",false,null,null,"s"],
+    ["qval","저평가 우량주",null,false,null,null,"f"],["growth","꾸준한 성장주",null,false,null,null,"f"],
+    ["income","배당 인컴",null,false,null,null,"f"],["cash","현금창출력",null,false,null,null,"f"],
+    ["garp","합리적 가격 성장주",null,false,null,null,"f"],["lowvol","저변동 방어주",null,false,null,null,"f"]];
   var SHOWN=PRESETS;  // 데이터로딩 후 빈 프리셋 제거
   // 시그널 칩 호버 설명(툴팁)
   var TIPS={
+    qval:"선행 PER 하위권 + ROE 상위권 + 부채 적정 — '싸면서 잘 버는' 종목. 미검증 스크리닝",
+    growth:"매출성장·이익전망 상위 + 이익률 평균 이상 — 성장하며 돈도 버는 종목. 미검증 스크리닝",
+    income:"배당수익률 상위 + 부채·이익률이 배당을 감당 — 배당 인컴. 미검증 스크리닝",
+    cash:"시총 대비 잉여현금흐름 상위 + 이익률 양호 — 현금창출력. 미검증 스크리닝",
+    garp:"성장하되 밸류에이션 과하지 않은 종목(GARP). 미검증 스크리닝",
+    lowvol:"베타 낮고 이익률 받쳐주는 방어형 — 하락장 방어·강세장 열위. 미검증 스크리닝",
     swingbuy:"차트 스윙 저점 매수 타점(확정 ▲ + 잠정 △)이 최근 발생한 종목 — 최신 타점순. 잠정=미확정이라 날짜 이동 가능",
     swingsell:"차트 스윙 고점 매도 타점(확정 ▼ + 잠정 ▽)이 최근 발생한 종목 — 최신 타점순. 잠정=미확정이라 날짜 이동 가능",
     buy:"상승추세(200일선 위) 종목 중 종합점수(과열도·추세·모멘텀·변동성, 섹터 상대) 내림차순 — 매수 후보 1차 기준",
@@ -413,8 +426,74 @@
   function swKeys(pk){return pk==='swingbuy'?['bms','bmw']:pk==='swingsell'?['sms','smw']:null;}   // 잠정(bmw/smw) 포함 — 최신 타점이 잠정이면 리스트에 '잠정' 태그로 구분
   function lastMkP(s,pk){var ci=lastMk(s,[pk==='swingbuy'?'bms':'sms']),pi=lastMk(s,[pk==='swingbuy'?'bmw':'smw']);return pi>ci?{i:pi,prov:true}:{i:ci,prov:false};}
   function swFresh(s,sk){var mi=lastMk(s,sk),N=(DATA.pxd_dates||[]).length;return mi>=0 && (N-1-mi)<=SW_WIN;}
+
+  // ─── 펀더멘털 스크리닝 (2026-07-22) ────────────────────────────────────────
+  // ⚠ 랩은 펀더멘털 팩터의 초과수익을 검증한 적이 없다. 아래는 '현재 단면에서 이 조건을 만족하는
+  //   종목을 찾아주는 필터'이며 예측력이 확인된 신호가 아니다(스윙 타점과 성격이 다름).
+  //   임계는 절대값이 아니라 **커버 종목 내 백분위** — 시장 전체 밸류에이션이 변해도 뜻이 유지된다.
+  //   dir: low=낮을수록 좋음(백분위를 뒤집어 점수화), high=높을수록 좋음.
+  var FDIR={fpe:'low',tpe:'low',ps:'low',pb:'low',de:'low',beta:'low',
+            roe:'high',pm:'high',rg:'high',gr:'high',dy:'high',fcfy:'high'};
+  var FPCT=null;   // {키:{티커:백분위}} — 1회 계산 후 캐시
+  function fpct(){
+    if(FPCT)return FPCT;
+    FPCT={};
+    Object.keys(FDIR).forEach(function(k){
+      var arr=[];
+      DATA.stocks.forEach(function(s){var v=(s.fund||{})[k];if(v!=null&&!isNaN(v))arr.push([v,s.t]);});
+      arr.sort(function(a,b){return a[0]-b[0];});
+      var m={},n=arr.length;
+      arr.forEach(function(x,i){m[x[1]]=n>1?(i/(n-1))*100:50;});   // 0=최저값 … 100=최고값
+      FPCT[k]=m;
+    });
+    return FPCT;
+  }
+  function pc(s,k){var m=fpct()[k];return m&&m[s.t]!=null?m[s.t]:null;}
+  function good(s,k){   // '좋은 쪽' 백분위(낮을수록 좋은 지표는 뒤집음). 값 없으면 null
+    var v=pc(s,k); if(v==null)return null; return FDIR[k]==='low'?100-v:v;
+  }
+  function allGood(s,ks,th){   // 전 지표가 th 이상 '좋은 쪽'이어야 자격(결측은 실격 — 모르면 넣지 않는다)
+    for(var i=0;i<ks.length;i++){var g=good(s,ks[i]); if(g==null||g<th)return false;}
+    return true;
+  }
+  function scoreOf(s,ks){var t=0,n=0;ks.forEach(function(k){var g=good(s,k);if(g!=null){t+=g;n++;}});return n?t/n:0;}
+
+  // 스크린: qualify=자격조건, keys=점수 산출 지표, note=화면 설명
+  var SCREENS={
+    qval:{name:'저평가 우량주', keys:['fpe','roe','de'],
+      qualify:function(s){return good(s,'fpe')>=65&&good(s,'roe')>=60&&good(s,'de')>=45;},
+      note:'이익 대비 주가가 싼 편(선행 PER 하위권)이면서 자기자본이익률이 높고 빚이 과하지 않은 종목. 싸지만 부실한 기업(밸류 트랩)을 걸러내려고 수익성·재무건전성을 함께 본다.'},
+    growth:{name:'꾸준한 성장주', keys:['rg','gr','pm'],
+      qualify:function(s){return good(s,'rg')>=65&&good(s,'gr')>=60&&good(s,'pm')>=50;},
+      note:'매출이 빠르게 늘고 내년 이익 전망도 좋아지는데, 남기는 이익률까지 평균 이상인 종목. 성장은 하는데 돈은 못 버는 기업을 제외한다.'},
+    income:{name:'배당 인컴', keys:['dy','de','pm'],
+      qualify:function(s){return good(s,'dy')>=70&&good(s,'de')>=40&&good(s,'pm')>=45;},
+      note:'배당수익률이 높은 편이면서 부채와 이익률이 배당을 감당할 만한 종목. 이익이 나빠 주가만 빠져 배당률이 높아 보이는 경우를 걸러낸다.'},
+    cash:{name:'현금창출력', keys:['fcfy','pm','de'],
+      qualify:function(s){return good(s,'fcfy')>=70&&good(s,'pm')>=50&&good(s,'de')>=40;},
+      note:'시가총액 대비 잉여현금흐름이 많은 종목. 회계 이익보다 실제로 손에 남는 현금을 보는 관점이라, 이익의 질을 따질 때 쓴다.'},
+    garp:{name:'합리적 가격의 성장주', keys:['gr','fpe','roe'],
+      qualify:function(s){return good(s,'gr')>=60&&good(s,'fpe')>=45&&good(s,'roe')>=50;},
+      note:'성장은 하는데 값이 지나치게 비싸지 않은 종목(GARP). 성장주의 고평가 위험과 가치주의 저성장 위험 사이를 노린다.'},
+    lowvol:{name:'저변동 방어주', keys:['beta','dy','pm'],
+      qualify:function(s){return good(s,'beta')>=70&&good(s,'pm')>=50;},
+      note:'시장이 흔들릴 때 상대적으로 덜 움직이는(베타 낮은) 종목 중 이익률이 받쳐주는 곳. 하락장 방어 성격이라 강세장에선 뒤처지기 쉽다.'}
+  };
+  function screenRows(key){
+    var sc=SCREENS[key]; if(!sc)return [];
+    return DATA.stocks.filter(sc.qualify).map(function(s){return {s:s,v:scoreOf(s,sc.keys)};})
+      .sort(function(a,b){return b.v-a.v;}).map(function(x){return x.s;});
+  }
+
   function filtered(){
     var p=curP(),comp=p[2],asc=p[3],flag=p[4],tim=p[5];
+    if(p[6]==='f'){                     // 펀더멘털 스크리닝 — 자격조건 통과분을 점수순으로
+      var fr=screenRows(p[0]).filter(function(s){
+        if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
+        if(state.q){var h=(s.t+' '+(s.name||'')+' '+(s.sector||'')+' '+secKo(s.sector)).toLowerCase();if(h.indexOf(state.q)<0)return false;}
+        return true;});
+      return {rows:fr,comp:'overheat',total:fr.length,screen:p[0]};
+    }
     var sk=swKeys(p[0]),sc=p[0]==='swingbuy'?'bscore':'sscore';
     var rows=DATA.stocks.filter(function(s){
       if(flag && (s.flags||[]).indexOf(flag)<0)return false;
