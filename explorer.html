@@ -414,6 +414,7 @@
       '</div>';
   }
 
+  render();   // 인라인 D로 즉시 렌더(빈 화면 방지) — json 도착 시 det/bt 병합 후 재렌더
   // 플레이북(strategy_detail.json) + 백테스트 차트데이터(strategy_backtests.json) 병합
   function _get(u){return fetch(u,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
   Promise.all([_get('data/strategy_detail.json'),_get('data/strategy_backtests.json')]).then(function(res){

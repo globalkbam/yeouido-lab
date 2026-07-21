@@ -181,8 +181,10 @@
   });
   try{var s=localStorage.getItem('yeouido-theme'); if(s)root.setAttribute('data-theme',s);}catch(e){}
   // 주목 종목 — 종목 시그널에서
+  function stkFail(){var ma=document.getElementById('mainasof');if(ma)ma.textContent='—';
+    var rc=document.getElementById('recostocks');if(rc)rc.innerHTML='<div class="rcol"><h4>데이터를 불러오지 못했습니다</h4></div>';}
   fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
-    if(!d)return;
+    if(!d){stkFail();return;}
     var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(d.as_of||'');
     var ma=document.getElementById('mainasof'); if(ma)ma.textContent=(d.as_of||'—');
     // 시장국면 기준일 교차확인 — 통일 여부 표기
@@ -205,7 +207,7 @@
     document.getElementById('recostocks').innerHTML=
       col('스윙 저점매수', buyAll.length, buy, ['bms','bmw'], '▲', 'var(--deploy)')+
       col('스윙 고점매도', sellAll.length, sell, ['sms','smw'], '▼', 'var(--hot)');
-  }).catch(function(){});
+  }).catch(stkFail);
 })();
 </script>
 </body>

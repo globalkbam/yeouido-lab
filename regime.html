@@ -180,7 +180,7 @@
     el('main').innerHTML=hero+
       '<div class="lbl">매크로 지표 현황</div>'+ig+
       '<div class="lbl">레짐 히스토리 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 2009~ 월별</span></div>'+
-      '<div class="histwrap"><canvas id="histc" height="54"></canvas><div class="leg" id="leg"></div></div>'+
+      '<div class="histwrap"><canvas id="histc" height="54" role="img" aria-label="시장 국면(레짐) 히스토리 — 2009년 이후 월별 성장×물가 분류 타임라인"></canvas><div class="leg" id="leg"></div></div>'+
       tbl;
     el('leg').innerHTML=RORDER.map(function(r){return '<span><i style="background:'+RC[r]+'"></i>'+r+' · '+(RKO[r]||'')+'</span>';}).join('');
     drawHist();

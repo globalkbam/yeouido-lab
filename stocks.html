@@ -336,18 +336,18 @@
     if(!rows.length){listEl.innerHTML='<div class="empty">해당 종목 없음</div>';drawDetail(null);return;}
     if(!state.sel||rows.indexOf(state.sel)<0)state.sel=rows[0];
     var sk=swKeys(state.preset), dts=DATA.pxd_dates||[], NN=dts.length;
-    rows.forEach(function(s){
-      var b=document.createElement('button');b.className='item';b.setAttribute('role','option');b.setAttribute('aria-selected',s===state.sel);
-      var v=s.comp[comp]||0, fl=(s.flags||[]).slice(0,2).map(flagHtml).join('');
-      var metric;
+    // 문자열 1회 빌드(리플로우 1회) + 이벤트 위임(리스너 1개) — 512행 성능
+    listEl.innerHTML=rows.map(function(s){
+      var v=s.comp[comp]||0, fl=(s.flags||[]).slice(0,2).map(flagHtml).join(''), metric;
       if(sk){var mi=lastMk(s,sk),dt=(dts[mi]||'').slice(5),ago=NN-1-mi,mc=state.preset==='swingbuy'?'--good':'--hot';
         metric='<span class="metric"><div class="mv" style="color:var('+mc+');font-size:13px">'+dt+'</div><div class="nm" style="text-align:right;margin-top:2px">'+(ago<=0?'당일':ago+'일 전')+'</div></span>';
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
-      b.innerHTML='<span><span class="tkline"><span class="tk">'+s.t+'</span>'+s.idx.map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
-        '<div class="nm">'+(s.name||'')+(s.sector?' · '+s.sector:'')+'</div></span>'+metric;
-      b.addEventListener('click',function(){select(s);});
-      listEl.appendChild(b);
-    });
+      return '<button class="item" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
+        '<span><span class="tkline"><span class="tk">'+s.t+'</span>'+s.idx.map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
+        '<div class="nm">'+(s.name||'')+(s.sector?' · '+s.sector:'')+'</div></span>'+metric+'</button>';
+    }).join('');
+    if(!listEl._deleg){listEl._deleg=1;listEl.addEventListener('click',function(e){var it=e.target.closest('.item');if(!it)return;
+      var t=it.getAttribute('data-t');for(var i=0;i<DATA.stocks.length;i++)if(DATA.stocks[i].t===t){select(DATA.stocks[i]);break;}});}
     drawDetail(state.sel);
   }
   function select(s){state.sel=s;var items=listEl.querySelectorAll('.item'),f=filtered(),ix=f.rows.indexOf(s);
@@ -379,7 +379,7 @@
       '<div class="nm">'+(s.name||'')+'</div><div class="sec">'+(s.sector||'')+'</div>'+(fl?'<div class="flags">'+fl+'</div>':'')+'</div>'+
       '<div class="chartcard"><div class="charthd"><span class="cl">주가 · <span id="chgd"></span></span><span class="chartbtns" id="chartbtns"></span></div>'+
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
-        '<canvas id="pxc" width="600" height="150"></canvas></div>'+
+        '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+fundHtml+
       '<div class="dbody">'+timing(s)+body+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 상단 리스트 랭킹은 과열도(<b>섹터 상대</b>)·추세·모멘텀·변동성 종합. <b>참고용 — 종목선택 예측력은 제한적이며, 매도는 \'확실한 하락\'이 아니라 비중축소 주의입니다. 매매권유 아님.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA. 투자자문·매매권유 아님.</div></div>';
     renderChart(s);
@@ -404,6 +404,7 @@
     var zz=((s.tp&&s.tp.zz)||[]).filter(function(p){return p[0]>=off;}).map(function(p){return [p[0]-off,p[1]];});
     var ml=el('marklg');if(ml)ml.innerHTML='<span style="color:var(--good)">●저점</span><span style="color:var(--hot)">●고점</span><span style="color:var(--muted)">스윙</span> <span style="color:var(--good)">▲매수</span><span style="color:var(--hot)">▼매도</span> <span style="color:var(--cold)">━MA20</span> <span style="color:var(--watch)">━MA60</span> <span style="color:var(--muted)">▮거래량</span>';
     drawChart(slice, sdates, mk, ma20, ma60, vsl, zz);
+    var cv=el('pxc');if(cv)cv.setAttribute('aria-label', s.t+' 가격 차트, 최근 '+n+'거래일 ('+(sdates[0]||'')+'~'+(DATA.as_of||'')+'), 변동 '+(chg==null?'—':(chg>=0?'+':'')+chg.toFixed(1)+'%')+', 매수 '+nb+'·매도 '+ns+' 타점');
   }
   function drawChart(arr, dates, mk, ma20, ma60, vd, zz){
     var cv=el('pxc');if(!cv)return;var ctx=cv.getContext('2d');
@@ -484,7 +485,7 @@
   }).catch(function(){detailEl.innerHTML='<div class="empty">데이터 로드 오류</div>';});
   function syncP(){var pb=el('presets').querySelectorAll('.fchip');SHOWN.forEach(function(p,i){if(pb[i])pb[i].setAttribute('aria-pressed',state.preset===p[0]);});
     var ib=el('idxf').querySelectorAll('.fchip');['NDX','SPX'].forEach(function(x,j){if(ib[j])ib[j].setAttribute('aria-pressed',state.idx.has(x));});}
-  el('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase().trim();state.sel=null;render();});
+  var _qt;el('q').addEventListener('input',function(e){var val=e.target.value.toLowerCase().trim();clearTimeout(_qt);_qt=setTimeout(function(){state.q=val;state.sel=null;render();},160);});
   (function(){var r=document.documentElement,b=el('themebtn');function c(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}b.addEventListener('click',function(){var n=c()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('yeouido-theme',n);}catch(e){}});})();
 })();
 </script>
