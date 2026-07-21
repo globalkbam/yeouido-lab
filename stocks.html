@@ -231,10 +231,10 @@
     return "";}
   // preset: [key,label,comp,asc,flag,timingSet]
   var PRESETS=[
+    ["swingbuy",'<span style="color:var(--good)">▲</span> 스윙 저점매수',"momentum",false,null,null],
+    ["swingsell",'<span style="color:var(--hot)">▼</span> 스윙 고점매도',"trend",true,null,null],
     ["buy","🟢 매수 신호","momentum",false,null,["매수","매수우세"]],
     ["sell","🔴 매도 신호","momentum",true,null,["매도","매도우세"]],
-    ["swingbuy","🔺 스윙 저점매수","momentum",false,null,null],
-    ["swingsell","🔻 스윙 고점매도","trend",true,null,null],
     ["oh","과매수","overheat",false,"과매수",null],["os","과매도","overheat",true,"과매도",null],
     ["dip","눌림목","trend",false,"눌림목",null],["brk","52주 돌파","momentum",false,"52주돌파",null],
     ["squeeze","과밀숏","positioning",false,"과밀숏",null],
@@ -244,7 +244,7 @@
   var SHOWN=PRESETS;  // 데이터로딩 후 빈 프리셋 제거
   var FLAGCLS={"과매수":"과매수","과매도":"과매도","상승추세":"상승추세","눌림목":"눌림목","52주돌파":"b52돌파","200일이탈":"b200이탈","과밀숏":"gmilshort"};
   var PERIODS=[["1주",5],["1개월",21],["3개월",63],["6개월",126],["1년",252]];
-  var state={q:"",preset:"buy",idx:new Set(),sel:null,period:252};
+  var state={q:"",preset:"swingbuy",idx:new Set(),sel:null,period:252};
   function cc(k){return 'var('+({overheat:'--hot',trend:'--good',momentum:'--accent',volatility:'--watch'}[k]||'--accent')+')';}
   function gc(g){return 'var('+({hot:'--hot',good:'--good',accent:'--accent',watch:'--watch',cold:'--cold',muted:'--muted'}[g]||'--accent')+')';}
   function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
