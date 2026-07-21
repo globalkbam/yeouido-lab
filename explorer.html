@@ -119,6 +119,20 @@
   .btsec{margin:2px 0 20px;padding:16px 16px 18px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:14px}
   .btsec h4{margin:0 0 13px;font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ink-2);text-transform:uppercase;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .btsec h4 small{font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px}
+  .htblwrap{overflow-x:auto}
+  .htbl{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:2px}
+  .htbl th,.htbl td{padding:5px 8px;border-bottom:1px solid var(--line-soft);text-align:left;font-weight:400}
+  .htbl th{white-space:nowrap}
+  .htbl .ht{font-family:var(--mono);font-weight:700;color:var(--ink)}
+  .htbl .hn{color:var(--muted);font-size:11px;margin-left:7px}
+  .htbl .hw{font-family:var(--mono);font-weight:600;white-space:nowrap;text-align:right;width:58px}
+  .htbl .hbar{width:45%}
+  .htbl .hbar i{display:block;height:7px;border-radius:4px;min-width:1px}
+  .htbl tr.zero .ht,.htbl tr.zero .hw{color:var(--muted);text-decoration:line-through}
+  .hxrow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+  .hx{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:2px 8px}
+  .hx b{color:var(--muted);font-weight:600;margin-right:5px}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .btnote{margin:8px 0 2px;font-size:10.5px;line-height:1.6;color:var(--muted)}
   .btnote b{color:var(--ink-2)}
   .btm-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:6px}
@@ -405,6 +419,30 @@
       '<div class="chartttl">연도별 수익 <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted)"></i>'+bl+'</span></div>'+svgYearly(bt,vc)+'</div>';
   }
 
+  function esc(x){return (x==null?'':String(x)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  // 현재 기준 포트폴리오 구성 — 백테스트와 같은 규칙으로 뽑은 '최근 리밸런스 시점' 보유.
+  // ⚠ 실시간 호가·실제 계좌가 아니라 리서치 재현 결과이며, 리밸 시점 이후 가격 변동은 반영되지 않는다.
+  function holdSection(h,vc){
+    if(!h||!h.positions||!h.positions.length)return '';
+    var kindLab={stocks:'종목',assets:'자산',sleeves:'슬리브'}[h.kind]||'구성';
+    var mx=0; h.positions.forEach(function(p){ if(Math.abs(p.w||0)>mx)mx=Math.abs(p.w||0); });
+    var rows=h.positions.map(function(p){
+      var w=(p.w||0), pct=(w*100), bw=mx>0?Math.abs(w)/mx*100:0;
+      return '<tr'+(w===0?' class="zero"':'')+'><th scope="row"><span class="ht">'+esc(p.t)+'</span>'+
+        (p.name?'<span class="hn">'+esc(p.name)+'</span>':'')+'</th>'+
+        '<td class="hw tnum">'+pct.toFixed(1)+'%</td>'+
+        '<td class="hbar"><i style="width:'+bw.toFixed(1)+'%;background:'+vc+'"></i></td></tr>';
+    }).join('');
+    var sum=h.positions.reduce(function(a,p){return a+(p.w||0);},0);
+    var ex=h.extra?Object.keys(h.extra).map(function(k){
+      return '<span class="hx"><b>'+esc(k)+'</b> '+esc(String(h.extra[k]))+'</span>';}).join(''):'';
+    return '<div class="btsec"><h4><span>현재 포트폴리오 구성</span><small>기준일 '+esc(h.as_of||'—')+' · '+
+      h.positions.length+kindLab+' · 합계 '+(sum*100).toFixed(1)+'%</small></h4>'+
+      (ex?'<div class="hxrow">'+ex+'</div>':'')+
+      '<div class="htblwrap"><table class="htbl"><caption class="vh">현재 보유 구성</caption><tbody>'+rows+'</tbody></table></div>'+
+      (h.note?'<div class="btnote">'+esc(h.note)+'</div>':'')+
+      '<div class="btnote"><b>주의</b> 리서치 재현 기준의 구성으로, 실제 운용 계좌·실시간 비중이 아닙니다. 리밸런스 시점 이후 가격 변동은 반영되지 않으며 투자자문·매매권유가 아닙니다.</div></div>';
+  }
   function drawDetail(d){
     if(!d){detailEl.innerHTML="";return;}
     var vc='var('+VMETA[d.v].col+')';
@@ -433,6 +471,7 @@
       '</div>'+
       '<div class="dbody">'+
         (d.bt?btSection(d.bt,vc):'')+
+        (d.hold?holdSection(d.hold,vc):'')+
         '<p class="lbl">전략 개요</p><p>'+d.t+'</p>'+
         '<div class="verdict-line" style="--vbg:'+vbg+'"><b>판정 근거 —</b> '+d.vt+'</div>'+
         play+
@@ -450,10 +489,11 @@
   _fromHash(); window.addEventListener('hashchange',_fromHash);
   // 플레이북(strategy_detail.json) + 백테스트 차트데이터(strategy_backtests.json) 병합
   function _get(u){return fetch(u,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
-  Promise.all([_get('data/strategy_detail.json'),_get('data/strategy_backtests.json')]).then(function(res){
-    var map=res[0],bt=res[1];
+  Promise.all([_get('data/strategy_detail.json'),_get('data/strategy_backtests.json'),_get('data/strategy_holdings.json')]).then(function(res){
+    var map=res[0],bt=res[1],hd=res[2];
     if(map){ D.forEach(function(d){ if(map[d.n]) d.det=map[d.n]; }); buildArchetypeFilter(); }
     if(bt&&bt.strategies){ D.forEach(function(d){ if(bt.strategies[d.n]) d.bt=bt.strategies[d.n]; }); }
+    if(hd&&hd.strategies){ D.forEach(function(d){ if(hd.strategies[d.n]) d.hold=hd.strategies[d.n]; }); }
     render();
   });
 })();
