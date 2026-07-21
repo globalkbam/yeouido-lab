@@ -415,7 +415,7 @@
       '<div class="btnote">지표는 <b>이 차트 구간</b> 기준(변동성·Sharpe·승률은 월간 수익률 연환산, CAGR은 실제 경과기간). '+
       '전략과 벤치는 <b>첫 월말을 100</b>으로 공통 리베이스하며, 편입 전 무포지션 구간은 제외합니다. '+
       '왼쪽 목록의 헤드라인 수치는 랩 정본 리서치의 측정 기준이라 값이 다를 수 있습니다.</div>';
-    return '<div class="btsec"><h4><span>백테스트 성과</span><small>'+bt.start+' ~ '+bt.end+' · gross(무비용)</small></h4>'+mg+
+    return '<div class="btsec"><h4><span>백테스트 성과</span><small>'+bt.start+' ~ '+bt.end+' · gross(무비용)</small></h4>'+mg+pp+
       '<div class="chartttl">누적수익 (로그축) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted);border-top-style:dashed"></i>'+bl+'</span>'+(bt.bench2?'<span class="lg"><i style="border-color:var(--champ);border-top-style:dashed"></i>'+(bt.bench2_label||'보조')+'</span>':'')+'</div>'+svgEquity(bt,vc)+
       '<div class="chartttl">낙폭 (drawdown)</div>'+svgDD(bt)+
       '<div class="chartttl">연도별 수익 <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted)"></i>'+bl+'</span></div>'+svgYearly(bt,vc)+'</div>';
