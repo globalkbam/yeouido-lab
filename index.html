@@ -219,7 +219,7 @@
     return parts.join(' · ')||'—';
   }
   function recoCol(title,sub,cnt,arr,cls,buy){return '<div class="rcol"><h4><span>'+title+' <span style="font-weight:400;text-transform:none;letter-spacing:0">'+sub+'</span></span><span style="white-space:nowrap">후보 '+cnt+'</span></h4>'+
-    (arr.length?arr.map(function(x){return '<a class="rstk '+cls+'" href="stocks.html"><span><span class="rk">'+x.t+'</span><span class="rn2">'+(x.name||'')+'</span></span><span class="rv">'+recoVal(x,buy)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
+    (arr.length?arr.map(function(x){return '<a class="rstk '+cls+'" href="stocks.html#t='+x.t+'&p='+(buy?'recobuy':'recosell')+'"><span><span class="rk">'+x.t+'</span><span class="rn2">'+(x.name||'')+'</span></span><span class="rv">'+recoVal(x,buy)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
   function renderReco(h){
     var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(h.as_of||'');
     var ma=document.getElementById('mainasof'); if(ma)ma.textContent=(h.as_of||'—');

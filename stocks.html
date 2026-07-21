@@ -284,10 +284,12 @@
     return "";}
   // preset: [key,label,comp,asc,flag,timingSet]
   var PRESETS=[
+    ["recobuy","🟢 매수 추천","momentum",false,null,["매수","매수우세"]],
+    ["recosell","🔴 매도 추천","momentum",true,null,["매도","매도우세"]],
     ["swingbuy",'<span style="color:var(--good)">▲</span> 스윙 저점매수',"momentum",false,null,null],
     ["swingsell",'<span style="color:var(--hot)">▼</span> 스윙 고점매도',"trend",true,null,null],
-    ["buy","🟢 매수 신호","momentum",false,null,["매수","매수우세"]],
-    ["sell","🔴 매도 신호","momentum",true,null,["매도","매도우세"]],
+    ["buy","매수 신호 전체","momentum",false,null,["매수","매수우세"]],
+    ["sell","매도 신호 전체","momentum",true,null,["매도","매도우세"]],
     ["oh","과매수","overheat",false,"과매수",null],["os","과매도","overheat",true,"과매도",null],
     ["dip","눌림목","trend",false,"눌림목",null],["brk","52주 돌파","momentum",false,"52주돌파",null],
     ["squeeze","과밀숏","positioning",false,"과밀숏",null],
@@ -297,6 +299,8 @@
   var SHOWN=PRESETS;  // 데이터로딩 후 빈 프리셋 제거
   // 시그널 칩 호버 설명(툴팁)
   var TIPS={
+    recobuy:"홈 매수 추천과 동일 — 상승추세(매수신호) ∩ 과열도≤45(저점 근처·진입 유리), 종합점수 내림차순",
+    recosell:"홈 매도 추천과 동일 — 200일선 이탈(매도신호), 약세 종합점수순 — 비중축소 주의(공매도 근거 아님)",
     swingbuy:"차트 스윙 저점 매수 타점(확정 ▲ + 잠정 △)이 최근 발생한 종목 — 최신 타점순. 잠정=미확정이라 날짜 이동 가능",
     swingsell:"차트 스윙 고점 매도 타점(확정 ▼ + 잠정 ▽)이 최근 발생한 종목 — 최신 타점순. 잠정=미확정이라 날짜 이동 가능",
     buy:"상승추세(200일선 위) 종목 중 종합점수(과열도·추세·모멘텀·변동성, 섹터 상대) 내림차순 — 매수 후보 1차 기준",
@@ -314,7 +318,7 @@
     lovol:"변동성 하위 — 안정적 흐름"};
   var FLAGCLS={"과매수":"과매수","과매도":"과매도","상승추세":"상승추세","눌림목":"눌림목","52주돌파":"b52돌파","200일이탈":"b200이탈","과밀숏":"gmilshort"};
   var PERIODS=[["1주",5],["1개월",21],["3개월",63],["6개월",126],["1년",252]];
-  var state={q:"",preset:"swingbuy",idx:new Set(),sel:null,period:252};
+  var state={q:"",preset:"recobuy",idx:new Set(),sel:null,period:252};
   function cc(k){return 'var('+({overheat:'--hot',trend:'--good',momentum:'--accent',volatility:'--watch'}[k]||'--accent')+')';}
   function gc(g){return 'var('+({hot:'--hot',good:'--good',accent:'--accent',watch:'--watch',cold:'--cold',muted:'--muted'}[g]||'--accent')+')';}
   var _cssC={};   // 테마별 CSS변수 캐시 — getComputedStyle 반복호출/리플로우 축소
@@ -376,6 +380,7 @@
     var rows=DATA.stocks.filter(function(s){
       if(flag && (s.flags||[]).indexOf(flag)<0)return false;
       if(tim && tim.indexOf(s.timing)<0)return false;
+      if(p[0]==='recobuy' && ((s.comp||{}).overheat||100)>45)return false;   // 매수 추천 = 과열도≤45 (홈과 동일)
       if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
       if(state.q){var hay=(s.t+' '+(s.name||'')+' '+(s.sector||'')).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
       if(sk)return swFresh(s,sk);                 // 스윙: 최근 SW_WIN일 내 마커 보유만
@@ -384,8 +389,8 @@
     // 스윙=최근 마커순(동점은 신호강도) / 매수·매도 신호=종합점수 내림차순 + 상위 50 캡(종목수 과다 방지) / 나머지=컴포짓 정렬
     var total=rows.length;
     if(sk)rows.sort(function(a,b){var d=lastMk(b,sk)-lastMk(a,sk);return d||((b[sc]||0)-(a[sc]||0));});
-    else if(p[0]==='buy')rows.sort(function(a,b){return (b.bscore||0)-(a.bscore||0);});
-    else if(p[0]==='sell')rows.sort(function(a,b){return (b.sscore||0)-(a.sscore||0);});
+    else if(p[0]==='buy'||p[0]==='recobuy')rows.sort(function(a,b){return (b.bscore||0)-(a.bscore||0);});
+    else if(p[0]==='sell'||p[0]==='recosell')rows.sort(function(a,b){return (b.sscore||0)-(a.sscore||0);});
     else rows.sort(function(a,b){var d=(a.comp[comp]||0)-(b.comp[comp]||0);return asc?d:-d;});
     return {rows:rows,comp:comp,total:total};
   }
@@ -402,7 +407,7 @@
       var v=s.comp[comp]||0, fl=(s.flags||[]).slice(0,2).map(flagHtml).join(''), metric;
       if(sk){var mp=lastMkP(s,state.preset),mi=mp.i,dt=(dts[mi]||'').slice(5),ago=NN-1-mi,mc=state.preset==='swingbuy'?'--good':'--hot';
         metric='<span class="metric"><div class="mv" style="color:var('+mc+');font-size:13px">'+dt+(mp.prov?' <span style="color:var(--watch);font-size:9px;font-weight:700">잠정</span>':'')+'</div><div class="nm" style="text-align:right;margin-top:2px">'+(ago<=0?'당일':ago+'일 전')+(mp.prov?' · 이동가능':'')+'</div></span>';
-      }else if(state.preset==='buy'||state.preset==='sell'){var sp=state.preset==='buy'?(s._bp||0):(s._sp||0);
+      }else if(['buy','sell','recobuy','recosell'].indexOf(state.preset)>=0){var sp=(state.preset==='buy'||state.preset==='recobuy')?(s._bp||0):(s._sp||0);
         metric='<span class="metric"><div class="mv" title="종합점수 백분위(과열도·추세·모멘텀·변동성)">'+sp+'</div><div class="mbar"><i style="width:'+sp+'%;background:var(--accent)"></i></div></span>';
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
       return '<button class="item" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
@@ -597,12 +602,20 @@
       var cnt=null,sk=swKeys(p[0]);
       if(sk)cnt=d.stocks.filter(function(s){return swFresh(s,sk);}).length;
       else if(p[4])cnt=d.stocks.filter(function(s){return (s.flags||[]).indexOf(p[4])>=0;}).length;
-      else if(p[5])cnt=d.stocks.filter(function(s){return p[5].indexOf(s.timing)>=0;}).length;
+      else if(p[5])cnt=d.stocks.filter(function(s){return p[5].indexOf(s.timing)>=0&&(p[0]!=='recobuy'||((s.comp||{}).overheat||100)<=45);}).length;
       if(cnt===0)return;  // 데이터 없는 프리셋 제거
       SHOWN.push(p);
       pf.appendChild(chip(p[1],cnt,function(){state.preset=p[0];state.sel=null;syncP();render();},TIPS[p[0]]));
     });
     if(SHOWN.length && !SHOWN.some(function(p){return p[0]===state.preset;}))state.preset=SHOWN[0][0];
+    // 딥링크: 홈 추천 종목 클릭 → #t=티커&p=탭 으로 진입, 해당 탭·종목 자동 선택
+    try{
+      var pm=location.hash.match(/p=(\w+)/), hm=location.hash.match(/t=([A-Za-z.\-]+)/);
+      if(pm&&SHOWN.some(function(x){return x[0]===pm[1];}))state.preset=pm[1];
+      if(hm){var tk=hm[1].toUpperCase(),tgt=null;
+        for(var di=0;di<d.stocks.length;di++)if(d.stocks[di].t===tk){tgt=d.stocks[di];break;}
+        if(tgt){if(filtered().rows.indexOf(tgt)<0){state.q=tk.toLowerCase();var qi=el('q');if(qi)qi.value=tk;}state.sel=tgt;}}
+    }catch(e){}
     var ixf=el('idxf');['NDX','SPX'].forEach(function(x){var cnt=d.stocks.filter(function(s){return (s.idx||[]).indexOf(x)>=0;}).length;ixf.appendChild(chip(x,cnt,function(){state.idx.has(x)?state.idx.delete(x):state.idx.add(x);syncP();render();},x==='NDX'?'나스닥100 구성종목만':'S&P500 구성종목만'));});
     syncP();render();
     var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(function(){if(state.sel)renderChart(state.sel);},150);});
