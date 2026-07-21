@@ -126,7 +126,7 @@
   <div id="content"><div class="empty">불러오는 중…</div></div>
   <footer>
     여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="archive.html">기각 아카이브</a><br>
-    로테이션 전략은 매일 웹 리서치로 최근동향 갱신 · 풀에서 날짜 시드 기반 9선 · 외부 출처 · 미검증 · 투자자문·매매권유 아님.
+    매일 웹 리서치로 최근동향 갱신 — 갱신 대상은 그날의 9선 + 가장 오래 방치된 3종(하루 12종) · 풀에서 날짜(KST) 시드 기반 9선 · 외부 출처 · 미검증 · 투자자문·매매권유 아님.
   </footer>
 </div>
 <script>
@@ -137,8 +137,10 @@
   function esc(s){return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
   // esc된 텍스트의 URL을 클릭 가능한 링크로(출처 논문·리포트 바로가기)
   function linkify(t){return t.replace(/(https?:\/\/[^\s)<]+)/g,function(u){
+    var tail='',m=u.match(/[.,;:]+$/);   // 출처 문장의 마침표·쉼표가 href에 흡수돼 죽은 링크가 되던 문제
+    if(m){tail=m[0];u=u.slice(0,u.length-tail.length);}
     var lbl=u.replace(/^https?:\/\/(www\.)?/,''); if(lbl.length>44)lbl=lbl.slice(0,44)+'…';
-    return '<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+lbl+'</a>';});}
+    return '<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+lbl+'</a>'+tail;});}
   // 날짜 시드 결정론적 9선 — 카테고리 균형(A2·B2·C2·D1·E2). build/rotation_select.py와 동일 알고리즘 유지 필수.
   var QUOTA={A:2,B:2,C:2,D:1,E:2};
   function pick(arr,n,seedStr){
@@ -169,13 +171,17 @@
       '<h3>'+esc(s.name)+'</h3>'+tb+lb+'<span class="stag">'+esc(s.type||'')+(s.target?' · 타겟: '+esc(s.target):'')+'</span></div>'+
       row('목적·타겟',s.purpose,'purpose')+row('핵심 원리',s.principle)+row('진입 기준',s.entry)+
       row('성과',s.performance)+lrow+
-      row('최근 동향'+(s.recent_at?'<span style="display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:9.5px;margin-top:2px">'+esc(s.recent_at)+' 갱신</span>':''),s.recent)+
+      // 갱신일이 없으면 '미기록'을 명시한다 — 전 카드가 매일 갱신되는 것처럼 보이면 안 된다(하루 12종만 갱신)
+      row('최근 동향<span style="display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:9.5px;margin-top:2px">'+
+          (s.recent_at?esc(s.recent_at)+' 갱신':'갱신일 미기록(카드 작성 시점)')+'</span>',s.recent)+
       (src?'<div class="ssrc"><b>출처</b> · '+src+'</div>':'')+'</div>';
   }
   var CATNM={A:'A. S&P 500 초과성과',B:'B. NASDAQ 100 초과성과',C:'C. 단기 마켓타이밍',D:'D. 자산배분·리스크관리',E:'E. 추가 알파·팩터·이벤트'};
   var CATSHORT={A:'S&P500 초과',B:'NDX 초과',C:'단기 타이밍',D:'자산배분',E:'알파·팩터'};
   var DATA=null, state={q:'', cats:new Set(), mode:'today', labonly:false};
-  function today(){return new Date().toISOString().slice(0,10);}
+  // KST 고정: UTC였을 때 한국 사용자에게 00~09시에 '어제 날짜'가 뜨고 9선이 오전 9시에 바뀌었다.
+  // 갱신 잡(08:20 KST)이 뽑는 날짜와도 어긋났다 — rotation_select.py도 동일하게 KST를 쓴다.
+  function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10);}
   function browsing(){return state.mode==='all' || !!state.q || state.cats.size>0 || state.labonly;}
   function selection(){
     var S=DATA.strategies;
@@ -222,6 +228,7 @@
       '<span class="stat">풀 <b>'+d.strategies.length+'</b>종</span>'+
       '<span class="stat">기준일 <b>'+today()+'</b></span>'+
       '<span class="stat">랩 검증 대조 <b>'+d.strategies.filter(function(s){return s.lab;}).length+'</b>종</span>'+
+      '<span class="stat">동향 갱신 이력 <b>'+d.strategies.filter(function(s){return s.recent_at;}).length+'</b>/'+d.strategies.length+'</span>'+
       '<span class="stat">갱신 '+esc(d.generated||'—')+'</span>'+staleStat(d.generated);
     // 카테고리 필터 칩(개수 포함)
     var cf=el('catf');
@@ -250,9 +257,16 @@
   function gotoHash(){
     var h=(location.hash||'').replace('#','').trim();
     if(!h||!DATA)return;
+    if(DATA.id_moved&&DATA.id_moved[h])h=DATA.id_moved[h];   // 카테고리 재분류로 id가 바뀐 카드의 옛 링크를 살린다
     var hit=null; DATA.strategies.forEach(function(x){if(x.id===h)hit=x;});
     if(!hit)return;
-    if(selection().indexOf(hit)<0){state.mode='all';syncMode();render();}
+    // 검색·필터가 걸린 채로는 대상이 안 보일 수 있으므로 모두 해제하고 전체 풀에서 찾는다
+    if(selection().indexOf(hit)<0){
+      state.mode='all'; state.q=''; state.cats.clear(); state.labonly=false;
+      var qi=el('q'); if(qi)qi.value='';
+      document.querySelectorAll('.fchip[aria-pressed="true"]').forEach(function(b){b.setAttribute('aria-pressed','false');});
+      syncMode(); render();
+    }
     var node=document.getElementById('s-'+h);
     if(node)node.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
   }

@@ -163,7 +163,7 @@
     <div class="eyebrow">여의도 전략 랩 · 리서치 아카이브</div>
     <h1 class="title">전략 탐색기</h1>
     <p class="lede">10시간 자율 리서치가 적대적으로 검증해 <b>통과시킨 전략</b>을 클릭해서 둘러봅니다. 왼쪽에서 전략을 고르면 오른쪽에 성과·판정과 함께
-      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 여기 담긴 건 배포·marginal 판정을 받은 것들 — <b>기각된 40개</b>는 사유와 함께 <a href="archive.html" style="color:var(--accent)">기각 아카이브</a>에서 볼 수 있습니다.
+      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 여기 담긴 건 <b>배포·marginal</b> 판정 20종과, 대조용으로 함께 두는 <b>기각 2종</b>(단일팩터 검증에서 열위) — 나머지 <b>기각 40개</b>는 사유와 함께 <a href="archive.html" style="color:var(--accent)">기각 아카이브</a>에서 볼 수 있습니다.
       아래 <b>활용 아키타입</b> 칩으로 목적별(배포코어·위기방어·레짐 오버레이·실행타이밍 등)로도 걸러 볼 수 있습니다.</p>
     <div class="statline" id="statline"></div>
   </header>
@@ -189,7 +189,7 @@
   </div>
 
   <footer>
-    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · <b>배포·marginal + 검증 단일팩터</b> (📊=실제 백테스트 차트) · 전부 구현→적대검증<br>
+    여의도 전략 랩 · github.com/globalkbam/yeouido-lab · <b>배포·marginal + 검증 단일팩터</b> (📊=실제 백테스트 차트) · 전부 구현→적대검증<br>
     수치는 백테스트(2016~2026, 명시 없으면 무비용·월말 gross) 기준 · <a href="index.html">홈</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="rotation.html">오늘의 로테이션</a> · <a href="archive.html">기각 아카이브</a>.
   </footer>
 </div>
@@ -251,7 +251,9 @@
     el('statline').innerHTML=
       '<span class="stat"><b>'+D.length+'</b> 전략</span>'+
       '<span class="stat deploy"><b>'+c.deploy+'</b> 배포</span>'+
-      '<span class="stat marg"><b>'+c.marginal+'</b> marginal</span>';
+      '<span class="stat marg"><b>'+c.marginal+'</b> marginal</span>'+
+      // 기각 2종을 숨기면 배지 합(3+17)이 전체(22)와 안 맞고, '검증 통과만 담았다'는 리드문과도 모순된다
+      (c.reject?'<span class="stat rej"><b>'+c.reject+'</b> 기각(비교용)</span>':'');
   })();
 
   // build filter chips

@@ -337,7 +337,8 @@
   }
   function render(){
     var f=filtered(),rows=f.rows,comp=f.comp;
-    el('rowcount').textContent=rows.length+"종목 · "+curP()[1];
+    // 프리셋 라벨은 색상 마크업(▲/▼)을 품고 있으므로 textContent로 쓰면 태그가 그대로 노출된다 — 개수만 이스케이프하고 라벨은 HTML로
+    el('rowcount').innerHTML=esc(rows.length+"종목 · ")+curP()[1];
     listEl.innerHTML="";
     if(!rows.length){listEl.innerHTML='<div class="empty">해당 종목 없음</div>';drawDetail(null);return;}
     if(!state.sel||rows.indexOf(state.sel)<0)state.sel=rows[0];

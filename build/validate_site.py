@@ -138,6 +138,11 @@ if not re.search(r"Math\.imul\s*\(\s*seed\s*,\s*16777619\s*\)", rot):
     errors.append("rotation.html FNV 해시가 Math.imul을 쓰지 않음 — float64 정밀도 손실로 rotation_select.py와 9선이 달라진다")
 if re.search(r"seed\s*\*\s*16777619", rot):
     errors.append("rotation.html에 `seed*16777619` 잔존 — Math.imul로 교체할 것")
+# 날짜 기준(KST)도 양쪽이 같아야 한다 — UTC였을 때 갱신 대상과 표시 대상이 오전 9시에 어긋났다
+if "9*3600e3" not in rot:
+    errors.append("rotation.html today()가 KST 보정(9*3600e3)을 하지 않음 — 일일잡과 날짜가 어긋난다")
+if "hours=9" not in sel:
+    errors.append("rotation_select.py가 KST(hours=9)를 쓰지 않음 — rotation.html과 날짜가 어긋난다")
 
 # 홈은 home_reco.json만 fetch하므로 stocks.json과 기준일이 어긋나면 홈이 낡은 채 고착된다(워크플로가 한쪽만 커밋한 사고)
 try:
