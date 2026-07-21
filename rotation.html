@@ -59,6 +59,18 @@
   footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);line-height:1.7}
   footer a{color:var(--accent);text-decoration:none}
   .empty{font-family:var(--mono);font-size:13px;color:var(--muted);padding:30px;text-align:center}
+  .controls{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--ground) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:14px 0 11px;margin-top:10px;border-bottom:1px solid var(--line-soft)}
+  .searchrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .search{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;box-shadow:var(--shadow)}
+  .search input{border:0;background:transparent;color:var(--ink);font-family:var(--sans);font-size:14px;width:100%;outline:none}
+  .search svg{flex-shrink:0;color:var(--muted)}
+  .chiprow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .fchip{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;user-select:none;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+  .fchip:hover{border-color:var(--accent);color:var(--ink-2)}
+  .fchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .fchip .c{opacity:.65;font-size:10px}
+  .fchip .d{width:8px;height:8px;border-radius:50%}
+  .rowcount{font-family:var(--mono);font-size:11px;color:var(--muted);margin:16px 2px 0;text-transform:uppercase;letter-spacing:.06em}
 </style>
 </head>
 <body>
@@ -72,6 +84,17 @@
     <div class="warn"><b>⚠ 웹 리서치 기반 · 외부 출처 · 미검증</b> — 이 전략들은 공개 문헌·기사에서 수집한 것으로, 랩이 자체 백테스트로 검증한 <a href="explorer.html" style="color:var(--accent)">전략 탐색기</a>의 전략과 다릅니다. 성과 수치는 원 출처 인용이며 재현·검증되지 않았습니다. <b>참고용 · 투자자문·매매권유 아님.</b></div>
     <div class="statline" id="statline"></div>
   </header>
+  <div class="controls">
+    <div class="searchrow">
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="search" placeholder="전략·유형·타겟·원리·출처 검색 (예: 모멘텀, 변동성, BAB)" aria-label="검색">
+      </label>
+      <button class="fchip" id="modebtn" aria-pressed="false" title="전체 풀 보기 / 오늘의 9선">전체 풀 보기</button>
+    </div>
+    <div class="chiprow" id="catf"></div>
+  </div>
+  <div class="rowcount" id="rowcount"></div>
   <div id="content"><div class="empty">불러오는 중…</div></div>
   <footer>
     여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a><br>
@@ -101,24 +124,54 @@
       row('성과',s.performance)+row('최근 동향',s.recent)+
       (src?'<div class="ssrc"><b>출처</b> · '+src+'</div>':'')+'</div>';
   }
-  fetch('data/rotation_pool.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
-    if(!d||!d.strategies){el('content').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
-    var today=new Date().toISOString().slice(0,10);
-    var sel=pick(d.strategies,9,today);
-    el('statline').innerHTML='<span class="stat"><b>'+sel.length+'</b> 오늘의 전략</span>'+
-      '<span class="stat">풀 <b>'+d.strategies.length+'</b>종</span>'+
-      '<span class="stat">기준일 <b>'+today+'</b></span>'+
-      '<span class="stat">갱신 '+esc(d.generated||'—')+'</span>';
-    // 카테고리별 그룹
-    var CATNM={A:'A. S&P 500 초과성과',B:'B. NASDAQ 100 초과성과',C:'C. 단기 마켓타이밍',D:'D. 자산배분·리스크관리',E:'E. 추가 알파·팩터·이벤트'};
+  var CATNM={A:'A. S&P 500 초과성과',B:'B. NASDAQ 100 초과성과',C:'C. 단기 마켓타이밍',D:'D. 자산배분·리스크관리',E:'E. 추가 알파·팩터·이벤트'};
+  var CATSHORT={A:'S&P500 초과',B:'NDX 초과',C:'단기 타이밍',D:'자산배분',E:'알파·팩터'};
+  var DATA=null, state={q:'', cats:new Set(), mode:'today'};
+  function today(){return new Date().toISOString().slice(0,10);}
+  function browsing(){return state.mode==='all' || !!state.q || state.cats.size>0;}
+  function selection(){
+    var S=DATA.strategies;
+    if(!browsing()) return pick(S,9,today());   // 기본: 오늘의 9선
+    var q=state.q;
+    return S.filter(function(s){
+      if(state.cats.size && !state.cats.has(s.cat))return false;
+      if(q){var hay=(s.id+' '+s.name+' '+s.type+' '+s.target+' '+s.purpose+' '+s.principle+' '+s.performance+' '+s.recent+' '+(s.sources||[]).join(' ')).toLowerCase();if(hay.indexOf(q)<0)return false;}
+      return true;
+    });
+  }
+  function render(){
+    var sel=selection(), br=browsing();
+    el('rowcount').textContent = br ? (sel.length+'개 표시 / 전체 '+DATA.strategies.length) : ('오늘의 9선 · '+today()+' (검색·필터로 전체 '+DATA.strategies.length+'종 탐색)');
     var html='';
     CATORD.forEach(function(c){
       var items=sel.filter(function(s){return s.cat===c;});
       if(!items.length)return;
-      html+='<div class="catsec"><div class="cathead"><span class="dot" style="background:'+(CATCOL[c])+'"></span>'+(CATNM[c]||c)+' <span style="color:var(--muted);font-weight:400;font-size:11px">· '+items.length+'선</span></div>'+
+      html+='<div class="catsec"><div class="cathead"><span class="dot" style="background:'+(CATCOL[c])+'"></span>'+(CATNM[c]||c)+' <span style="color:var(--muted);font-weight:400;font-size:11px">· '+items.length+(br?'개':'선')+'</span></div>'+
         items.map(card).join('')+'</div>';
     });
-    el('content').innerHTML=html||'<div class="empty">오늘의 전략이 없습니다.</div>';
+    el('content').innerHTML=html||'<div class="empty">'+(br?'조건에 맞는 전략이 없습니다.':'오늘의 전략이 없습니다.')+'</div>';
+  }
+  function syncMode(){var b=el('modebtn');b.setAttribute('aria-pressed',state.mode==='all');b.textContent=state.mode==='all'?'오늘의 9선':'전체 풀 보기';}
+  fetch('data/rotation_pool.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    if(!d||!d.strategies){el('content').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
+    DATA=d;
+    el('statline').innerHTML='<span class="stat"><b>9</b> 오늘의 전략</span>'+
+      '<span class="stat">풀 <b>'+d.strategies.length+'</b>종</span>'+
+      '<span class="stat">기준일 <b>'+today()+'</b></span>'+
+      '<span class="stat">갱신 '+esc(d.generated||'—')+'</span>';
+    // 카테고리 필터 칩(개수 포함)
+    var cf=el('catf');
+    CATORD.forEach(function(c){
+      var cnt=d.strategies.filter(function(s){return s.cat===c;}).length;
+      if(!cnt)return;
+      var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');
+      b.innerHTML='<span class="d" style="background:'+CATCOL[c]+'"></span>'+c+'. '+CATSHORT[c]+' <span class="c">'+cnt+'</span>';
+      b.addEventListener('click',function(){state.cats.has(c)?state.cats.delete(c):state.cats.add(c);b.setAttribute('aria-pressed',state.cats.has(c));render();});
+      cf.appendChild(b);
+    });
+    el('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase().trim();render();});
+    el('modebtn').addEventListener('click',function(){state.mode=state.mode==='all'?'today':'all';syncMode();render();});
+    syncMode(); render();
   }).catch(function(){el('content').innerHTML='<div class="empty">데이터 로드 오류</div>';});
 })();
 </script>
