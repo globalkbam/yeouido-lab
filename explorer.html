@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
-<title>여의도 전략 탐색기 — 57개 전략 성과 브라우저</title>
+<title>여의도 전략 탐색기 — 전략 성과 브라우저</title>
 <style>
   :root{
     --ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;
@@ -171,7 +171,7 @@
   </div>
 
   <footer>
-    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · 적대검증 통과 <b>배포·marginal 17개 전략</b> (기각 40개는 아카이브) · 전부 구현→적대검증<br>
+    여의도 전략 랩 · github.com/ydyoon4578/Yeouido · <b>배포·marginal + 검증 단일팩터</b> (📊=실제 백테스트 차트) · 전부 구현→적대검증<br>
     수치는 백테스트(2016~2026, 명시 없으면 무비용·월말 gross) 기준 · <a href="index.html">홈</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="archive.html">기각 아카이브</a>.
   </footer>
 </div>
@@ -206,6 +206,12 @@
   // 이전 탐색
   {n:"섹터 모멘텀 top4",c:"이전 탐색",v:"marginal",m:"0.63",ml:"@10bp",corr:null,t:"상위 모멘텀 섹터 4개 로테이션.",vt:"<b>marginal.</b> 약하나 비용robust."},
   {n:"지수 200MA 타이밍",c:"이전 탐색",v:"marginal",m:"리스크만",ml:"—",corr:null,t:"200일선 상/하로 지수 롱/플랫.",vt:"<b>marginal.</b> 알파 아닌 리스크 관리 오버레이."},
+  // 단일팩터·검증(strategy_good) — 실제 백테스트 차트 있음
+  {n:"FCF 개선 (SPX top10)",c:"단일팩터·검증",v:"marginal",m:"0.98",ml:"Sharpe",corr:null,t:"전년 대비 잉여현금흐름/가격 개선 상위 10종 롱온리(SPX·월말리밸). 현금흐름 질(質)의 단일팩터.",vt:"<b>marginal(완만한 초과).</b> Sharpe 0.98 vs SPX B&H 0.96·CAGR 17.3% vs 15.3%로 소폭 우위. 단일팩터로는 드물게 벤치 대등이상이나 MDD −32%로 깊어 코어 아닌 틸트 후보."},
+  {n:"섹터 리스크패리티 (역변동성)",c:"단일팩터·검증",v:"marginal",m:"MDD −20%",ml:"방어",corr:null,t:"11개 SPDR 섹터 ETF를 60일 역변동성 가중(월말리밸). 집중 없는 방어형 배분.",vt:"<b>marginal(방어).</b> Sharpe 0.77 vs SPX 0.86로 위험조정 소폭 열위이나 MDD −20%로 지수보다 얕음. 초과수익원 아닌 저변동·분산 슬리브."},
+  {n:"변동성 관리 (σ타겟 익스포저)",c:"단일팩터·검증",v:"marginal",m:"MDD −25%",ml:"리스크감축",corr:null,t:"NDX 익스포저를 clip(목표σ15%/실현σ, 0~1)로 조절(무레버·월말). 변동성 급등 시 자동 축소.",vt:"<b>marginal(리스크감축).</b> Sharpe 0.79 vs NDX 1.00·CAGR 11% vs 18%로 강세장엔 드래그이나 MDD −25%로 지수(−35%)보다 방어. Sharpe 엔진 아닌 낙폭 관리용."},
+  {n:"Book-to-Price 밸류 (SPX top10)",c:"단일팩터·검증",v:"reject",m:"0.67",ml:"Sharpe",corr:null,t:"장부가/시가(HML 프록시) 상위 10종 롱온리(SPX·월말). Fama-French 밸류의 단변량.",vt:"<b>기각(위험조정 미달).</b> Sharpe 0.67 vs SPX 0.96·CAGR 10.9% vs 15.3%로 명목·위험조정 모두 B&H 열위. 2018+ 성장주도 국면서 밸류 단일팩터의 구조적 약세 확인 — 참고용."},
+  {n:"팩터 모멘텀 (12M 상위2)",c:"단일팩터·검증",v:"reject",m:"0.75",ml:"Sharpe",corr:null,t:"5개 팩터(모멘텀·밸류·퀄·저변동·사이즈) 슬리브의 12M 수익 상위 2개 균등(팩터 타이밍).",vt:"<b>기각(벤치 열위).</b> Sharpe 0.75 vs SPX 0.96. 팩터 로테이션 타이밍은 단순 지수 대비 초과 실패(랩 감사서도 팩터모멘텀 t−2.4 열위 확인) — 참고용."},
  ];
 
   var VMETA={deploy:{lab:"배포",col:"--deploy"},marginal:{lab:"marginal",col:"--marg"},reject:{lab:"기각",col:"--rej"}};
@@ -346,7 +352,7 @@
     return '<svg class="btsvg" viewBox="0 0 '+W+' '+H+'"><line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+y0.toFixed(1)+'" y2="'+y0.toFixed(1)+'" stroke="var(--line)"/>'+bars+'</svg>';
   }
   function btSection(bt,vc){
-    var m=bt.metrics,sg=function(x){return (x>=0?'+':'')+x;};
+    var m=bt.metrics,sg=function(x){return (x>=0?'+':'')+x;},bl=bt.bench_label||'NDX';
     var mg='<div class="btm-grid">'+
       '<div class="btm"><div class="k">CAGR</div><div class="v" style="color:'+vc+'">'+sg(m.cagr)+'%</div></div>'+
       '<div class="btm"><div class="k">Sharpe</div><div class="v">'+m.sharpe+'</div></div>'+
@@ -355,9 +361,9 @@
       '<div class="btm"><div class="k">Calmar</div><div class="v">'+m.calmar+'</div></div>'+
       '<div class="btm"><div class="k">승률</div><div class="v">'+m.hit+'%</div></div></div>';
     return '<div class="btsec"><h4><span>백테스트 성과</span><small>'+bt.start+' ~ '+bt.end+' · gross(무비용)</small></h4>'+mg+
-      '<div class="chartttl">누적수익 (로그축) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted);border-top-style:dashed"></i>NDX</span></div>'+svgEquity(bt,vc)+
+      '<div class="chartttl">누적수익 (로그축) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted);border-top-style:dashed"></i>'+bl+'</span></div>'+svgEquity(bt,vc)+
       '<div class="chartttl">낙폭 (drawdown)</div>'+svgDD(bt)+
-      '<div class="chartttl">연도별 수익 <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted)"></i>NDX</span></div>'+svgYearly(bt,vc)+'</div>';
+      '<div class="chartttl">연도별 수익 <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted)"></i>'+bl+'</span></div>'+svgYearly(bt,vc)+'</div>';
   }
 
   function drawDetail(d){
