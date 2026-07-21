@@ -2,7 +2,7 @@
 
 퀀트 전략 리서치 결과를 공개하는 정적 사이트. **전략 코드·리서치는 비공개 repo(Yeouido)에 있고, 이 repo엔 공개 HTML과 데이터만** 있습니다.
 
-**라이브:** https://globalkbam.github.io/yeodoo-lab/
+**라이브:** https://ydyoon4578.github.io/yeodoo-lab/
 
 ## 구성 (여섯 페이지)
 | 파일 | 내용 |
