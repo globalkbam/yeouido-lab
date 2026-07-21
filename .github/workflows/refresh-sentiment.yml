@@ -1,0 +1,42 @@
+name: Refresh market sentiment (VIX/FRED)
+
+on:
+  schedule:
+    - cron: '30 23 * * *'    # 매일 08:30 KST (23:30 UTC 전일) — stocks(:05/:40)·regime(:15/:50)·holdings(:25)와 분(minute) 모두 어긋나게: 같은 브랜치 동시 push 경쟁 회피
+    - cron: '5 0 * * *'      # 09:05 KST 백업 (23시대 슬롯과 시(hour)까지 분리, 변경 없으면 스킵)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-sentiment
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: pip install --quiet pandas numpy yfinance fredapi
+      - name: Compute market sentiment index
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python build/refresh_sentiment.py
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/sentiment.json)" ]; then
+            git add data/sentiment.json
+            git commit -m "chore(data): 시장 심리 지수 자동 갱신"
+            # stocks/regime 워크플로와 같은 main에 push → 경합 시 리베이스 후 1회 재시도
+            git push || (git pull --rebase origin main && git push)
+            echo "갱신·푸시 완료 → GitHub Pages 자동 재빌드"
+          else
+            echo "변경 없음 — 스킵"
+          fi

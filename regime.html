@@ -92,6 +92,35 @@
   footer a{color:var(--accent);text-decoration:none}
   .empty{font-family:var(--mono);font-size:13px;color:var(--muted);padding:30px;text-align:center}
   @media(max-width:560px){.hrow{grid-template-columns:1fr;text-align:center}.hemoji{font-size:44px}}
+
+  /* ── 시장 심리(sentiment) ── */
+  .sgauge{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 24px;border-left:5px solid var(--sc,var(--accent))}
+  .sghead{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap}
+  .sgnum{font-family:var(--mono);font-size:clamp(34px,7vw,52px);font-weight:700;line-height:1;color:var(--sc,var(--ink));font-variant-numeric:tabular-nums}
+  .sgnum small{font-size:.42em;font-weight:600;color:var(--muted);margin-left:3px}
+  .sglab{font-family:var(--mono);font-size:clamp(16px,3.4vw,21px);font-weight:700;color:var(--sc,var(--ink))}
+  .sgpc{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:auto;text-align:right;line-height:1.7}
+  .sbar{position:relative;margin:22px 0 0;height:14px;border-radius:8px;border:1px solid var(--line);
+    background:linear-gradient(90deg,var(--cold) 0%,color-mix(in srgb,var(--cold) 34%,var(--panel-2)) 26%,var(--panel-2) 50%,color-mix(in srgb,var(--watch) 40%,var(--panel-2)) 74%,var(--hot) 100%)}
+  .smark{position:absolute;top:-7px;width:4px;height:26px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 2px var(--panel);transform:translateX(-2px)}
+  .sticks{display:flex;margin-top:7px}
+  .sticks span{flex:1;text-align:center;font-family:var(--mono);font-size:10px;color:var(--muted);border-left:1px solid var(--line-soft);padding-top:2px}
+  .sticks span:first-child{border-left:0}
+  .sticks span.on{color:var(--ink);font-weight:700}
+  .sprev{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .sprev b{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-2)}
+  .sprev b i{font-style:normal;color:var(--muted);font-weight:400;margin-right:5px}
+  .swarn{margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--hot);background:var(--hot-bg);border-radius:8px;padding:8px 11px}
+  .sfill{height:6px;border-radius:4px;background:var(--panel-2);margin-top:9px;overflow:hidden;border:1px solid var(--line-soft)}
+  .sfill>i{display:block;height:100%;border-radius:4px}
+  .smeta{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ic.pnl{background:var(--panel-2)}
+  .snote{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--watch);border-radius:12px;box-shadow:var(--shadow);padding:15px 18px;font-size:13.5px;color:var(--ink-2);line-height:1.75}
+  .snote b{color:var(--ink)} .snote ul{margin:9px 0 0;padding-left:18px} .snote li{margin:3px 0}
+  .snote .fine{display:block;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  #sentspark{width:100%;height:150px}
+  tr.cur th,tr.cur td{background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+  tr.cur td:first-child,tr.cur th:first-child{background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
   /*a11y-fixes*/
   @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .fchip[aria-pressed="true"]{color:var(--ground)}}
   :root[data-theme="dark"] .fchip[aria-pressed="true"]{color:var(--ground)}
@@ -116,6 +145,8 @@
   </header>
 
   <div id="main"><div class="empty">불러오는 중…</div></div>
+
+  <section id="sent" aria-labelledby="sent-h"><h2 class="lbl" id="sent-h" style="font-size:11px;margin-top:40px">시장 심리 (0~100)</h2><div class="empty">불러오는 중…</div></section>
 
   <footer>
     여두 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="rotation.html">오늘의 로테이션</a> · <a href="sources.html">데이터 출처</a> · <a href="archive.html">기각 아카이브</a><br>
@@ -222,6 +253,194 @@
   }
 
   (function(){var r=document.documentElement,b=el('themebtn');function c(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}b.addEventListener('click',function(){var n=c()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('yeouido-theme',n);}catch(e){}});})();
+})();
+
+/* ═══ 시장 심리 지수 ═══════════════════════════════════════════════
+   data/sentiment.json 은 별도 빌더가 생성한다. 레짐 블록과 독립된 IIFE로 두어
+   한쪽이 실패해도 다른 쪽 렌더가 죽지 않게 한다.                        */
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  var css=function(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();};
+  var host=el('sent'); if(!host)return;
+  var SD=null;
+  // 색은 '좋다/나쁘다'가 아니라 '차갑다(공포)/뜨겁다(탐욕)' 축이다.
+  // 탐욕을 초록으로 칠하면 "탐욕=좋음"으로 읽히는데, 검증상 그런 근거가 없다.
+  var BANDS=[{lo:0,hi:20,ko:'극단공포',c:'--cold'},{lo:20,hi:40,ko:'공포',c:'--cold'},
+             {lo:40,hi:60,ko:'중립',c:'--ink-2'},{lo:60,hi:80,ko:'탐욕',c:'--watch'},
+             {lo:80,hi:100,ko:'극단탐욕',c:'--hot'}];
+  function bandOf(s){for(var i=0;i<BANDS.length;i++){if(s<BANDS[i].hi||i===4)return BANDS[i];}return BANDS[2];}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function n1(v){return v==null||isNaN(v)?'—':(Math.round(v*10)/10).toFixed(1);}
+  function pct(v){return v==null||isNaN(v)?'—':Math.round(v*1000)/10+'%';}
+  function sgn(v){return v==null||isNaN(v)?'—':(v>0?'+':'')+(Math.round(v*100)/100);}
+
+  fetch('data/sentiment.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    if(!d||!d.components){host.innerHTML=head()+'<div class="empty">시장 심리 데이터가 아직 준비되지 않았습니다.</div>';return;}
+    SD=d; render();
+    var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(drawSpark,150);});
+    new MutationObserver(drawSpark).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  }).catch(function(){host.innerHTML=head()+'<div class="empty">시장 심리 데이터를 불러오지 못했습니다.</div>';});
+
+  function head(){return '<h2 class="lbl" id="sent-h" style="font-size:11px;margin-top:40px">시장 심리 (0~100)</h2>';}
+
+  function render(){
+    var d=SD, s=d.score, ok=(s!=null&&!isNaN(s)), b=ok?bandOf(s):null, sc=ok?('var('+b.c+')'):'var(--muted)';
+    var lab=esc(d.label||(ok?b.ko:'산출불가'));
+
+    // ① 게이지
+    var g='<div class="sgauge" style="--sc:'+sc+'" role="img" aria-label="시장 심리 지수 '+
+      (ok?n1(s)+'점, 100점 만점, 0은 극단공포 100은 극단탐욕, 현재 구간 '+lab:'산출 불가')+'">'+
+      '<div class="sghead"><div class="sgnum">'+(ok?n1(s):'—')+'<small>/100</small></div>'+
+      '<div class="sglab">'+lab+'</div>'+
+      '<div class="sgpc">기준일 '+esc(d.as_of||'—')+'<br>'+
+        (d.score_pctl!=null?'전체 이력 대비 하위 '+pct(d.score_pctl):'&nbsp;')+'</div></div>'+
+      '<div class="sbar">'+(ok?'<div class="smark" style="left:'+Math.max(0,Math.min(100,s))+'%"></div>':'')+'</div>'+
+      '<div class="sticks">'+BANDS.map(function(x){
+        return '<span class="'+(ok&&x===b?'on':'')+'">'+x.ko+'<br>'+x.lo+'–'+x.hi+'</span>';}).join('')+'</div>';
+    var pv=d.prev||{};
+    var pl=[['1일 전',pv.d1],['1주 전',pv.w1],['1개월 전',pv.m1]].filter(function(x){return x[1]!=null;});
+    if(pl.length)g+='<div class="sprev">'+pl.map(function(x){
+      var dv=ok?(s-x[1]):null;
+      return '<b><i>'+x[0]+'</i>'+n1(x[1])+(dv==null?'':' ('+(dv>=0?'+':'')+n1(dv)+')')+'</b>';}).join('')+'</div>';
+    if(d.weight_available!=null&&d.weight_available<0.999)
+      g+='<div class="swarn">⚠ 구성요소 일부 결측 — 가용 가중치 '+Math.round(d.weight_available*100)+'%만으로 재정규화한 값입니다'+
+         (d.weight_available<0.5?' (0.5 미만이면 점수를 내지 않습니다)':'')+'.</div>';
+    g+='</div>';
+
+    // ② 컴포넌트 카드
+    function card(x,isPanel){
+      var cs=x.score, cb=(cs!=null&&!isNaN(cs))?bandOf(cs):null;
+      return '<div class="ic'+(isPanel?' pnl':'')+'"><div class="ictop"><span class="icl">'+esc(x.label)+'</span>'+
+        '<span class="icv">'+esc(x.raw_fmt!=null?x.raw_fmt:(x.raw!=null?x.raw:'—'))+'</span></div>'+
+        '<span class="stbadge '+(isPanel?'neut':(cb?(cb.c==='--hot'?'hot':cb.c==='--cold'?'cold':'neut'):'neut'))+'">'+
+          (isPanel?'점수 미반영 · 표시 전용':'가중 '+Math.round((x.weight||0)*100)+'% · 기여 '+n1(x.contrib)+'점')+'</span>'+
+        '<div class="sfill"><i style="width:'+(cs!=null?Math.max(0,Math.min(100,cs)):0)+'%;background:'+(cb?'var('+cb.c+')':'var(--muted)')+'"></i></div>'+
+        '<div class="smeta"><span>심리점수 '+(cs!=null?n1(cs):'—')+'</span>'+
+          '<span>'+(x.pctl!=null?'백분위 '+pct(x.pctl):(x.as_of?esc(x.as_of):''))+'</span></div>'+
+        '<div class="icd">'+esc(x.desc)+'</div></div>';
+    }
+    var comp='<div class="lbl">점수 구성요소 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 가중치는 백테스트 최적화가 아니라 증거 등급으로 사전 결정</span></div>'+
+      '<div class="icards">'+(d.components||[]).map(function(x){return card(x,false);}).join('')+'</div>';
+    if((d.panel||[]).length)
+      comp+='<div class="lbl">참고 패널 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 검증에서 예측력이 확인되지 않아 점수에 넣지 않음(가중 0)</span></div>'+
+        '<div class="icards">'+d.panel.map(function(x){return card(x,true);}).join('')+'</div>';
+
+    // ③ 히스토리 스파크라인
+    var h=(d.history||[]).filter(function(r){return r&&r.score!=null;}), span=h.length?(esc(h[0].dt)+' ~ '+esc(h[h.length-1].dt)):'';
+    var hist=h.length<2?'':'<div class="lbl">심리 지수 히스토리 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· '+span+'</span></div>'+
+      '<div class="histwrap"><canvas id="sentspark" role="img" aria-label="시장 심리 지수 일별 추이 '+span+
+        '. 최근 값 '+(ok?n1(s):'없음')+'점, 기간 최저 및 최고는 아래 범례 참조."></canvas>'+
+      '<div class="leg" id="sentleg"></div></div>';
+
+    // ④ 백테스트
+    var bt=d.backtest||{}, tb='';
+    function btable(title,hint,rows,base,curIdx,extra){
+      if(!rows||!rows.length)return '';
+      return '<div class="lbl">'+title+' <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· '+hint+'</span></div>'+
+        '<div class="tblwrap"><table><thead><tr><th scope="col">구간</th><th scope="col">관측일</th>'+
+        '<th scope="col">20일 후</th><th scope="col">승률</th><th scope="col">60일 후</th><th scope="col">승률</th>'+
+        (extra?'<th scope="col">에피소드</th><th scope="col">t / p (60일)</th><th scope="col">3지표 구간 t / p</th>':'')+'</tr></thead><tbody>'+
+        rows.map(function(r,i){
+          function c(v){return v==null?'—':(v>0?'+':'')+n1(v)+'%';}
+          // 3지표(VIX·기간구조·MOVE)가 모두 가용한 구간의 재검정 — 유의성이 표본 외에서 소멸하는지 그대로 노출
+          var f3=r.full3, f3c='—';
+          if(f3&&f3.t60!=null){
+            var dead=(f3.p60!=null&&f3.p60>=0.05);
+            f3c='<span'+(dead?' style="color:var(--muted)"':'')+'>'+sgn(f3.t60)+' / '+(f3.p60!=null?f3.p60:'—')+
+                (dead?' <b style="font-size:9px">소멸</b>':'')+'</span>';
+          }
+          return '<tr'+(i===curIdx?' class="cur"':'')+'><th scope="row">'+esc(r.bucket)+(i===curIdx?' ◀ 현재':'')+
+            (r.share_pct!=null?'<span style="display:block;font-weight:400;font-size:9.5px;color:var(--muted)">표본 비중 '+n1(r.share_pct)+'%</span>':'')+'</th>'+
+            '<td>'+(r.n!=null?r.n.toLocaleString():'—')+'</td>'+
+            '<td class="pv">'+c(r.fwd20)+'</td><td>'+(r.win20!=null?n1(r.win20)+'%':'—')+'</td>'+
+            '<td class="pv">'+c(r.fwd60)+'</td><td>'+(r.win60!=null?n1(r.win60)+'%':'—')+'</td>'+
+            (extra?'<td>'+(r.episodes!=null?r.episodes:'—')+'</td><td class="pv">'+
+              (r.t60!=null?sgn(r.t60)+' / '+(r.p60!=null?r.p60:'—'):'—')+'</td><td class="pv">'+f3c+'</td>':'')+'</tr>';
+        }).join('')+
+        (base?'<tr><th scope="row">무조건부(전체)</th><td>'+(base.n_days!=null?base.n_days.toLocaleString():'—')+
+          '</td><td class="pv">+'+n1(base.fwd20)+'%</td><td>'+(base.win20!=null?n1(base.win20)+'%':'—')+
+          '</td><td class="pv">+'+n1(base.fwd60)+'%</td><td>'+(base.win60!=null?n1(base.win60)+'%':'—')+'</td>'+
+          (extra?'<td>—</td><td>—</td><td>—</td>':'')+'</tr>':'')+
+        '</tbody></table></div>';
+    }
+    var curLvl=ok?BANDS.indexOf(b):-1;
+    var p=d.score_pctl, curPct=(p==null)?-1:(p<0.10?0:p<0.25?1:p<0.75?2:p<0.90?3:4);
+    tb=btable('레벨 버킷별 이후 수익','SPY '+esc(bt.sample||'')+' · n='+(bt.n_days||'—')+' · 무비용(gross)',bt.buckets,bt.base,curLvl,false)+
+       btable('분위 버킷별 이후 수익 — 에피소드 검정 포함','지수의 확장 백분위 기준 · 겹치는 관측을 에피소드로 묶어 t검정',bt.buckets_pctl,bt.base_pctl,curPct,true);
+
+    // ⑤ 정직 고지
+    var vv=bt.vs_vix_only||{};
+    var note='<div class="lbl">이 지표를 어떻게 읽어야 하나</div><div class="snote">'+
+      '<b>수익 예측 신호가 아닙니다.</b> 오늘 시장이 얼마나 겁먹었는지를 0~100으로 요약한 <b>상태 지표</b>입니다.'+
+      '<ul>'+
+      (vv.ic60_composite!=null?'<li>자체 검증에서 이 합성 지수는 <b>VIX 하나만 보는 것보다 낫지 않았습니다</b> — 60일 IC '+
+        vv.ic60_composite+' vs VIX 단독 '+vv.ic60_vix_only+'. 개선을 주장하지 않습니다.</li>':'')+
+      '<li>레벨 버킷 수익은 단조가 아니라 <b>U자</b>입니다. 가장 나쁜 구간은 극단탐욕이 아니라 <b>20–40 "공포"</b>였고, 에피소드 단위로 묶으면 레벨 버킷의 우위는 대부분 사라집니다.</li>'+
+      '<li>살아남은 것은 분위 하위 구간 하나뿐입니다(에피소드 t≈2.9, 3지표가 모두 가용한 2006-07 이후로 좁혀도 t≈2.4·p≈0.03로 유지). 그마저 <b>위험(변동성·낙폭)도 함께 커집니다</b>.</li>'+
+      '<li><b>"극단탐욕=매도"는 주장하지 않습니다</b> — 전 구간에서는 유의해 보이지만(t≈−2.3), 3개 지표가 모두 존재하는 구간으로 좁히면 <b>초과수익이 0.0%p·p≈0.38로 소멸</b>합니다. 표의 마지막 열에 그대로 표시해 두었습니다.</li>'+
+      '<li>백테스트 초기 약 21%(1998~2003)는 VIX3M·MOVE가 없어 <b>지수가 사실상 VIX 단독</b>이었습니다. 분위 구간 이름은 명목 10%가 아니라 임계값 서술이며, 실제 표본 비중을 각 행에 함께 적었습니다(확장 백분위라 빈도가 균등하지 않음).</li>'+
+      '<li>서브기간별로 부호가 뒤집힌 구간(2004–09)이 있습니다. 안정적인 알파가 아닙니다.</li>'+
+      '</ul>'+
+      (d.note?'<span class="fine">'+esc(d.note)+'</span>':'')+
+      '<span class="fine">'+esc(d.disclaimer||'참고용 리서치입니다. 투자 권유·매매 신호가 아닙니다.')+'</span>'+
+      ((d.sources||[]).length?'<span class="fine">출처 · '+d.sources.map(function(x){
+        return esc(x.name)+'('+esc(x.provider)+', '+esc(x.since)+'~)';}).join(' · ')+'</span>':'')+
+      '</div>';
+
+    host.innerHTML=head()+g+comp+hist+tb+note;
+    drawSpark();
+  }
+
+  function drawSpark(){
+    var cv=el('sentspark'); if(!cv||!SD)return;
+    var h=(SD.history||[]).filter(function(x){return x&&x.score!=null&&!isNaN(x.score);});
+    if(h.length<2)return;
+    var dpr=window.devicePixelRatio||1, W=cv.clientWidth||800, H=cv.clientHeight||150;
+    cv.width=Math.max(1,Math.round(W*dpr)); cv.height=Math.max(1,Math.round(H*dpr));
+    var ctx=cv.getContext('2d'); if(!ctx)return;
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    var padL=30, padR=8, padT=8, padB=16, iw=Math.max(1,W-padL-padR), ih=Math.max(1,H-padT-padB);
+    var y=function(v){return padT+ih*(1-Math.max(0,Math.min(100,v))/100);};
+    var x=function(i){return padL+iw*(h.length<2?0:i/(h.length-1));};
+    // 극단 구간 음영(0-20 공포 / 80-100 탐욕) — 색만이 아니라 좌측 눈금 숫자도 함께 표기
+    ctx.fillStyle=css('--cold-bg')||'#dbe9f0'; ctx.fillRect(padL,y(20),iw,y(0)-y(20));
+    ctx.fillStyle=css('--hot-bg')||'#f3e0db';  ctx.fillRect(padL,y(100),iw,y(80)-y(100));
+    // 눈금
+    ctx.strokeStyle=css('--line-soft')||'#e1e7e5'; ctx.lineWidth=1;
+    ctx.font='9px ui-monospace,monospace'; ctx.fillStyle=css('--muted')||'#888'; ctx.textAlign='right';
+    [0,20,50,80,100].forEach(function(v){
+      var yy=Math.round(y(v))+0.5;
+      ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();
+      ctx.fillText(String(v),padL-5,yy+3);
+    });
+    // 연도 경계
+    ctx.textAlign='center';
+    var lastY=null;
+    for(var i=0;i<h.length;i++){
+      var yr=String(h[i].dt||'').slice(0,4);
+      if(lastY!==null&&yr!==lastY){
+        var xx=Math.round(x(i))+0.5;
+        ctx.strokeStyle=css('--line')||'#d4dcda';
+        ctx.beginPath();ctx.moveTo(xx,padT);ctx.lineTo(xx,padT+ih);ctx.stroke();
+        ctx.fillStyle=css('--muted')||'#888'; ctx.fillText(yr,Math.min(W-padR-12,xx+16),H-4);
+      }
+      lastY=yr;
+    }
+    // 라인
+    ctx.strokeStyle=css('--accent')||'#1E6F6A'; ctx.lineWidth=1.6; ctx.lineJoin='round'; ctx.beginPath();
+    for(var j=0;j<h.length;j++){var px=x(j),py=y(h[j].score); if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+    ctx.stroke();
+    // 마지막 점
+    var lx=x(h.length-1), ly=y(h[h.length-1].score);
+    ctx.fillStyle=css('--ink')||'#141C1A'; ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fill();
+    // 범례
+    var vals=h.map(function(r){return r.score;}), mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+    var lg=el('sentleg');
+    if(lg)lg.innerHTML='<span><i style="background:var(--cold-bg)"></i>0–20 극단공포</span>'+
+      '<span><i style="background:var(--hot-bg)"></i>80–100 극단탐욕</span>'+
+      '<span>기간 최저 '+n1(mn)+' · 최고 '+n1(mx)+' · 최근 '+n1(vals[vals.length-1])+'</span>'+
+      '<span>관측 '+h.length.toLocaleString()+'일</span>';
+  }
 })();
 </script>
 </body>

@@ -56,8 +56,10 @@
   /* 자동갱신(GitHub cron)이 조용히 실패하면 낡은 신호가 최신처럼 보이므로 명시 경고 */
   .stalewarn{color:var(--hot);font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--hot) 45%,transparent);border-radius:5px;padding:2px 7px}
   @media(max-width:560px){.asofbar .asofnote{border-left:0;padding-left:0;flex-basis:100%}}
-  /* 현재 국면 배지 — regime.json에서 라이브 */
-  .rgchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--rgc,var(--ink-2));background:color-mix(in srgb,var(--rgc,var(--muted)) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--rgc,var(--muted)) 40%,transparent);border-radius:999px;padding:3px 11px}
+  /* 현재 국면 배지 — regime.json에서 라이브 / 심리 지수 배지 — sentiment.json에서 라이브 */
+  .rgchip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--rgc,var(--ink-2));background:color-mix(in srgb,var(--rgc,var(--muted)) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--rgc,var(--muted)) 40%,transparent);border-radius:999px;padding:3px 11px}
+  a.rgchip{text-decoration:none;border-bottom:0}
+  a.rgchip:hover{background:color-mix(in srgb,var(--rgc,var(--muted)) 20%,var(--panel))}
 
   .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:40px 0 14px;display:flex;align-items:center;gap:10px}
 
@@ -120,6 +122,7 @@
       <span class="asofnote">가격·테크니컬·EPS·시장국면 통일 · 공매도잔량만 격주(FINRA)</span>
       <span class="stalewarn" id="stalewarn" hidden></span>
       <span class="rgchip" id="rgchip" hidden></span>
+      <a class="rgchip" id="sentchip" href="regime.html" hidden></a>
     </div>
   </header>
 
@@ -210,6 +213,27 @@
       }
     }).catch(function(){});
   }
+  // 시장 심리 지수(0~100) — data/sentiment.json. 상태 요약 지표이며 수익 예측 신호가 아님(랩 자체 검증: VIX 단독 대비 개선 없음).
+  // 색은 냉(공포)↔온(탐욕) 축만 — 탐욕을 초록으로 칠하면 '탐욕=좋음'으로 읽히는데 검증은 반대다
+  // (극단공포 이후 60일 +3.85% > 극단탐욕 +1.89%). regime.html의 색 정책과 동일하게 유지.
+  var SNTC={'극단공포':'#2C6E8F','공포':'#4E90AE','중립':'#5C6B67','탐욕':'#A76A12','극단탐욕':'#A64B3B'};
+  var SNTE={'극단공포':'🧊','공포':'❄️','중립':'◐','탐욕':'🔥','극단탐욕':'🌋'};
+  function sentimentCheck(){
+    var ch=document.getElementById('sentchip'); if(!ch)return;
+    fetch('data/sentiment.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(sn){
+      if(!sn||sn.score==null||!sn.label||!SNTE[sn.label])return;   // 산출불가·결측이면 조용히 숨김 유지
+      ch.style.setProperty('--rgc',SNTC[sn.label]||'var(--muted)');
+      ch.textContent='심리 '+SNTE[sn.label]+' '+sn.label+' '+Math.round(sn.score);
+      var tip='시장 심리 지수 '+Math.round(sn.score)+'/100 ('+sn.label+') · 기준일 '+(sn.as_of||'—')+' · 상태 요약 지표이며 수익 예측 신호가 아닙니다(참고용)';
+      if(sn.weight_available!=null&&sn.weight_available<0.999)tip+=' · 일부 지표 결측(가중 가용 '+Math.round(sn.weight_available*100)+'%)';
+      ch.title=tip;
+      ch.hidden=false;
+      // 기준일이 사이트 기준일과 다르면 화면에 드러낸다(랩 최우선 규칙: 기준일 통일·표기)
+      var ma=document.getElementById('mainasof'), note=document.querySelector('.asofnote');
+      if(note&&ma&&sn.as_of&&ma.textContent&&sn.as_of!==ma.textContent.trim()&&note.textContent.indexOf('시장심리')<0)
+        note.textContent=note.textContent+' · 시장심리 '+sn.as_of;
+    }).catch(function(){});
+  }
   // 전략(2026-07): 추세 전환 '완전 확정' 후 진입 — 홈은 최신 확정 스윙 타점(잠정 제외·날짜 불변)
   function recoVal(x){
     var parts=[x.dt+' · '+(x.ago<=0?'당일':x.ago+'일 전')];
@@ -226,6 +250,7 @@
       recoCol('🔴 스윙 고점매도','확정 고점 — 이익실현·비중축소 참고', h.nsell!=null?h.nsell:(h.sell||[]).length, h.sell||[], 'srec', false);
     staleCheck(h.as_of);
     regimeCheck(h.as_of);
+    sentimentCheck();
   }
   function loadFull(){   // 폴백: 대형 stocks.json에서 직접 계산(확정 bms/sms만)
     fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
