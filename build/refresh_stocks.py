@@ -332,8 +332,10 @@ def main():
     vo_c = cser(["atrp", "vol"])                                     # 변동성
     sect = pd.Series({t: (mem.get(t, {}) or {}).get("sector") or "?" for t in vdf.index}, index=vdf.index)
     oh_rel = (oh_c - oh_c.groupby(sect).transform("median") + 50.0).clip(0, 100)   # 섹터 상대 과열도(피어 대비)
-    # 매수(저점) = 섹터상대 과매도 + 건강한 추세·모멘텀 − 고변동.  매도(고점) = 섹터상대 과매수 + 약한 추세·모멘텀 + 고변동.
-    buy_score = (100 - oh_rel) + 0.6*tr_c + 0.6*mo_c - 0.3*vo_c
+    # 매수 점수 = 추세+모멘텀 (저과열은 점수 아닌 '필터'로만 — 저과열 가중이 수익을 깎는 것을 실측으로 확인).
+    #   그리드 검증(5y 주간): 상승추세∩과열≤60 + tr+mo top8 → ex-SPY20 +2.72%p·hit 56.2%·중앙 roc3m 25%(추격 아님)
+    #   vs 구식(저과열 가중+과열≤45) +1.62%p — 상승추세 평균(+1.84)보다도 낮았음.
+    buy_score = tr_c + mo_c
     sell_score = oh_rel + 0.6*(100 - tr_c) + 0.6*(100 - mo_c) + 0.3*vo_c
     # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
     daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
@@ -575,7 +577,7 @@ def main():
             if buy and sn.get("px") and sn.get("lowpx"): r["ld"] = round((sn["px"]/sn["lowpx"] - 1)*100, 1)  # 최근 스윙저점 대비 %
             return r
         _buyside = [s for s in stocks if s["timing"] in ("매수", "매수우세")]
-        _cand = [s for s in _buyside if (s["comp"].get("overheat") or 100) <= 45]   # ② 과열도 낮음
+        _cand = [s for s in _buyside if (s["comp"].get("overheat") or 100) <= 60]   # ② 과열 아님(≤60 — 45는 수익 저해 실측)
         _cand.sort(key=lambda s: -(s.get("bscore") or 0))
         _sellside = [s for s in stocks if s["timing"] in ("매도", "매도우세")]
         _sellside.sort(key=lambda s: -(s.get("sscore") or 0))
