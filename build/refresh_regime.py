@@ -5,8 +5,10 @@ refresh_regime.py — 시장 국면(레짐) 스냅샷 빌더 (self-contained, FR
 출력: data/regime.json (현재 레짐·축별 지표·히스토리·레짐별 자산 조건부 성과).
 GitHub Actions 주간 크론으로 갱신.
 """
-import os, json
+import os, sys, json
 import numpy as np, pandas as pd
+try: sys.stdout.reconfigure(encoding="utf-8")   # Windows 콘솔 이모지 출력(cp949) 방지
+except Exception: pass
 from fredapi import Fred
 import yfinance as yf
 
@@ -27,7 +29,12 @@ def zscore(s, win):
 def main():
     print("FRED 매크로 로드…")
     S = {c: series(c) for c in ["PAYEMS","UNRATE","CFNAIMA3","SAHMREALTIME","CPIAUCSL",
-                                 "T10YIE","NFCI","BAMLH0A0HYM2","T10Y2Y","T10Y3M","VIXCLS","DFII10","DGS10"]}
+                                 "T10YIE","NFCI","BAMLH0A0HYM2","T10Y2Y","T10Y3M","VIXCLS","DFII10","DGS10",
+                                 # ── 추가 매크로 지표 ──
+                                 "INDPRO","RSAFS","ICSA","UMCSENT",                 # 성장·활동·노동·소비
+                                 "CPILFESL","PCEPILFE","T5YIFR","DCOILWTICO",       # 물가(근원CPI·근원PCE·5Y5Y·유가)
+                                 "BAMLC0A0CM","DTWEXBGS",                            # 금융(IG스프레드·달러)
+                                 "DFF","DGS2","MORTGAGE30US"]}                       # 금리(연방기금·2년·모기지)
     asof = max(s.index.max() for s in S.values() if len(s)).date().isoformat()
 
     # ── 파생 시계열 ──
@@ -35,6 +42,23 @@ def main():
     nfp_3m = S["PAYEMS"].diff().rolling(3).mean()                       # 3M 평균 월 고용증감(천명)
     unrate_chg = S["UNRATE"] - S["UNRATE"].rolling(12).min()           # 실업률 저점대비 상승폭(Sahm 유사)
     last = lambda s: float(s.dropna().iloc[-1]) if len(s.dropna()) else None
+    # ── 추가 지표 파생값 ──
+    indpro_yoy = last((S["INDPRO"]/S["INDPRO"].shift(12)-1)*100)         # 산업생산 YoY(%)
+    rsafs_yoy  = last((S["RSAFS"]/S["RSAFS"].shift(12)-1)*100)           # 소매판매 YoY(%)
+    claims     = last(S["ICSA"].rolling(4).mean())                       # 신규 실업수당청구 4주평균(건)
+    claims     = claims/1000 if claims is not None else None             # → 천건
+    umcsent    = last(S["UMCSENT"])                                      # 미시간 소비심리
+    cpi_core   = last((S["CPILFESL"]/S["CPILFESL"].shift(12)-1)*100)     # 근원 CPI YoY(%)
+    pce_core   = last((S["PCEPILFE"]/S["PCEPILFE"].shift(12)-1)*100)     # 근원 PCE YoY(%, Fed 타깃)
+    t5yifr     = last(S["T5YIFR"])                                       # 5Y5Y 기대인플레(%)
+    wti        = last(S["DCOILWTICO"])                                   # WTI 유가($)
+    ig         = last(S["BAMLC0A0CM"])                                   # IG 회사채 스프레드(%)
+    dxy        = last(S["DTWEXBGS"]); dxy_z = last(zscore(S["DTWEXBGS"], 756))   # 달러지수(broad)
+    dff        = last(S["DFF"])                                          # 연방기금금리(%)
+    dgs10, dgs2 = last(S["DGS10"]), last(S["DGS2"])                      # 국채 10Y·2Y(%)
+    t10y3m     = last(S["T10Y3M"])                                       # 10Y−3M 커브(%p)
+    mort       = last(S["MORTGAGE30US"])                                 # 30년 모기지(%)
+    rnd = lambda v, n=2: round(v, n) if v is not None else None
 
     # ── 축1: 성장 ──
     nfp, sahm, cfnai, dU = last(nfp_3m), last(S["SAHMREALTIME"]), last(S["CFNAIMA3"]), last(unrate_chg)
@@ -83,6 +107,7 @@ def main():
     def stat_nfp(v): return ("견조","good") if (v or 0)>100 else (("위축","hot") if (v or 0)<0 else ("둔화","watch"))
     def stat_sahm(v): return ("침체 트리거","hot") if (v or 0)>=0.5 else ("정상","good")
     def stat_real(v): return ("고실질금리(긴축)","hot") if (v or 0)>2 else (("완화","good") if (v or 0)<0.5 else ("중립","neut"))
+    mk = lambda v, fn: (fn(v) if v is not None else ["—","neut"])   # None-안전 상태 판정
     indicators = [
       {"k":"T10Y2Y","label":"수익률곡선 (10Y−2Y)","group":"금융","v":round(curve,2) if curve is not None else None,"u":"%p","st":stat_curve(curve),"d":"장단기 금리차. 음(역전)이면 역사적으로 침체 선행."},
       {"k":"BAMLH0A0HYM2","label":"하이일드 스프레드","group":"금융","v":round(hy,2) if hy is not None else None,"u":"%","st":stat_hy(hy_z),"d":"하이일드 회사채 가산금리. 확대는 위험회피·신용경색 신호."},
@@ -95,6 +120,25 @@ def main():
       {"k":"UNRATE","label":"실업률 저점대비","group":"성장","v":round(dU,2) if dU is not None else None,"u":"%p","st":("상승(둔화)","hot") if (dU or 0)>=0.5 else ("안정","good"),"d":"12개월 저점 대비 실업률 상승폭(Sahm 룰 유사)."},
       {"k":"CFNAIMA3","label":"시카고 활동지수 (MA3)","group":"성장","v":round(cfnai,2) if cfnai is not None else None,"u":"","st":("위축","hot") if (cfnai or 0)<-0.7 else (("둔화","watch") if (cfnai or 0)<-0.35 else ("확장","good")),"d":"85개 지표 종합 실물활동. 0=추세성장·음(−)이면 둔화."},
       {"k":"SAHMREALTIME","label":"Sahm 침체룰 (실시간)","group":"성장","v":round(sahm,2) if sahm is not None else None,"u":"%p","st":stat_sahm(sahm),"d":"실업률 3M평균이 12M저점 +0.5%p면 침체 개시 신호."},
+      # ── 추가: 성장·활동·소비 ──
+      {"k":"INDPRO","label":"산업생산 (YoY)","group":"성장","v":rnd(indpro_yoy,1),"u":"%","st":mk(indpro_yoy,lambda v:["확장","good"] if v>2 else(["위축","hot"] if v<0 else["둔화","watch"])),"d":"산업생산지수 전년比. 제조·광공업 실물 모멘텀."},
+      {"k":"RSAFS","label":"소매판매 (YoY)","group":"성장","v":rnd(rsafs_yoy,1),"u":"%","st":mk(rsafs_yoy,lambda v:["견조","good"] if v>3 else(["위축","hot"] if v<0 else["둔화","watch"])),"d":"소매판매 전년比(명목). 소비 수요 강도."},
+      {"k":"ICSA","label":"신규 실업수당청구 (4주평균)","group":"성장","v":rnd(claims,0),"u":"천건","st":mk(claims,lambda v:["낮음(견조)","good"] if v<250 else(["상승(악화)","hot"] if v>300 else["보통","neut"])),"d":"주간 신규 실업수당 청구 4주평균. 노동시장 실시간 악화 신호."},
+      {"k":"UMCSENT","label":"소비심리 (미시간)","group":"성장","v":rnd(umcsent,1),"u":"","st":mk(umcsent,lambda v:["양호","good"] if v>90 else(["위축","hot"] if v<70 else["보통","watch"])),"d":"미시간대 소비자심리지수. 낮을수록 소비 위축 우려."},
+      # ── 추가: 물가 ──
+      {"k":"CPILFESL","label":"근원 CPI (YoY)","group":"물가","v":rnd(cpi_core,1),"u":"%","st":mk(cpi_core,lambda v:["고물가","hot"] if v>=4 else(["안정","good"] if v<2.5 else["중간","watch"])),"d":"식품·에너지 제외 근원 소비자물가 전년比. 기조적 인플레."},
+      {"k":"PCEPILFE","label":"근원 PCE (YoY)","group":"물가","v":rnd(pce_core,1),"u":"%","st":mk(pce_core,lambda v:["목표상회","hot"] if v>=3 else(["목표근접","good"] if v<2.5 else["둔화중","watch"])),"d":"연준이 가장 중시하는 근원 개인소비지출 물가(타깃 2%)."},
+      {"k":"T5YIFR","label":"기대인플레 5Y5Y","group":"물가","v":rnd(t5yifr,2),"u":"%","st":mk(t5yifr,lambda v:["높음","watch"] if v>2.5 else(["낮음","good"] if v<2 else["안정","neut"])),"d":"5년 후 5년 기대인플레(포워드). 장기 인플레 기대 앵커링."},
+      {"k":"DCOILWTICO","label":"WTI 유가","group":"물가","v":rnd(wti,1),"u":"$","st":mk(wti,lambda v:["고유가","watch"] if v>90 else(["저유가","good"] if v<60 else["보통","neut"])),"d":"서부텍사스산 원유. 헤드라인 인플레·비용 압력 입력."},
+      # ── 추가: 금융 ──
+      {"k":"BAMLC0A0CM","label":"투자등급 스프레드 (IG)","group":"금융","v":rnd(ig,2),"u":"%","st":mk(ig,lambda v:["확대(경계)","watch"] if v>1.5 else(["타이트","good"] if v<1 else["보통","neut"])),"d":"투자등급 회사채 가산금리. 확대는 신용 스트레스 초기 신호."},
+      {"k":"DTWEXBGS","label":"달러지수 (broad)","group":"금융","v":rnd(dxy,1),"u":"","st":mk(dxy_z,lambda z:["강달러(긴축)","watch"] if z>0.75 else(["약달러(완화)","good"] if z<-0.75 else["보통","neut"])),"d":"광의 무역가중 달러지수. 강달러는 위험자산·신흥국 역풍."},
+      # ── 추가: 금리 ──
+      {"k":"DFF","label":"연방기금금리","group":"금리","v":rnd(dff,2),"u":"%","st":mk(dff,lambda v:["긴축","hot"] if v>=4.5 else(["완화","good"] if v<=2 else["중립","neut"])),"d":"연준 정책금리(실효). 통화정책 스탠스의 기준."},
+      {"k":"DGS10","label":"국채 10년","group":"금리","v":rnd(dgs10,2),"u":"%","st":mk(dgs10,lambda v:["높음","watch"] if v>4.5 else(["낮음","good"] if v<3 else["중립","neut"])),"d":"10년물 국채금리. 장기 할인율·모기지·밸류에이션 기준."},
+      {"k":"DGS2","label":"국채 2년","group":"금리","v":rnd(dgs2,2),"u":"%","st":mk(dgs2,lambda v:["높음","watch"] if v>4.5 else(["낮음","good"] if v<3 else["중립","neut"])),"d":"2년물 국채금리. 향후 정책금리 경로 기대를 반영."},
+      {"k":"T10Y3M","label":"수익률곡선 (10Y−3M)","group":"금리","v":rnd(t10y3m,2),"u":"%p","st":mk(t10y3m,lambda v:["역전(침체선행)","hot"] if v<0 else["정상","good"]),"d":"연준이 중시하는 침체 예측 커브(10Y−3M)."},
+      {"k":"MORTGAGE30US","label":"30년 모기지","group":"금리","v":rnd(mort,2),"u":"%","st":mk(mort,lambda v:["높음","hot"] if v>=7 else(["낮음","good"] if v<5 else["보통","watch"])),"d":"30년 고정 모기지금리. 주택·소비 금융여건의 체감 지표."},
     ]
 
     # ── 히스토리(월별 레짐 라벨, ~15년) + 자산·섹터·팩터 조건부 성과 ──
@@ -105,7 +149,7 @@ def main():
                       "financial": financial, "desc": desc, "strategy": strat},
            "indicators": indicators, "history": hist,
            "asset_perf": perf["macro"], "sector_perf": perf["sector"], "factor_perf": perf["factor"]}
-    json.dump(out, open(OUT, "w"), ensure_ascii=False, separators=(",", ":"))
+    json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"→ {OUT} · 레짐 {emoji}{lab} (성장 {growth}·물가 {inflation}·금융 {financial}) · 기준일 {asof}")
 
 

@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="description" content="여의도 전략 랩 — FRED 무료 매크로로 판별하는 현재 시장 국면(레짐). 성장×물가×금융 3축 분류, 레짐별 자산 조건부 성과.">
 <script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
-<title>여의도 시장 국면 — 매크로 레짐</title>
+<title>여의도 시장 국면 — 매크로 지표</title>
 <style>
   :root{
     --ground:#ECEFEE;--panel:#FBFCFC;--panel-2:#F2F5F4;--line:#D4DCDA;--line-soft:#E1E7E5;
@@ -88,7 +88,7 @@
 <div class="wrap">
   <header class="mast">
     <div class="eyebrow">여의도 전략 랩 · 시장 국면</div>
-    <h1 class="title">시장 국면 — 매크로 레짐</h1>
+    <h1 class="title">시장 국면 — 매크로 지표</h1>
     <p class="lede"><b>FRED 무료 매크로</b>로 현재 시장이 어떤 국면인지 판별합니다 — <b>성장 × 물가 × 금융</b> 3축 분류.
       수익률곡선·신용스프레드·실질금리·금융여건·고용·Sahm 침체룰을 종합해 <b>7개 명명 레짐</b>(Goldilocks·Recovery·Overheating·SoftLanding·LateCycle·Stagflation·Recession)으로 라벨링하고, <b>레짐별 자산·섹터·팩터 조건부 성과(로테이션 보드)</b>로 지금 국면에서 무엇이 유리했는지 보여줍니다.</p>
     <div style="margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--muted)">기준일 <b id="asof" style="color:var(--ink)">—</b> · 출처 FRED + yfinance</div>
@@ -128,7 +128,7 @@
       '<div class="haxes"><span class="ax"><b>성장</b>'+(GKO[rg.growth]||rg.growth)+'</span><span class="ax"><b>물가</b>'+(GKO[rg.inflation]||rg.inflation)+'</span><span class="ax"><b>금융</b>'+(GKO[rg.financial]||rg.financial)+'</span></div></div></div>'+
       '<div class="hstrat"><b>참고 전략</b>'+rg.strategy+'</div></div>';
     // indicator groups
-    var groups=["성장","물가","금융"], ig='';
+    var groups=["성장","물가","금융","금리"], ig='';
     groups.forEach(function(g){
       var items=d.indicators.filter(function(x){return x.group===g;});
       if(!items.length)return;
