@@ -74,6 +74,9 @@
   .flag.deepdip{color:var(--cold);background:var(--cold-bg);border:1px solid color-mix(in srgb,var(--cold) 35%,transparent)}
   .flag.gmilshort{color:var(--cold);background:var(--cold-bg)}
   .item .metric{text-align:right}
+  /* 목표주가 탭은 "목표가 / +XX% · 애널 NN"이라 82px에서 잘린다 — 이 탭에서만 우측 칼럼을 넓힌다 */
+  .item.wide{grid-template-columns:minmax(0,1fr) 108px}
+  .item.wide .nm{overflow:visible}
   .item .mbar{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;margin-top:4px}
   .item .mbar>i{display:block;height:100%;border-radius:3px}
   .item .mv{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
@@ -435,15 +438,13 @@
       }else if(state.preset==='tgt'){
         // 목표주가 탭 — 목표평균·상승여력·커버 애널 수. 상승여력은 무채색(강조하지 않는다: 검증상 최근 하락의 기계적 반영)
         var fu=s.fund||{}, upv=fu.up, tpm=fu.tpm;
-        // 상승여력이 클수록 하락추세일 확률이 높다 — 200일선 이탈 여부를 같은 행에 병기해 오독을 막는다
-        var dn200=(s.flags||[]).indexOf('200일이탈')>=0;
+        // 하락추세 여부는 종목명 옆 flags 배지(200일이탈)로 이미 보이므로 여기선 중복 표기하지 않는다(가독성 우선)
         metric='<span class="metric"><div class="mv" style="font-size:12.5px">'+(tpm!=null?Math.round(tpm).toLocaleString():'—')+'</div>'+
           '<div class="nm" style="text-align:right;margin-top:2px">'+
           (upv!=null?'<b style="color:var(--muted)">'+(upv>=0?'+':'')+Math.round(upv)+'%</b>':'—')+
-          (dn200?' <span style="color:var(--hot);font-weight:700">200MA↓</span>':'')+
           (fu.nan?' · 애널 '+fu.nan:'')+'</div></span>';
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
-      return '<button class="item" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
+      return '<button class="item'+(state.preset==='tgt'?' wide':'')+'" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
         '<span><span class="tkline"><span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
         '<div class="nm">'+esc(s.name||'')+(s.sector?' · '+esc(s.sector):'')+'</div></span>'+metric+'</button>';
     }).join('');
