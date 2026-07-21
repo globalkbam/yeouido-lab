@@ -138,7 +138,7 @@
   function render(){
     var d=DATA, rg=d.regime, rc=RC[rg.label]||css('--accent');
     // hero
-    var hero='<div class="hero" style="--rc:'+rc+'"><div class="hrow"><div class="hemoji">'+rg.emoji+'</div>'+
+    var hero='<div class="hero" style="--rc:'+rc+'"><div class="hrow"><div class="hemoji" aria-hidden="true">'+rg.emoji+'</div>'+
       '<div><div class="hlab">'+rg.label+' · '+(RKO[rg.label]||'')+'</div><div class="hdesc">'+rg.desc+'</div>'+
       '<div class="haxes"><span class="ax"><b>성장</b>'+(GKO[rg.growth]||rg.growth)+'</span><span class="ax"><b>물가</b>'+(GKO[rg.inflation]||rg.inflation)+'</span><span class="ax"><b>금융</b>'+(GKO[rg.financial]||rg.financial)+'</span></div></div></div>'+
       '<div class="hstrat"><b>참고 전략</b>'+rg.strategy+'</div></div>';

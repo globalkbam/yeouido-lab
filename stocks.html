@@ -317,7 +317,7 @@
     var rows=DATA.stocks.filter(function(s){
       if(flag && (s.flags||[]).indexOf(flag)<0)return false;
       if(tim && tim.indexOf(s.timing)<0)return false;
-      if(state.idx.size){var ok=false;s.idx.forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
+      if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
       if(state.q){var hay=(s.t+' '+(s.name||'')+' '+(s.sector||'')).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
       if(sk)return swFresh(s,sk);                 // 스윙: 최근 SW_WIN일 내 마커 보유만
       return s.comp[comp]!=null;
@@ -343,7 +343,7 @@
         metric='<span class="metric"><div class="mv" style="color:var('+mc+');font-size:13px">'+dt+'</div><div class="nm" style="text-align:right;margin-top:2px">'+(ago<=0?'당일':ago+'일 전')+'</div></span>';
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
       return '<button class="item" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
-        '<span><span class="tkline"><span class="tk">'+s.t+'</span>'+s.idx.map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
+        '<span><span class="tkline"><span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
         '<div class="nm">'+(s.name||'')+(s.sector?' · '+s.sector:'')+'</div></span>'+metric+'</button>';
     }).join('');
     if(!listEl._deleg){listEl._deleg=1;listEl.addEventListener('click',function(e){var it=e.target.closest('.item');if(!it)return;
@@ -375,7 +375,7 @@
     var fundHtml=(fu.teps!=null||fu.feps!=null)?'<div class="fund"><div class="fhd"><span>펀더멘털 · EPS·밸류에이션</span><span>yfinance</span></div><div class="fgrid">'+
       fitems.map(function(x){if(x[2]==null)return '';var val=x[0]==="gr"?((x[2]>0?"+":"")+x[2]+"%"):x[2];var col=x[0]==="gr"?(x[2]>0?"var(--good)":"var(--hot)"):"var(--ink)";
         return '<div class="fcell"><div class="fcl">'+x[1]+(x[3]?' <span>'+x[3]+'</span>':'')+'</div><div class="fcv" style="color:'+col+'">'+val+'</div></div>';}).join('')+'</div></div>':'';
-    detailEl.innerHTML='<div class="dtop"><div class="tkrow"><span class="tk">'+s.t+'</span>'+s.idx.map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+'</div>'+
+    detailEl.innerHTML='<div class="dtop"><div class="tkrow"><span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+'</div>'+
       '<div class="nm">'+(s.name||'')+'</div><div class="sec">'+(s.sector||'')+'</div>'+(fl?'<div class="flags">'+fl+'</div>':'')+'</div>'+
       '<div class="chartcard"><div class="charthd"><span class="cl">주가 · <span id="chgd"></span></span><span class="chartbtns" id="chartbtns"></span></div>'+
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
@@ -478,7 +478,7 @@
       pf.appendChild(chip(p[1],cnt,function(){state.preset=p[0];state.sel=null;syncP();render();}));
     });
     if(SHOWN.length && !SHOWN.some(function(p){return p[0]===state.preset;}))state.preset=SHOWN[0][0];
-    var ixf=el('idxf');['NDX','SPX'].forEach(function(x){var cnt=d.stocks.filter(function(s){return s.idx.indexOf(x)>=0;}).length;ixf.appendChild(chip(x,cnt,function(){state.idx.has(x)?state.idx.delete(x):state.idx.add(x);syncP();render();}));});
+    var ixf=el('idxf');['NDX','SPX'].forEach(function(x){var cnt=d.stocks.filter(function(s){return (s.idx||[]).indexOf(x)>=0;}).length;ixf.appendChild(chip(x,cnt,function(){state.idx.has(x)?state.idx.delete(x):state.idx.add(x);syncP();render();}));});
     syncP();render();
     window.addEventListener('resize',function(){if(state.sel)renderChart(state.sel);});
     new MutationObserver(function(){if(state.sel)renderChart(state.sel);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
