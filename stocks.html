@@ -109,6 +109,23 @@
   .fcl{font-size:9px;color:var(--muted);line-height:1.3} .fcl span{opacity:.6}
   .fcv{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--ink)}
   @media(max-width:440px){.fgrid{grid-template-columns:repeat(3,1fr)}}
+  /* 애널리스트 목표주가 — 표기 전용. 랩의 신호가 아니며 정렬·랭킹에 쓰지 않는다(상승여력은 모멘텀과 음상관) */
+  .tpx{padding-bottom:11px}
+  .tpx .fhd b{color:var(--watch);font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:1}
+  .tpbar{position:relative;height:44px;margin:0 6px 6px}
+  .tptrack{position:absolute;left:0;right:0;top:20px;height:6px;border-radius:3px;background:var(--panel-2);border:1px solid var(--line-soft)}
+  .tpband{position:absolute;top:20px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--accent) 26%,transparent)}
+  .tpmk{position:absolute;top:14px;width:2px;height:18px;border-radius:1px;margin-left:-1px}
+  .tpmk.end{top:17px;height:12px;background:var(--line)}
+  .tpmk.avg{background:var(--accent)} .tpmk.cur{background:var(--ink)}
+  .tplb{position:absolute;font-family:var(--mono);font-size:9.5px;font-weight:700;white-space:nowrap;transform:translateX(-50%);font-variant-numeric:tabular-nums}
+  .tplb.up{top:0;color:var(--ink)} .tplb.dn{top:32px;color:var(--accent)}
+  .tplb i{font-style:normal;opacity:.65;font-weight:400}
+  .tprk{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:9px;font-size:10.5px;color:var(--muted);line-height:1.5}
+  .tpnote{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line-soft);font-size:10.5px;color:var(--muted);line-height:1.65}
+  .tpnote b{color:var(--ink-2)}
+  .tpnote ul{margin:5px 0 0;padding-left:15px} .tpnote li{margin-bottom:2px}
+  @media(max-width:440px){.tpbar{margin:0 2px 6px;height:46px}.tplb{font-size:8.5px}.tplb i{display:none}}
   /* 스크롤 컨테이너인데 내부에 포커스 가능한 요소가 없어 키보드로 스크롤 불가 → tabindex 부여 */
   .whybox{margin:0 0 14px;padding:12px 15px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px}
   .whybox h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
@@ -449,6 +466,61 @@
       '매수는 <b>상승추세</b>에서만, 매도는 <b>하락추세</b>에서만 표시하며, 예외적으로 깊은 과매도 뒤 반등이 확인된 경우만 '+
       '<b>고위험 반등</b>으로 따로 표시합니다.</div></div>';
   }
+  // 애널리스트 목표주가 — 표기 전용 블록. bscore/sscore·flags·timing 어디에도 입력하지 않으며 정렬 키로도 쓰지 않는다.
+  // 근거: 상승여력(목표평균/현재가−1)은 우리 매수점수와 스피어만 −0.71, 6개월 모멘텀과 월별 횡단면 평균 −0.60(55개월 중 100% 음수).
+  var RKLAB={strong_buy:["적극매수","good"],buy:["매수","good"],hold:["중립","neut"],underperform:["시장하회","watch"],sell:["매도","hot"],none:["등급없음","neut"]};
+  // 등급 분포는 매 갱신마다 바뀌는 라이브 값 — 하드코딩하면 낡은 수치가 고착된다(적대검토 지적)
+  var _rkc=null;
+  function rkTally(){
+    if(_rkc)return _rkc;
+    _rkc={};(DATA&&DATA.stocks||[]).forEach(function(s){var k=(s.fund||{}).rk;if(k)_rkc[k]=(_rkc[k]||0)+1;});
+    return _rkc;
+  }
+  function rkCount(k){var t=rkTally();return (t[k]||0)+((k==='sell')?(t.strong_sell||0)+(t.underperform||0):0);}
+  function rkSummary(){
+    var t=rkTally();
+    return ['strong_buy','buy','hold','underperform','sell','none'].filter(function(k){return t[k];})
+      .map(function(k){return (RKLAB[k]?RKLAB[k][0]:k)+' '+t[k];}).join(' · ')||'등급 데이터 없음';
+  }
+  function tpBlock(s,fu){
+    var tm=fu.tpm; if(tm==null||!(tm>0))return '';
+    var p=s.pxd||[],cur=null;
+    for(var i=p.length-1;i>=0;i--){if(p[i]!=null){cur=p[i];break;}}
+    if(cur==null||!(cur>0))return '';
+    var lo=(fu.tpl!=null&&fu.tpl>0)?fu.tpl:null, hi=(fu.tph!=null&&fu.tph>0)?fu.tph:null;
+    var up=(fu.up!=null)?fu.up:(tm/cur-1)*100;   // 생성기가 기준일 종가로 계산한 값을 우선 사용(as-of 일치)
+    var lo0=Math.min(cur,tm,lo!=null?lo:cur), hi0=Math.max(cur,tm,hi!=null?hi:cur);
+    var span=hi0-lo0;
+    var pos=function(v){return span>0?Math.max(2,Math.min(98,(v-lo0)/span*100)):50;};
+    var num=function(v){return v==null?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:2});};
+    var b1=pos(lo!=null?lo:Math.min(cur,tm)), b2=pos(hi!=null?hi:Math.max(cur,tm));
+    var bandL=Math.min(b1,b2), bandR=Math.max(b1,b2);   // 하단>상단으로 뒤집힌 이상 데이터 방어
+    var bar='<div class="tpbar"><div class="tptrack"></div>'+
+      '<div class="tpband" style="left:'+bandL+'%;width:'+Math.max(0,bandR-bandL)+'%"></div>'+
+      '<span class="tpmk end" style="left:'+bandL+'%"></span><span class="tpmk end" style="left:'+bandR+'%"></span>'+
+      '<span class="tpmk cur" style="left:'+pos(cur)+'%"></span><span class="tpmk avg" style="left:'+pos(tm)+'%"></span>'+
+      '<span class="tplb up" style="left:'+pos(cur)+'%"><i>현재가 </i>'+num(cur)+'</span>'+
+      '<span class="tplb dn" style="left:'+pos(tm)+'%"><i>목표평균 </i>'+num(tm)+'</span></div>';
+    // 상승여력은 의도적으로 무채색(--ink) — 색으로 호·불호를 암시하면 매매 신호로 오독된다.
+    var items=[["목표 하단",num(lo),"low"],["목표 평균",num(tm),"mean"],["목표 상단",num(hi),"high"],
+               ["상승여력",(up>=0?"+":"")+up.toFixed(1)+"%","up"],["애널리스트",(fu.nan!=null?fu.nan+"명":"—"),"n"]];
+    var grid='<div class="fgrid">'+items.map(function(x){
+      return '<div class="fcell"><div class="fcl">'+esc(x[0])+'</div><div class="fcv">'+esc(x[1])+'</div></div>';}).join('')+'</div>';
+    var rk=RKLAB[fu.rk]||null;
+    var rkHtml='<div class="tprk">'+(rk?'<span class="stbadge '+rk[1]+'">추천등급 '+esc(rk[0])+'</span>':'')+
+      '<span>커버 '+DATA.n_stocks+'종목 중 <b>sell·strong_sell 등급 '+rkCount('sell')+'건</b> ('+rkSummary()+') — 등급 척도 자체가 매수 쪽으로 눌려 있습니다.</span></div>';
+    var note='<div class="tpnote"><b>이 숫자는 애널리스트 컨센서스일 뿐, 여두 랩의 신호가 아닙니다.</b> 매수점수·매도점수·플래그·타이밍 어디에도 반영하지 않으며, '+
+      '상승여력으로 정렬·랭킹하는 기능도 의도적으로 만들지 않았습니다. 랩 자체 검증 결과는 다음과 같습니다(<b>검증 시점 2026-07-22</b> — 아래 통계 수치는 그때의 단면·이력 기준이며 매일 갱신되지 않습니다).'+
+      '<ul>'+
+      '<li><b>상승여력의 64%는 최근 주가 하락의 기계적 반영입니다.</b> 목표가는 약 1~3개월 시차로 주가를 따라오고(과거수익률 63일 구간에서 설명력 최대), 그 사이 하락분이 그대로 "여력"으로 쌓입니다. 가격경로 5개 변수만으로 단면 분산의 R²=0.638이 설명되고, 남은 36%는 애널리스트 등급의 재표현입니다(잔차 상관 −0.67). 밸류에이션(P/E) 설명력은 사실상 0.</li>'+
+      '<li><b>우리 매수점수와 반대로 움직입니다</b> — 스피어만 −0.71, 6개월 모멘텀과는 월별 횡단면 평균 −0.60(55개월 중 100%가 음수), 52주 고점위치와 −0.75. 상승여력 최상위 5분위는 77.5%가 200일선 아래이고(전체 34.1%) 상위 20종목은 90%가 200일선 아래·랩 타이밍의 90%가 매도측입니다. 상승여력 상위를 사는 것은 이 랩이 이미 41건 기각한 <b>떨어지는 칼</b> 매수와 같습니다.</li>'+
+      '<li><b>예측력은 확인되지 않았습니다.</b> 애널리스트 이력(511종목·168,523건)으로 월말 컨센서스를 재구성해 검증한 결과 상승여력 5분위 최상위−최하위 60일 초과수익 +0.83%p(t=0.89, 비유의·단조성 없음), 목표가 상향 이벤트 60일 CAR +0.17%(월 클러스터 t=−0.22), 등급 상향 +0.09%(t=0.85)로 모두 유의하지 않았습니다. 문헌도 같은 방향입니다(Palley·Steffen·Zhang 2019: 컨센서스 목표가 10분위 헤지 12개월 −5.06%, t=−3.34).</li>'+
+      '<li><b>한계 — 순수 forward 검증은 불가합니다.</b> 재구성 이력은 액션을 낸 증권사만 담겨 진짜 컨센서스 스냅샷이 아니고, 포인트-인-타임 보장이 없으며, 유니버스가 현 지수 편입 종목이라 생존편향이 있습니다. 가격 5년은 단일 레짐입니다.</li>'+
+      '<li>목표가 밴드 중앙 폭은 42%이고 <b>현재가가 애널리스트 최저 목표가보다도 낮은 종목이 20.5%</b>인 반면 최고 목표가를 넘은 종목은 0.2%입니다 — 상방으로만 열린 비대칭 구조입니다.</li>'+
+      '</ul>참고용이며 매매 권유가 아닙니다. 출처 yfinance(.info), 기준일 '+DATA.as_of+'.</div>';
+    return '<div class="fund tpx"><div class="fhd"><span>애널리스트 목표주가 <b>참고표기 · 신호 아님</b></span><span>yfinance 컨센서스</span></div>'+
+      bar+grid+rkHtml+note+'</div>';
+  }
   function drawDetail(s){
     if(!s){detailEl.innerHTML='';return;}
     if(!ensureDetail(s)){
@@ -485,7 +557,7 @@
       '<div class="chartcard"><div class="charthd"><span class="cl">주가 · <span id="chgd"></span></span><span class="chartbtns" id="chartbtns"></span></div>'+
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
-      '<div class="comps">'+comps+'</div>'+fundHtml+
+      '<div class="comps">'+comps+'</div>'+fundHtml+tpBlock(s,fu)+
       '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 타점은 ①스윙 전환점(지그재그) ②추세 내 눌림목/반등(K=5) 두 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 표시됩니다. <b>채운 도형(▲▼●)=확정 — 한번 찍히면 날짜 불변. 빈 도형(△▽○)=잠정 — 미확정이라 이동 가능하며, 과거 실측 확정 확률이 이동 확률을 유의하게 웃돌 때만(실측 약 57~91%) 표시합니다(지그재그 저점=진행률 50%+·고점=60%+, 눌림목=2일 유지+). 확정 타점은 잠정 단계를 거쳐 등장합니다(하루 급변으로 건너뛰는 예외만 존재).</b> 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 스윙 탭은 <b>최신 확정 타점순</b> 정렬. <b>참고용 — 확정 저점의 약 50%는 이후 20일간 저점 유지(5y 실측), 확정일 매수 수익은 시장 수준(+1.6% vs +1.4%) — 수익 예측 도구가 아니라 진입 규율·구조 도구입니다. 고점 표식은 하락 예측력이 없어 이익실현 레벨 참고이며, \'확실한 하락\' 신호가 아닙니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA.</div></div>';
     renderChart(s);
   }

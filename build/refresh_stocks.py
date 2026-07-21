@@ -15,6 +15,7 @@ import yfinance as yf
 HERE = os.path.dirname(os.path.abspath(__file__))
 MEMBERS = os.path.join(HERE, "..", "data", "members.json")
 OUT = os.path.join(HERE, "..", "data", "stocks.json")
+TPHIST = os.path.join(HERE, "..", "data", "target_history.json")   # 애널리스트 목표주가 스냅샷 이력(직접 누적)
 PX_MONTHS = 37
 
 FACTORS = {
@@ -209,14 +210,75 @@ def flags(s):
 
 
 def fetch_fund(t):
-    """yfinance .info에서 trailing/forward EPS·PE·유동주식수 (무료). 실패시 None."""
+    """yfinance .info에서 trailing/forward EPS·PE·유동주식수 + 애널리스트 목표주가 (무료). 실패시 None.
+    ⚠ 목표주가는 **같은 .info 응답에서 꺼내므로 추가 API 호출 0**. 새로 Ticker를 만들지 말 것.
+    ⚠⚠ 목표주가/상승여력은 **표기 전용**이다. bscore·sscore·flags·timing 어디에도 넣지 않는다.
+        검증(512종목 전수 + 애널리스트 이벤트 168,523건): 상승여력 단면분산의 64%가 최근 주가경로만으로 설명되고
+        (목표가 갱신 시차 ≈1~3개월), 우리 매수점수와 스피어만 −0.71, 6M 모멘텀과 −0.60(55개월 100% 음수).
+        20/60일 예측력 없음(Q5−Q1 60일 +0.83%, t=0.89). 상승여력 상위20은 90%가 200일선 아래 = 떨어지는 칼."""
     try:
         info = yf.Ticker(t).info
         return t, {"teps": info.get("trailingEps"), "feps": info.get("forwardEps"),
                    "tpe": info.get("trailingPE"), "fpe": info.get("forwardPE"),
-                   "float": info.get("floatShares") or info.get("sharesOutstanding")}
+                   "float": info.get("floatShares") or info.get("sharesOutstanding"),
+                   # ── 애널리스트 목표주가(참고 표기용, 신호 아님) ──
+                   "tpm": info.get("targetMeanPrice"), "tph": info.get("targetHighPrice"),
+                   "tpl": info.get("targetLowPrice"), "nan": info.get("numberOfAnalystOpinions"),
+                   "rk": info.get("recommendationKey")}
     except Exception:
         return t, None
+
+
+# ── 목표주가 이력 누적 ──────────────────────────────────────────────────────
+# 검증에서 확인: 컨센서스 목표가의 포인트-인-타임 스냅샷은 무료로 소급 취득이 불가능하다
+# (yfinance .info는 현재값만, upgrades_downgrades는 '액션을 낸 증권사'만 남는 재구성이라 컨센서스가 아니다).
+# → 미래 forward 검증을 하려면 오늘부터 우리가 직접 쌓는 수밖에 없다. 이 파일이 그 자산이다.
+# 정책: 주 1회(HIST_MIN_DAYS) 또는 목표가가 유의미하게 바뀐 종목이 일정 비율 이상일 때만 스냅샷 추가.
+#       최대 HIST_MAX_SNAPS개 유지(오래된 것부터 폐기) — 파일 무한 증식 방지.
+HIST_MIN_DAYS = 7        # 최소 기록 간격(일)
+HIST_CHG_PCT = 2.0       # '변화'로 볼 목표가 변동폭(%)
+HIST_CHG_FRAC = 0.10     # 변화 종목 비중이 이 이상이면 간격 전이라도 기록
+HIST_MAX_SNAPS = 210     # 스냅샷 상한(주1회 ≈ 4년). 초과분은 오래된 것부터 제거. 512종목 기준 스냅 1개≈6KB → 파일 상한 ≈1.3MB
+
+
+def update_target_history(path, as_of, tp_now):
+    """data/target_history.json 에 {as_of, 티커별 목표평균} 스냅샷을 append. 반환 (기록여부, 사유, 스냅샷수)."""
+    import datetime as _dt
+    doc = {"schema": 1,
+           "note": "애널리스트 컨센서스 목표주가(targetMeanPrice) 스냅샷 이력. 표기·향후 검증 전용이며 신호로 사용하지 않음. "
+                   "주 1회 또는 목표가 변동 종목 비중 10%↑일 때 기록.",
+           "snaps": []}
+    try:
+        old = json.load(open(path, encoding="utf-8"))
+        if isinstance(old, dict) and isinstance(old.get("snaps"), list):
+            doc["snaps"] = old["snaps"]
+    except Exception:
+        pass   # 파일 없음/손상 → 새로 시작(빌드는 절대 중단하지 않는다)
+    if not tp_now:
+        return False, "목표주가 데이터 없음", len(doc["snaps"])
+    snaps = doc["snaps"]
+    if snaps:
+        last = snaps[-1]
+        if last.get("d") == as_of:
+            snaps.pop()   # 같은 기준일 재실행 → 덮어쓰기(중복 방지)
+        else:
+            try:
+                d0 = _dt.date.fromisoformat(last.get("d", ""))
+                gap = (_dt.date.fromisoformat(as_of) - d0).days
+            except Exception:
+                gap = 10**6
+            prev = last.get("tp") or {}
+            common = [k for k in tp_now if k in prev and prev[k]]
+            chg = sum(1 for k in common if abs(tp_now[k] / prev[k] - 1) * 100 >= HIST_CHG_PCT)
+            frac = (chg / len(common)) if common else 1.0
+            if gap < HIST_MIN_DAYS and frac < HIST_CHG_FRAC:
+                return False, f"직전 기록 {gap}일 전 · 변동종목 {frac*100:.0f}% — 기록 생략", len(snaps)
+    snaps.append({"d": as_of, "n": len(tp_now), "tp": tp_now})
+    if len(snaps) > HIST_MAX_SNAPS:
+        del snaps[:len(snaps) - HIST_MAX_SNAPS]
+    doc["snaps"] = snaps
+    json.dump(doc, open(path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    return True, "기록", len(snaps)
 
 
 def fetch_short_interest():
@@ -344,6 +406,7 @@ def main():
         vs = [rp[s[1:]] if s[0] == "+" else 100 - rp[s[1:]] for s in spec if s[1:] in rp and pd.notna(rp[s[1:]])]
         return round(float(np.mean(vs)), 0) if vs else None
     stocks = []
+    tp_hist = {}      # {티커: 목표평균} — data/target_history.json 누적용(오늘부터 쌓아야 미래 검증 가능)
     for t in raw:
         sg, rp = raw[t]["sig"], pct.loc[t]
         sig = {k: {"v": round(float(sg[k]), 2), "pct": round(float(rp[k]), 0), "dt": (si_asof if k in ("dtc", "sipct") else as_of)} for k in FACTORS if k in sg and pd.notna(sg[k])}
@@ -519,6 +582,23 @@ def main():
         fnd = {"teps": r2(fd.get("teps")), "feps": r2(fd.get("feps")), "tpe": r2(fd.get("tpe")), "fpe": r2(fd.get("fpe"))}
         if fnd["teps"] and fnd["feps"] and fnd["teps"] != 0:
             fnd["gr"] = round((fnd["feps"]/fnd["teps"] - 1)*100, 1)   # 12M 선행 EPS 성장률(%)
+        # 애널리스트 목표주가 — 참고 표기 전용(신호·랭킹·정렬 금지). 결측이면 키 자체를 넣지 않는다.
+        _tpm, _tph, _tpl = r2(fd.get("tpm")), r2(fd.get("tph")), r2(fd.get("tpl"))
+        if _tpm and _tpm > 0:
+            fnd["tpm"] = _tpm
+            if _tph and _tph > 0: fnd["tph"] = _tph
+            if _tpl and _tpl > 0: fnd["tpl"] = _tpl
+            _last = _f(raw[t]["close"].iloc[-1])   # 상승여력은 우리 기준일 종가 기준(정보원 currentPrice와 as-of 혼선 방지)
+            if _last == _last and _last > 0:
+                fnd["up"] = round((_tpm/_last - 1)*100, 1)
+            _na = fd.get("nan")
+            # float('nan')은 truthy라 가드를 통과하고 int()에서 ValueError → 잡 전체가 죽는다(적대검토 지적)
+            if _na and _na == _na:
+                try: fnd["nan"] = int(_na)
+                except (ValueError, TypeError): pass
+            _rk = fd.get("rk")
+            if _rk and _rk != "none": fnd["rk"] = str(_rk)
+            tp_hist[t] = _tpm
         _tb = raw[t]["tb"]   # 트리거는 추세 방향에 맞는 것만 노출(상승=매수트리거·하락=매도트리거)
         trig = ([k for k in ("reclaim", "golden", "macd_bull") if _tb.get(k)] if _tb.get("up")
                 else [k for k in ("lose", "death", "macd_bear") if _tb.get(k)])
@@ -534,7 +614,15 @@ def main():
     out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": (si_asof if k in ("dtc", "sipct") else as_of)} for k in FACTORS},
            "fund_defs": {"teps": "주당순이익 TTM (최근 12개월 실적)", "feps": "선행 EPS (향후 12개월 애널리스트 추정)",
-                         "gr": "선행 EPS 성장률 (forward/trailing−1, %)", "tpe": "P/E (TTM)", "fpe": "선행 P/E (forward)"},
+                         "gr": "선행 EPS 성장률 (forward/trailing−1, %)", "tpe": "P/E (TTM)", "fpe": "선행 P/E (forward)",
+                         "tpm": "애널리스트 목표주가 평균 (12개월, 참고용·신호 아님)", "tph": "목표주가 최고", "tpl": "목표주가 최저",
+                         "up": "상승여력 = 목표평균/현재가−1 (%). ⚠ 매수 근거로 쓰지 말 것 — 512종목 전수검증 결과 "
+                               "상승여력 분산의 64%가 '목표가는 1~3개월 시차로 느리게 갱신되는데 주가는 이미 빠진' 기계적 산물이며, "
+                               "우리 매수점수와 상관 −0.71·6개월 모멘텀과 −0.60(55개월 중 100% 음수)이다. "
+                               "상승여력 상위 20종목의 90%가 200일선 아래(하락추세)이고, 20/60일 예측력은 통계적으로 없다(Q5−Q1 t=0.89).",
+                         "nan": "목표주가를 제시한 애널리스트 수",
+                         "rk": "애널리스트 종합 추천등급. ⚠ 512종목 중 sell·strong_sell 0건 — 등급 체계 자체가 매수 편향(buy 349·hold 89·strong_buy 61)."},
+           "fund_note": "목표주가·추천등급은 표기만 하고 신호로 쓰지 않는다(매수/매도 점수·플래그·타이밍에 일절 반영하지 않음). 참고용이며 매매권유가 아니다.",
            "composite_defs": {"overheat": "과열도 — RSI·스토캐스틱·MFI·Williams·%b·52주", "trend": "추세강도 — ADX·이동평균·MACD·Aroon",
                               "momentum": "모멘텀 — 1/3/6M 수익률·상대강도", "volatility": "변동성 — ATR%·실현변동성",
                               "positioning": "포지셔닝 — 공매도 커버일수(격주 FINRA)"},
@@ -566,6 +654,13 @@ def main():
             os.remove(os.path.join(SD_DIR, fn))
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"→ {OUT} ({len(stocks)}종목 · 슬림 {os.path.getsize(OUT)//1024}KB · 상세 {len(_keep)}파일 · 기준일 {as_of})")
+    # ── 목표주가 스냅샷 누적(실패해도 빌드는 계속 — 부가 자산이지 배포물이 아니다) ──
+    try:
+        _wrote, _why, _ns2 = update_target_history(TPHIST, as_of, tp_hist)
+        _sz = os.path.getsize(TPHIST)//1024 if os.path.exists(TPHIST) else 0
+        print(f"목표주가 이력 {'기록' if _wrote else '생략'}({_why}) · 스냅샷 {_ns2}개 · {_sz}KB · 이번 커버 {len(tp_hist)}/{len(stocks)}종목")
+    except Exception as e:
+        print("  목표주가 이력 갱신 실패(무시):", e)
     # ── 홈 전용 초소형 요약(주목종목) — 홈이 대형 stocks.json 대신 이것만 fetch(LCP 개선) ──
     try:
         # 전략 재편(2026-07): 추세 전환 '완전 확정' 후 진입 — 홈은 최신 확정 스윙 타점(잠정 제외, 리페인팅 없음)
