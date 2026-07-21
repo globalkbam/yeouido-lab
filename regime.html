@@ -167,8 +167,8 @@
       var cols=RORDER.filter(function(r){return assets.some(function(a){return perf[a][r]!=null;});});
       assets.sort(function(a,b){return (perf[b][cur]==null?-99:perf[b][cur])-(perf[a][cur]==null?-99:perf[a][cur]);}); // 현재 레짐 성과순
       return '<div class="lbl">'+title+' <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· '+hint+'</span></div>'+
-        '<div class="tblwrap"><table><thead><tr><th>'+col0+'</th>'+cols.map(function(r){return '<th class="'+(r===cur?'cur':'')+'" title="'+(RKO[r]||r)+'">'+r+'</th>';}).join('')+'</tr></thead><tbody>'+
-        assets.map(function(a){return '<tr><td>'+(NM[a]||a)+'</td>'+cols.map(function(r){
+        '<div class="tblwrap"><table><thead><tr><th scope="col">'+col0+'</th>'+cols.map(function(r){return '<th scope="col" class="'+(r===cur?'cur':'')+'" title="'+(RKO[r]||r)+'">'+r+'</th>';}).join('')+'</tr></thead><tbody>'+
+        assets.map(function(a){return '<tr><th scope="row">'+(NM[a]||a)+'</th>'+cols.map(function(r){
           var v=perf[a][r]; if(v==null)return '<td class="'+(r===cur?'cur':'')+'">—</td>';
           var mag=Math.min(1,Math.abs(v)/2.5), c=v>=0?'14,138,84':'166,75,59';
           return '<td class="pv '+(r===cur?'cur':'')+'" style="background:rgba('+c+','+(mag*0.28)+');color:'+(v>=0?'var(--good)':'var(--hot)')+'">'+(v>0?'+':'')+v+'</td>';
