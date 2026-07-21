@@ -183,6 +183,20 @@
   /*touch-targets*/
   @media(pointer:coarse){.fchip,.cbtn,.sortbtn,.item,.cbtn,.pill{min-height:40px}.fchip{padding-top:8px;padding-bottom:8px}}
   /*reduced-motion*/
+  /* 신호 사용법 30초 가이드 */
+  details.howto{margin:16px 0 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+  details.howto summary{cursor:pointer;padding:11px 16px;font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--accent);list-style:none;display:flex;align-items:center;gap:8px;user-select:none}
+  details.howto summary::-webkit-details-marker{display:none}
+  details.howto summary::before{content:"▸";transition:transform .15s}
+  details.howto[open] summary::before{transform:rotate(90deg)}
+  details.howto summary:hover{color:var(--accent-2)}
+  .howto .hbody{padding:2px 16px 14px;display:flex;flex-direction:column;gap:9px}
+  .howto .hrow{font-size:13px;color:var(--ink-2);line-height:1.6}
+  .howto .hrow b.hb{font-family:var(--mono);font-size:11.5px;padding:1px 8px;border-radius:6px;margin-right:7px;white-space:nowrap}
+  .howto .hb.g{color:var(--good);background:var(--good-bg)}
+  .howto .hb.a{color:var(--watch);background:var(--watch-bg)}
+  .howto .hb.m{color:var(--cold);background:var(--cold-bg)}
+  .howto .hrow b:not(.hb){color:var(--ink)}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -194,8 +208,16 @@
     <div class="eyebrow">여두 전략 랩 · 종목 테크니컬</div>
     <h1 class="title">NDX · SPX 종목 시그널</h1>
     <p class="lede">나스닥100·S&amp;P500 구성종목의 <b>과매수/과매도·추세·모멘텀·변동성·거래량·공매도 포지셔닝</b>을 종목별로 — 가격 기반 <b>테크니컬</b>(RSI·MACD·볼린저·ADX…) + <b>EPS 펀더멘털</b>(yfinance) + <b>공매도잔량</b>(FINRA).
-      프리셋으로 <b>매수 신호·매도 신호·과매수·과매도·눌림목·52주돌파·과밀숏</b>을 즉시 스크리닝하고, 종목 클릭 시 가격·거래량 차트와 지표별 <b>값·상태·한 줄 설명</b>이 뜹니다. 매매 타이밍은 <b>스윙 저점 근처 매수·고점 근처 매도</b> — 과열도·추세·모멘텀·변동성으로 걸러 <b>떨어지는 칼(깊은 붕괴)·강세종목 조기매도를 피하고</b>, 시장국면·섹터를 반영합니다.</p>
+      프리셋으로 <b>매수 신호·매도 신호·과매수·과매도·눌림목·52주돌파·과밀숏</b>을 즉시 스크리닝하고, 종목 클릭 시 가격·거래량 차트와 지표별 <b>값·상태·한 줄 설명</b>이 뜹니다. 차트 타점은 <b>스윙 저점 근처 매수·고점 근처 매도</b> 표식 — 과열도·추세·모멘텀·변동성으로 걸러 <b>떨어지는 칼(깊은 붕괴)·강세종목 조기매도를 피하고</b>, 시장국면·섹터를 반영합니다.</p>
     <div class="statline" id="statline"></div>
+    <details class="howto">
+      <summary>두 신호, 뭘 보고 판단하나 — 30초 가이드</summary>
+      <div class="hbody">
+        <div class="hrow"><b class="hb g">🟢🔴 매수·매도 신호</b><b>종목의 추세 상태.</b> 200일선 위(상승추세)＝매수 신호, 아래(하락추세)＝매도 신호 + 전환 트리거. "어떤 종목을 후보로 두고 무엇을 피할까"의 <b>1차 기준</b> — 백테스트 검증(매수 top 20일 초과수익 +2.1%p·하락장 꼬리손실 −24%→−14%, 512종목·5년).</div>
+        <div class="hrow"><b class="hb a">▲▼ 스윙 저점·고점</b><b>차트의 위치 표식.</b> 지그재그 전환점은 확정까지 <b>보통 수 주 지연</b>되는 사후 표시 — 단독 매매신호가 아니라 "지금 가격이 최근 저점/고점 대비 어디쯤인지" 구조 파악용. 특히 <b>고점 표식은 이후 하락을 예측하지 못합니다</b>(자체 검증 — 고점 확정 후 20일 수익 +2.1%로 유니버스 평균 이상).</div>
+        <div class="hrow"><b class="hb m">권장 루틴</b>① <b>매수 신호</b> 탭에서 후보 선별 → ② 차트에서 현재가의 <b>스윙 저점 대비 위치·과열도</b> 확인(저점 근처·과열도 낮음＝진입 유리, 분할 매수) → ③ 보유 종목이 <b>매도 신호</b>(200일선 이탈)로 바뀌면 비중축소. 매도 신호는 공매도 근거가 아닙니다.</div>
+      </div>
+    </details>
   </header>
 
   <div class="controls">
@@ -442,7 +464,7 @@
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+fundHtml+
-      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 타점은 ①스윙 전환점 확정 ②상승추세 눌림목 저점 ③깊은 과매도 뒤 반등 확인(고위험) 세 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 표시됩니다. 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 상단 리스트 랭킹은 과열도(<b>섹터 상대</b>)·추세·모멘텀·변동성 종합. <b>참고용 — 종목선택 예측력은 제한적이며, 매도는 \'확실한 하락\'이 아니라 비중축소 주의입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA.</div></div>';
+      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 타점은 ①스윙 전환점 확정 ②상승추세 눌림목 저점 ③깊은 과매도 뒤 반등 확인(고위험) 세 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 표시됩니다. 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 상단 리스트 랭킹은 과열도(<b>섹터 상대</b>)·추세·모멘텀·변동성 종합. <b>참고용 — 스윙 전환점은 확정까지 보통 수 주 지연되는 사후 구조 표시이고(고점 표식은 하락 예측력 없음), 행동 기준은 매수/매도 신호(추세 상태)가 1차입니다. 종목선택 예측력은 제한적이며, 매도는 \'확실한 하락\'이 아니라 비중축소 주의입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA.</div></div>';
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}
