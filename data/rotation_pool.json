@@ -114,6 +114,28 @@
    "id": "A6"
   },
   {
+   "cat": "A",
+   "cat_label": "S&P 500 초과성과",
+   "name": "경기순환 섹터 로테이션 (Business-Cycle Sector Rotation)",
+   "type": "매크로 연동 섹터 로테이션 (Long-only, GICS 11개 섹터 배분 전환)",
+   "target": "S&P 500 지수 (GICS 11개 섹터 ETF 유니버스: XLK·XLY·XLF·XLI·XLB·XLE·XLU·XLP·XLV·XLC·XLRE)",
+   "purpose": "경기국면(회복·확장·둔화·수축)에 따라 섹터별 이익 민감도가 체계적으로 다르다는 점을 이용해, 국면마다 우위 섹터로 비중을 전환하여 광의 시장(S&P 500) 대비 초과수익을 추구. 국면 전환기에 경기민감(cyclical) ↔ 방어(defensive) 축을 오가며 하방 국면에서 방어적 완충, 상방 국면에서 베타 확대를 노리는 자산군 내 매크로 알파 전략.",
+   "principle": "섹터 이익은 서로 다른 매크로 동인(성장·신용·인플레·금리)에 반응하므로 국면별 상대성과에 규칙성이 존재한다는 가설. Fidelity(Emsbo-Mattingly 등)의 4국면 프레임워크는 1962년 이후 데이터에서 초기(early)엔 금융·경기소비재·부동산(연율 +25/23/20%), 후기(late)엔 에너지·소재, 침체기엔 필수소비재·헬스케어·유틸리티가 상대우위임을 문서화. 학술 근거로 Conover·Jensen·Johnson·Mercer(Journal of Investing, 2008) \"Sector Rotation and Monetary Conditions\"는 33년 데이터에서 Fed 완화기엔 경기민감 섹터, 긴축기엔 방어 섹터로 전환하는 규칙이 낮은 리밸런싱 빈도로도 유의한 초과수익을 냄을 보임(긴축기 방어 로테이션 수익이 벤치마크의 약 2배·리스크는 더 낮음). Jacobsen·Stangl·Visaltanachoti(2009) 계열 연구도 미국시장에서 대안적 로테이션이 벤치마크를 약 +7%p 상회했다고 보고. 국면 판별 신호는 통상 성장(ISM·산업생산·GDP 추세), 신용/통화(Fed 스탠스·수익률곡선), 인플레·고용의 조합.",
+   "entry": "신호: (1) 국면 라벨링 — Fidelity식 4국면(회복/확장/둔화/침체)을 선행지표(수익률곡선 10Y-3M, ISM 제조업, 신용 스프레드, 실업률 추세)로 판정, 또는 Conover류 통화조건(Fed 완화/긴축) 이분법. (2) 각 국면의 역사적 우위 섹터를 동일가중 오버웨이트, 열위 섹터 언더웨이트/배제. 예: 회복→금융·경기소비재·부동산, 확장→기술·산업재, 둔화(late)→에너지·소재·유틸리티, 침체→필수소비재·헬스케어·유틸리티. 리밸런싱: 월말 신호 확인 후 국면 전환 시에만 교체(월 1회 점검, 실제 매매는 국면 변화 시). 회전율이 낮아 5bp 비용 가정에서도 마모가 작음. 실무 강건화: 신호 래그(lag) 부여로 룩어헤드 차단, 국면 오판 방지 위해 히스테리시스(2개월 연속 확인 후 전환) 권장.",
+   "performance": "강점: (1) 국면 판별이 맞을 때 위험조정성과 개선 — 통화조건 기반(Conover 등)은 긴축기 방어전환으로 낮은 변동성에 벤치마크 약 2배 수익, 낮은 회전율로 거래비용 우호적. (2) 섹터 배분이 포트폴리오 수익 변동의 약 25%를 설명(Fidelity)해 레버가 크고 개별종목 리스크가 분산됨. (3) 침체기 방어섹터 완충으로 MDD 축소 잠재력. 약점(균형): (1) 최대 취약점은 국면 타이밍 — 국면 전환은 사후에야 확정되고 실시간 오판이 잦다. Molchanov·Stangl(Int'l J. of Finance & Economics, 2024) \"The myth of business cycle sector rotation\"은 투자자에게 완벽한 국면 타이밍을 '가정으로 부여'해도 체계적 섹터성과가 popular belief이 기대하는 곳에서 나타나지 않으며, 거래비용·타이밍 오차 반영 시 초과수익이 급감한다고 반박(대안적 산업간 예측력도 무작위와 유의차 없음). (2) 확장(mid) 국면은 섹터 리더십이 자주 바뀌어 국면 간 성과차가 가장 작음 — 신호 무력 구간. (3) NBER 국면·통화조건·선행지표 정의에 따라 결과가 흔들리는 정의 민감성. 종합: '완벽한 타이밍'이라는 강가정 없이는 순알파가 얇은, 근거가 양분된 전략.",
+   "recent": "2025~2026 실황(WebSearch): 2026년 들어 시장은 late-cycle 전환 국면으로 해석되며, 2023~25년을 지배한 기술주(XLK, RRG상 Lagging 사분면으로 이동)에서 경기민감+방어로 동시 로테이션이 진행. 에너지·소재·산업재(끈적한 인플레·지정학·리쇼어링 수혜)와 필수소비재·유틸리티·헬스케어(변동성 확대 속 안전선호)가 YTD 아웃퍼폼. BlackRock은 2026 전망에서 '경기민감과 방어의 이례적 동거(the odd couple of 2026)'를 지적 — 실질임금 둔화·저축 소진으로 소비자 압박이 커지며 cyclical과 defensive가 동시 강세를 보이는 late-cycle 전형 패턴. 헬스케어는 규제 리스크 선반영 후 대형주(LLY·JNJ) 랠리로 재부각. 시사점: 교과서적 국면-섹터 매핑이 흔들리는 국면(동시 로테이션)이라, 단순 국면 라벨링보다 상대강도·매크로 게이트 병용이 필요.",
+   "sources": [
+    "Conover, Jensen, Johnson & Mercer (2008), 'Sector Rotation and Monetary Conditions', Journal of Investing 17(1), 34-46 — https://joi.pm-research.com/content/17/1/34",
+    "Molchanov & Stangl (2024), 'The myth of business cycle sector rotation', International Journal of Finance & Economics 29(4), 4419-4442 — https://onlinelibrary.wiley.com/doi/full/10.1002/ijfe.2882",
+    "Fidelity Investments, 'The Business Cycle Approach to Equity Sector Investing' — https://www.fidelity.com/webcontent/ap101883-markets_sectors-content/20.07.0/business_cycle/Business_Cycle_Sector_Approach_2020.pdf",
+    "Fidelity, 'An introduction to sector rotation strategies' — https://www.fidelity.com/learning-center/trading-investing/markets-sectors/intro-sector-rotation-strats",
+    "BlackRock (2026), 'The odd couple of 2026: cyclicals and defensives' — https://www.blackrock.com/us/individual/insights/cyclicals-vs-defensive",
+    "Jacobsen, Stangl & Visaltanachoti, 'Sector Rotation across the Business Cycle' (ResearchGate) — https://www.researchgate.net/publication/315424973_Sector_Rotation_across_the_Business_Cycle",
+    "AlphaBetaStock (2026), 'Sector Rotation Shifts Toward Industrials And Energy As Tech Narrows' — https://alphabetastock.com/sector-rotation-industrials-energy-tech-narrowing-2026/"
+   ],
+   "id": "A7"
+  },
+  {
    "id": "B1",
    "cat": "B",
    "cat_label": "NASDAQ 100 초과성과",
@@ -520,6 +542,121 @@
     "Global M&A Rebound Fueled by AI in 2026, BCG (2026)"
    ],
    "id": "E6"
+  },
+  {
+   "cat": "E",
+   "cat_label": "추가 알파·팩터·이벤트",
+   "name": "발생액 아노말리 (Accruals Anomaly)",
+   "type": "회계기반 이익질(earnings quality) 크로스섹션 팩터 · Long-only(저발생액) 또는 Long-Short 헤지",
+   "target": "미국 전종목(NYSE/AMEX/NASDAQ) 또는 글로벌 대형주. 재무제표(대차대조표·현금흐름표) 확보 가능한 유니버스. 회전율 낮음(연 1회 리밸런싱).",
+   "purpose": "이익의 '질(質)'로 알파 발굴. 보고이익(net income)을 현금이익과 발생액(accrual)으로 분해했을 때, 발생액 비중이 높은 이익은 지속성이 낮아 미래에 실망을 준다는 시장의 체계적 오가격(mispricing)을 수확한다. 발생액이 낮은(현금창출력이 실제 이익을 뒷받침하는) 기업을 롱, 발생액이 높은(이익이 회계적 발생분으로 부풀려진) 기업을 숏/회피.",
+   "principle": "Sloan(1996, The Accounting Review): 이익의 발생액 성분은 현금 성분보다 지속성이 낮으나, 투자자는 이 차이를 무시하고 발생액을 과대평가한다(earnings fixation / functional fixation 가설). 그 결과 고발생액 기업은 다음 해 실적 실망으로 언더퍼폼, 저발생액 기업은 서프라이즈로 아웃퍼폼. 발생액 측정: 대차대조표법 BS_ACC=(ΔCA−ΔCash)−(ΔCL−ΔSTD−ΔITP)−Dep. 이후 개선: Hafzalla·Lundholm·Van Winkle(2011) '퍼센트 발생액'(발생액을 총자산 대신 이익 절대값으로 스케일)이 헤지수익을 키우고 손실기업·특별항목에 강건. 리스크 기반 해석(Khan 2008)과 미스프라이싱 해석이 공존. 최근 Penman·Zhu(2026)는 발생액·PEAD를 다기간 리스크 프라이싱으로 재해석.",
+   "entry": "연 1회(회계연도 종료 후 재무제표 확정 시점, 통상 4~6월 lag) 발생액 지표 계산 → 전 종목 데실(10분위) 정렬 → 최저 발생액 데실 롱(현금이익 질 상위), 최고 발생액 데실 숏(또는 Long-only는 롱만). 동일가중이 표준(소형주 효과 포함). 보유 1년. Sloan 원 논문 기준 상·하위 스프레드 포지션. 실전 이식 시 소형·저유동성 종목 필터, per_f12m류 밸류에이션과 결합 권장. 리밸 저빈도라 회전율·비용 낮음.",
+   "performance": "강점: (1) 원 논문(1962~1991) 롱숏 연 ~10.4%p 헤지수익, 데실간 뚜렷한 단조성(발생액↑→미래수익↓). (2) 저회전(연 1회)으로 거래비용 부담 낮음. (3) 회계 펀더멘털 기반이라 가격·모멘텀 팩터와 상관 낮아 분산효과. (4) 퍼센트 발생액 개선판은 저발생액 롱 사이드에서 수익 대부분 발생 → long-only 친화적. 약점: (1) Green·Hand·Soliman(2011) \"Going, Going, Gone\"—2003년 전후 헤지펀드 차익거래 자본 유입·시그널 축소로 미국 초과수익 사실상 소멸 진단. (2) 수익 상당부분이 소형·저유동성·고특이위험(idiosyncratic risk) 종목에 집중되어 차익거래 한계·실현가능성 낮음(Mashruwala 2006). (3) 데이터 마이닝 논쟁—out-of-sample 재검증에서 유의하게 음(-)의 성과 보고 사례. (4) 숏 사이드 실행난도·차입비용. 반론: Lev·Nissim(2006)은 크기가 줄지 않고 지속된다 주장하여 학계 결론 미합의.",
+   "recent": "2020년대 들어 '사망 vs 지속' 논쟁이 이어짐. 미국 대형주에서는 헤지펀드 아비트리지·유동성 개선으로 약화되었으나, 유동성이 낮은 세그먼트·글로벌(UK 등) 시장에서는 잔존 증거(Papanastasopoulos 2020, UK 퍼센트 발생액). 2024~2025 anomaly-decay 문헌은 발생액을 '차익거래로 감쇠된 대표 아노말리'로 분류. 2026년 6월 Penman·Zhu는 발생액·PEAD를 단일기간 모형이 못 잡는 다기간 리스크로 재해석하는 프레임 제시(미스프라이싱이 아닐 수 있다는 리스크 기반 반론 강화). 실무 시사점: 단독 알파보다는 퀄리티/이익질 팩터 스택(현금기반 영업수익성 Ball et al. 2016 등)의 한 구성요소로, 저유동성·소형 틸트를 통제하며 사용하는 것이 현실적.",
+   "sources": [
+    "Sloan (1996), 'Do Stock Prices Fully Reflect Information in Accruals and Cash Flows about Future Earnings?', The Accounting Review",
+    "Quantpedia — Accrual Anomaly (https://quantpedia.com/strategies/accrual-anomaly)",
+    "Green, Hand & Soliman (2011), 'Going, Going, Gone? The Apparent Demise of the Accruals Anomaly', Management Science (https://pubsonline.informs.org/doi/10.1287/mnsc.1110.1320)",
+    "Hafzalla, Lundholm & Van Winkle (2011), 'Percent Accruals', The Accounting Review / SSRN (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1558464)",
+    "Lev & Nissim (2006), 'The Persistence of the Accruals Anomaly', Contemporary Accounting Research (http://www.columbia.edu/~dn75/The%20Persistence%20of%20the%20Accruals%20Anomaly%20-%20publication.pdf)",
+    "Dechow, Khimich & Sloan (2011), 'The Accrual Anomaly', SSRN (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1793364)",
+    "Mashruwala, Rajgopal & Shevlin (2006), 'Why is the accrual anomaly not arbitraged away?', Journal of Accounting and Economics",
+    "Papanastasopoulos (2020), 'Percent accruals and the accrual anomaly: evidence from the UK', Accounting Forum (https://www.tandfonline.com/doi/full/10.1080/01559982.2020.1736758)",
+    "Penman & Zhu (2026), 'Explaining Two Prominent Accounting Pricing Anomalies: The Accrual Anomaly and PEAD'",
+    "AlphaArchitect — 'Two Accounting Anomalies: One May Be Risk, the Other Is Mispricing' (https://alphaarchitect.com/accounting-anomalies/)"
+   ],
+   "id": "E7"
+  },
+  {
+   "cat": "E",
+   "cat_label": "추가 알파·팩터·이벤트",
+   "name": "자산성장 아노말리 (Asset Growth Effect)",
+   "type": "횡단면 팩터 (기업 투자·대차대조표 성장 기반, 롱온리 또는 롱숏)",
+   "target": "미국 대형주 유니버스(NDX/SPX)에 이식 가능한 롱온리 스크린. 원논문은 미국 전종목·국제 24개국 대상. 연 1회 회계데이터 기반 리밸.",
+   "purpose": "기업의 총자산 증가율(과잉투자 대리변수)이 미래 수익률과 음(-)의 관계라는 아노말리를 이용해, 자산을 적게 늘린(보수적 투자) 기업을 롱하여 추가 알파를 확보. 팩터모델의 투자팩터(CMA / I/A)에 대응하는 독립 알파원으로, 기존 풀의 퀄리티·밸류·모멘텀과 상관이 낮은 팩터 다변화 목적.",
+   "principle": "Cooper, Gulen, Schill(2008, Journal of Finance 63(4):1609-1651)는 총자산 성장률(TAG = (총자산_t − 총자산_t-1)/총자산_t-1)이 이후 1년 횡단면 수익률의 강한 음의 예측변수임을 발견. 최저 자산성장 십분위가 최고 십분위를 미국에서 연 약 7~8%p(동일가중 스프레드는 약 20%) 초과. 대형주에서도 예측력이 유지된다는 점이 핵심 기여. 해석은 두 갈래: (1) 행태적 과대추정 — 투자자가 과거 성장을 미래로 과도 외삽하여 고성장·과잉투자 기업을 고평가(저자산성장주는 저평가), (2) 합리적 q이론/투자CAPM — 할인율이 낮은 기업일수록 투자를 늘리므로 저투자 기업의 기대수익이 높음. 이 팩터는 Fama-French 5팩터의 CMA(Conservative Minus Aggressive)와 Hou-Xue-Zhang q팩터의 투자팩터(I/A)로 제도권 편입됨. 국제 증거는 Watanabe, Xu, Yao, Yu(2013, JFE) \"The asset growth effect: Insights from international equity markets\"가 24개국서 확인.",
+   "entry": "시그널: 직전 회계연도 총자산 YoY 성장률(TAG). 낮을수록(자산 축소·저투자) 매력. 랭크 후 하위 십분위(또는 하위 20~30%) 롱. 원논문은 십분위 롱숏(저자산성장 롱 − 고자산성장 숏), 동일가중과 가치가중 모두 검증(동일가중 스프레드가 훨씬 큼 — 소형주 편중 신호). 리밸런싱: 연 1회, 회계연도 종료 후 재무제표 공시 지연을 고려해 t년 6월 시점 포트폴리오 구성(Fama-French 컨벤션). 롱온리 대형주 이식 시: NDX/SPX 멤버 중 TAG 최저 N종목 동일가중, 연 1회 리밸, PIT 멤버십·5bp 비용 적용. 극단적 자산급증(대형 M&A·유상증자)·급감(자산매각·감손) 특이치 필터 권장.",
+   "performance": "강점: 학술적으로 매우 강건한 앵커 팩터(FF5·q팩터에 정식 편입), 40여 년·다국가서 재현, 대형주에서도 작동해 유동성·집행 부담이 낮음, 저PB·저투자 특성상 밸류/퀄리티와 부분 중첩되지만 독립 알파를 남김. 약점: (1) 수익 감쇠 — Cooper·Gulen·Ion(2023, JFE) \"The use of asset growth in empirical asset pricing models\"는 표본구성·기간에 따라 프리미엄이 약화됨을 보고, 투자팩터(CMA) 파워는 대략 2004년 이후 상당히 소진. (2) 효과가 소형주·차익거래 제약(고변동·낮은 애널리스트 커버리지) 기업에 집중 → 대형주 롱온리로 좁히면 스프레드가 축소. (3) 동일가중>>가치가중 격차가 커서 소형주 프리미엄 오염 위험 → 대형 유니버스 이식 시 기대 알파 하향 조정 필수. (4) 순수 저자산성장 롱은 성장주 랠리(2020~2021, 2023~2024 대형 성장주 주도장)에서 지속 열위 가능 → 국면 의존.",
+   "recent": "2024~2025: (1) Guo et al.(2024, Economics Letters) \"New findings on the asset growth anomaly: the joint effect of profitability and financing constraints\" — 저자산성장 롱숏의 위험조정 초과는 고수익성·고재무제약 기업에서 특히 유의, 무조건적 스프레드보다 조건부 정제가 필요함을 시사(어닝/퀄리티와의 상호작용). (2) 팩터 로테이션(2025): 2025년 연중은 모멘텀·성장 주도, 퀄리티·밸류·배당은 부진 → 저투자/CMA 계열 순풍 약함. 다만 2025년 4분기에는 밸류·퀄리티·배당이 반등하며 성장·모멘텀 둔화(팩터 리더십 반전 신호). (3) 학계 컨센서스는 \"아노말리 소멸론\"과 \"구성·조건부 존속론\"이 병존 — 단순 무조건 롱숏의 알파는 감쇠, 수익성·재무제약·밸류와 상호작용시킨 정제형은 여전히 유의. KB 이식 시 무조건 저자산성장보다 퀄리티·수익성 게이트를 얹은 조건부 버전을 백테스트 우선순위로 검토 권장(단, 게이트 집중은 ex-2026·국면 붕괴 리스크 — 기존 리서치 교훈대로 부트스트랩·적대검증 필수).",
+   "sources": [
+    "Cooper, M. J., Gulen, H., & Schill, M. J. (2008), 'Asset Growth and the Cross-Section of Stock Returns', Journal of Finance 63(4):1609-1651 — https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1540-6261.2008.01370.x",
+    "Cooper, M. J., Gulen, H., & Ion, M. (2023), 'The use of asset growth in empirical asset pricing models', Journal of Financial Economics — https://www.sciencedirect.com/science/article/abs/pii/S0304405X23001861 (초고 PDF: https://finance.unibocconi.eu/sites/default/files/files/media/attachments/Cooper_Gulen_Ion_Manuscript20190507084119.pdf)",
+    "Watanabe, Xu, Yao, Yu (2013), 'The asset growth effect: Insights from international equity markets', Journal of Financial Economics — https://www.sciencedirect.com/science/article/abs/pii/S0304405X12002486",
+    "Fama, E. & French, K. (2015), 'A five-factor asset pricing model' (CMA 투자팩터) — https://www.sciencedirect.com/science/article/abs/pii/S0304405X14002323",
+    "Hou, Xue, Zhang / Lu Zhang (2019 NBER w26538), 'q-Factors and Investment CAPM' (I/A 투자팩터) — https://www.nber.org/system/files/working_papers/w26538/w26538.pdf",
+    "Guo et al. (2024), 'New findings on the asset growth anomaly: the joint effect of profitability and financing constraints', Economics Letters 244 — https://ideas.repec.org/a/eee/ecolet/v244y2024ics0165176524005007.html",
+    "Quantpedia, 'Asset Growth Effect' — https://quantpedia.com/strategies/asset-growth-effect",
+    "Certuity, 'Q1 2026 Risk Factor Performance Review' (2025 팩터 로테이션) — https://certuity.com/research/q1-2026-risk-factor-review/"
+   ],
+   "id": "E8"
+  },
+  {
+   "cat": "E",
+   "cat_label": "추가 알파·팩터·이벤트",
+   "name": "변동성 리스크 프리미엄 (VRP / 숏볼)",
+   "type": "옵션 매도 기반 리스크 프리미엄 수취 (변동성 캐리)",
+   "target": "S&P500 등 주가지수 옵션(SPX), 필요시 VIX 선물·개별주 옵션",
+   "purpose": "주식 지수 옵션의 내재변동성(IV)이 사후 실현변동성(RV)보다 구조적으로 높게 형성되는 스프레드(변동성 리스크 프리미엄)를 옵션 매도로 수취해, 주식 대비 유사 수익·저변동성의 '변동성 캐리' 알파를 얻는 것. 방향성 베팅이 아니라 보험 판매자로서 위험 프리미엄을 회수하는 income/carry 성격이며, 주식과 부분적으로만 겹치는 별도 수익원 확보가 목적.",
+   "principle": "투자자들의 하락·꼬리위험 헤지 수요와 위험회피 때문에 옵션 IV가 미래 RV를 평균적으로 초과(S&P500 기준 약 2~4 변동성포인트) 상방편향된다. Carr-Wu(2009, RFS)는 지수 분산스왑 수취(variance swap)가 유의하게 음(-)의 초과수익(=매도자에겐 양(+))을 갖고 개별주는 0 또는 양임을 실증했고, Bollerslev-Tauchen-Zhou(2009, RFS)는 IV-RV 분산 프리미엄이 향후 지수 수익률을 예측(높은 VRP→높은 미래수익)함을 보였다. 곧 VRP는 시간가변적 경제 불확실성/소비변동에 대한 보상이라는 균형이론 근거를 갖는다. 실무적으로 풋/스트래들·스트랭글 매도, 분산스왑, VIX 선물 롤다운(콘탱고)으로 수취한다.",
+   "entry": "유니버스: SPX 지수 옵션(대표 벤치마크 CBOE PUT=월물 ATM 풋 매도·담보 T-bill, PUTW/WPUT=주간). 진입: 매월/매주 만기 롤 시 등가격 근처(델타 0.3~0.5) 풋 또는 스트랭글 매도, 명목=담보자산 규모의 풀커버(무레버리지). 사이징은 VIX 연동(고VIX→명목 축소, Kelly/하이브리드). 최근 연구는 0~5DTE 초단기·심외가격(far-OTM)이 세타붕괴(∝1/√잔존)로 위험조정 수익 우수. 리스크관리 필수: (i)롱 VIX콜·롱 원월풋 꼬리헤지, (ii)VIX 텀구조 콘탱고일 때만 숏볼 게이트, (iii)손실확대 시 명목 축소. 리밸: 월/주/일 만기 롤.",
+   "performance": "강점: CBOE PUT 지수는 32년+ S&P500과 유사한 연복리수익을 훨씬 낮은 표준편차로 달성(Sharpe 약 0.65 vs 지수 0.49). 하락·횡보장 초과(대형 하락월 -2.9% vs 지수 -5.4%), 꾸준한 캐리성 현금흐름. 약점(균형): 강세장 상방절단으로 열위(대형 상승월 +2.1% vs 지수 +4.1%), 음의 왜도·크래시 리스크 큼. 수익분포='잦은 소폭이익+드문 대손실'의 숏감마/숏베가로 시장과 양의 상관(스트레스 시 손실 급증). 미헤지 나이브 숏풋은 급락 시 큰 드로다운→롱VIX콜+롱풋 이중헤지로 크게 완화. 규율 없는 레버리지 숏볼은 파멸적(2018-02 Volmageddon서 XIV 하루 -90%대, $19억→$0.63억 소멸).",
+   "recent": "2025~2026 핵심은 0DTE 폭증: SPX 옵션 거래의 약 59%(하루 약 230만 계약)가 0DTE로 숏볼 수취가 초단기·심외가격으로 이동. 학술(2025-08 arXiv 'Sizing the Risk')은 0~5DTE far-OTM SPXW 풋라이팅에서 연 14~23%·벤치마크 대비 낮은 변동성/드로다운, 2024 저변동성 국면 하이브리드 사이징의 드로다운 통제 효과를 보고. 다만 CFA/FAJ(2021) Volmageddon 연구가 재확인하듯 레버리지 숏볼 ETP의 피드백루프 붕괴 위험 상존→무레버리지 풀커버+텀구조 게이트+꼬리헤지가 실무 컨센서스. (주의: 풀의 테일헤지/변동성타게팅과 인접하나 본 전략은 프리미엄 매도·수취로 방향이 반대인 별개 수익원.)",
+   "sources": [
+    "Carr, P. & Wu, L. (2009), 'Variance Risk Premiums', Review of Financial Studies 22(3):1311-1341 — https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1359527",
+    "Bollerslev, T., Tauchen, G. & Zhou, H. (2009), 'Expected Stock Returns and Variance Risk Premia', Review of Financial Studies 22(11):4463-4492 — https://academic.oup.com/rfs/article-abstract/22/11/4463/1565787",
+    "Bondarenko, O. (2019), 'Historical Performance of Put-Writing Strategies', Cboe/SSRN — https://cdn.cboe.com/resources/education/research_publications/PutWriteCBOE19_v14_by_Prof_Oleg_Bondarenko_as_of_June_14.pdf",
+    "Cboe, 'CBOE S&P 500 PutWrite Index (PUT) Factsheet, as of June 30, 2026' — https://cdn.cboe.com/resources/indices/factsheet/CboeGlobalIndices_PUT-Index.pdf",
+    "'Sizing the Risk: Kelly, VIX, and Hybrid Approaches in Put-Writing on Index Options' (2025), arXiv:2508.16598 — https://arxiv.org/html/2508.16598v1",
+    "Iyer, A., 'Shorting Volatility: Harvesting the Risk Premium and Managing Tail Risk', SSRN — https://papers.ssrn.com/sol3/Delivery.cfm/5464595.pdf",
+    "CFA Institute / Financial Analysts Journal (2021), 'Volmageddon and the Failure of Short Volatility Products' — https://rpc.cfainstitute.org/research/financial-analysts-journal/2021/volmageddon-failure-short-volatility-products",
+    "Quantpedia, 'Volatility Risk Premium Effect' — https://quantpedia.com/strategies/volatility-risk-premium-effect",
+    "ainvest (2026), '0DTE Volatility Drives Market Strategies in 2026' — https://www.ainvest.com/news/0dte-volatility-drives-market-strategies-2026-2602/"
+   ],
+   "id": "E9"
+  },
+  {
+   "cat": "E",
+   "cat_label": "추가 알파·팩터·이벤트",
+   "name": "페어 트레이딩 / 통계적 차익거래 (Cointegration Pairs Trading)",
+   "type": "시장중립 상대가치 롱숏 (Statistical Arbitrage)",
+   "target": "역사적으로 동조성이 높은(공적분·근접거리) 종목 페어. 실무는 동종섹터·ETF·듀얼상장주 등 펀더멘털 근접 대체재 페어 유니버스",
+   "purpose": "두 자산의 상대가격(스프레드)이 일시적으로 벌어졌다가 역사적 평균으로 되돌아오는 평균회귀를 포착. 저평가된 쪽을 롱, 고평가된 쪽을 숏하여 시장방향(베타)에 무관한 순수 알파를 추구하는 시장중립 상대가치 차익거래. 지수·팩터 익스포저와 낮은 상관을 노려 포트폴리오 분산·대안 알파원으로 편입",
+   "principle": "Gatev·Goetzmann·Rouwenhorst(2006, RFS 19:797-827)의 거리법(distance method): 12개월 형성기간 동안 정규화 누적수익 경로의 유클리드 거리 최소 페어를 선택하고, 6개월 거래기간에 스프레드가 형성기 표준편차의 ±2σ 벌어지면 진입, 수렴(스프레드 0교차) 시 청산. 이론적 근거는 공적분(cointegration): 각 가격은 랜덤워크로 발산해도 두 가격의 선형결합은 정상성(stationary)을 가져 평균 주변에서 진동. 저자들은 초과수익이 페어에 내재한 공통요인(common factor) 노출로 설명되며 전통적 리스크로는 설명되지 않는다고 봄. 실무 계량화는 z-score, 스프레드 반감기(half-life)로 평균회귀 속도를 측정",
+   "entry": "형성기 12개월 정규화가격 거리 최소 상위 5·20 페어 선택 → 거래기간 6개월. 진입: 스프레드 z-score ±2σ 초과(저평가 롱/고평가 숏, 달러중립). 청산: z=0(스프레드 수렴) 또는 거래기간 종료. 실무 필터: 스프레드 반감기 5~30일, 공적분(Engle-Granger/Johansen) 검정 통과 페어만. 리밸런싱은 월 단위 롤링으로 페어풀 갱신, 자기금융(self-financing) 롱숏",
+   "performance": "[강점] GGR 원논문 1962~2002 상위20 페어 연 최대 ~11%(월 0.86%, 1962~88기) 초과수익, 보수적 거래비용 상회. 시장중립이라 지수·팩터와 저상관 → 분산효과 우수. Do·Faff(2010)도 GFC 등 장기 시장혼란기에 강한 성과(위기 헤지 특성) 확인. [약점] 심각한 성과 감쇠: Do·Faff 복제 결과 월 초과수익이 1962~88 0.86% → 1989~2002 0.37% → 2003~09 0.24%로 급락. 원인은 퀀트 헤지펀드 경쟁 심화(alpha crowding)와 시장효율 상승, 그리고 수렴하지 않는(nonconverging) 페어 비중 증가. 거래비용 반영 시 GGR 기본법은 대체로 무수익화. 숏 차입비용·역사관계 붕괴(구조변화)·꼬리위험(스프레드 발산 지속) 상존",
+   "recent": "2025~26 학계·실무는 단순 거리법의 쇠퇴를 전제로 적응형·정교화로 이동. Journal of Asset Management(2025, Springer, s41260-025-00416-0)은 유사 ETF 간 공적분 페어 발굴로 접근성·안정성 개선을 제시. ETF 30페어(2000~2024) 연구는 z-score 임계 하향 시 거래기회·수익·Sharpe 증가하나 변동성·MDD도 확대되어, 공적분이 유지되는 짧은 창(window)이 장기 수익을 제약 → 적응적 페어선택·강한 리스크관리 필요를 강조. 강화학습 기반 통계차익(arXiv 2403.12180)과 copula 기반 페어(MDPI JRFM 2025, 18/9/506) 등 비선형·확률의존구조 확장이 활발. 실무 대형 스탯아브(D.E. Shaw·Citadel·Renaissance)는 다변량·고빈도로 진화",
+   "sources": [
+    "Gatev, Goetzmann & Rouwenhorst (2006) 'Pairs Trading: Performance of a Relative-Value Arbitrage Rule', Review of Financial Studies 19(3):797-827 — https://ideas.repec.org/a/oup/rfinst/v19y2006i3p797-827.html (원 NBER w7032: https://www.nber.org/papers/w7032)",
+    "Do & Faff (2010) 'Does Simple Pairs Trading Still Work?', Financial Analysts Journal 66(4) — https://www.tandfonline.com/doi/abs/10.2469/faj.v66.n4.1",
+    "Cointegration-based pairs trading: identifying and exploiting similar ETFs, Journal of Asset Management (2025) — https://link.springer.com/article/10.1057/s41260-025-00416-0",
+    "Advanced Statistical Arbitrage with Reinforcement Learning, arXiv:2403.12180 — https://arxiv.org/pdf/2403.12180",
+    "Performance of Pairs Trading Strategies Based on Various Copula Methods, JRFM 18(9):506 (2025) — https://www.mdpi.com/1911-8074/18/9/506",
+    "Examining Pairs Trading Profitability, Yale Economics (2024) — https://economics.yale.edu/sites/default/files/2024-05/Zhu_Pairs_Trading.pdf"
+   ],
+   "id": "E10"
+  },
+  {
+   "cat": "E",
+   "cat_label": "추가 알파·팩터·이벤트",
+   "name": "내부자 매수 추종 (Insider Buying / Form 4 Net Purchases)",
+   "type": "이벤트·시그널 기반 롱온리 종목선택 (알파 팩터)",
+   "target": "미국 상장주식 (소형·중형주 틸트 권장), 유니버스 예: Russell 2000/3000 또는 SPX·NDX 편입 종목 중 Form 4 신고 발생 종목",
+   "purpose": "기업 임원·이사·10% 이상 대주주가 자기 회사 주식을 자기 돈으로 공개시장 매수(SEC Form 4, 거래코드 P)한 사실을 신호로 삼아, 정보우위를 가진 내부자를 따라 매수함으로써 시장·벤치마크 대비 초과수익(알파)을 추구. 내부자는 자사 펀더멘털에 대한 사적 정보를 보유하며, 특히 '매도'가 아닌 '매수'가 정보적으로 유의하다는 비대칭성을 활용.",
+   "principle": "학술 근거가 두터운 앵커 아노말리. (1) Lakonishok & Lee(2001, Journal of Finance, \"Are Insider Trades Informative?\"): 1975~1995 데이터에서 내부자 순매수 상위 기업이 순매도 기업 대비 향후 12개월 raw +7.8%p, 규모·B/M 조정 후 +4.8%p 초과; 효과는 소형주에 집중, 매수는 정보적이나 매도는 무의미. (2) Cohen, Malloy & Pomorski(2012, JF, \"Decoding Inside Information\"): 달력상 예측 가능한 '루틴(routine)' 거래를 걷어내고 '기회주의적(opportunistic)' 거래만 남기면 가치가중 월 82bp(연 ~10%) 이상 초과수익, 루틴 거래는 알파 사실상 0. 가장 정보력 높은 주체는 지배구조 취약·지리적 집중 기업의 비임원 로컬 내부자. (3) 다수 내부자가 짧은 기간 동시 매수하는 '클러스터 매수'는 단독 매수의 약 2배 신호강도.",
+   "entry": "공개시장 매수(코드 P)만 사용(옵션행사·증여·10b5-1 예정매매 제외). 트레일링 6개월 순내부자매수(매수액-매도액, 또는 순매수 신고건수) 기준 상위 분위(예: 상위 데실) 롱온리, 동일가중. 정밀화: (a) 루틴 트레이더 제거—과거 수년간 같은 달에 반복 매매한 내부자 배제 후 opportunistic만; (b) 클러스터 필터—2~3인 이상 내부자 동시 매수 또는 CEO/CFO 매수 가중; (c) 매수 규모(연봉 대비·시총 대비) 큰 건 우선. 리밸런싱 월말, 보유기간 6~12개월(신고는 거래 후 영업일 2일 이내 공시되어 반영 지연 짧음). 5bp 거래비용, 소형주 유동성 상한 적용.",
+   "performance": "강점: 30년 넘게 재현된 강건한 아노말리, 매수-매도 비대칭성이 안정적; 클러스터+opportunistic 정제로 신호강도 크게 상승(월 82bp급); 저평가·소형주에서 특히 유효, 여타 팩터와 상관이 낮아 분산효과. 약점: 알파가 소형·마이크로캡·지배구조 취약 기업에 집중되어 유동성·거래비용·수용력(capacity) 제약이 크고 NDX 같은 대형 기술주 유니버스에서는 신호가 약함(최근 업종연구: 은행 강, 기술 약); 신호 희석·군집화(다수 추종 ETF·스크리너)와 STOCK/10b5-1 규제 변화로 대형주 초과폭 축소; 원시 순매수만 쓰면 루틴 노이즈로 알파가 희석되어 정제가 필수.",
+   "recent": "2025~2026 연구는 원시 시그널보다 정제·결합을 강조. J. Risk & Financial Management(MDPI, 2026) 업종별 분석: 2005~2025 데이터에서 은행 내부자 매수의 정보력이 가장 강하고 기술주에서 현저히 약함(대형 기술주 신호 감쇠 시사). 34개국 370만 건 내부자거래 분석(2025): 개별 매수·매도 지표를 합성(composite)한 신호가 단일 지표를 유의하게 능가. R&D 집약·지배구조 우량 기업에서 매수(매도 아님) 신호가 더 수익성 높음(2025). 2022년 Rule 10b5-1 개정 후 158,000건 임원매도 추적 연구: 특정 기회주의 패턴은 사라졌으나 전체 내부자 초과수익은 유의하게 감소하지 않음. arXiv(2026) 마이크로캡 gradient boosting 연구는 내부자 매수 후 12개월 이상현상 초과수익(~7%대) 재확인. (별개 주의: 의회의원 거래 추종 ETF NANC/KRUZ는 corporate Form 4가 아닌 STOCK Act 45일 지연 공시 기반이며, 위험조정 초과 미확인—본 전략과 구분.)",
+   "sources": [
+    "Lakonishok, J. & Lee, I. (2001), 'Are Insider Trades Informative?', Review of Financial Studies/Journal of Finance — https://www.lsvasset.com/pdf/research-papers/Insider-Trades-Informative.pdf",
+    "Lakonishok & Lee, NBER Working Paper w6913 'Are Insiders' Trades Informative?' — https://www.nber.org/system/files/working_papers/w6913/w6913.pdf",
+    "Cohen, L., Malloy, C. & Pomorski, L. (2012), 'Decoding Inside Information', Journal of Finance 67(3):1009-1043 — https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1692517 (NBER w16454: https://www.nber.org/system/files/working_papers/w16454/w16454.pdf)",
+    "'Insider Trading Signals Across Industries: Evidence from Technology, Utilities, and Banking', Journal of Risk and Financial Management (MDPI, 2026), 19(5):306 — https://www.mdpi.com/1911-8074/19/5/306",
+    "'Insider Purchase Signals in Microcap Equities: Gradient Boosting Detection of Abnormal Returns', arXiv 2602.06198 (2026) — https://arxiv.org/pdf/2602.06198",
+    "VerityData, 'What Recent Academic Research Suggests About Insider Signals' (2026) — https://verityplatform.com/wp-content/uploads/2026/04/VerityData-Insider-Academic-Studies.pdf",
+    "US Congress members' trading (NANC/KRUZ), Economics Letters/ScienceDirect (2025) — https://www.sciencedirect.com/science/article/abs/pii/S0165176525001004 (본 전략과 구분되는 참고)"
+   ],
+   "id": "E11"
   }
  ]
 }
