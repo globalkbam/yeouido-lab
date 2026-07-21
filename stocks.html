@@ -71,6 +71,7 @@
   .flag{font-family:var(--mono);font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:4px}
   .flag.과매수,.flag.b200이탈{color:var(--hot);background:var(--hot-bg)} .flag.과매도{color:var(--cold);background:var(--cold-bg)}
   .flag.상승추세,.flag.b52돌파{color:var(--good);background:var(--good-bg)} .flag.눌림목{color:var(--watch);background:var(--watch-bg)}
+  .flag.deepdip{color:var(--cold);background:var(--cold-bg);border:1px solid color-mix(in srgb,var(--cold) 35%,transparent)}
   .flag.gmilshort{color:var(--cold);background:var(--cold-bg)}
   .item .metric{text-align:right}
   .item .mbar{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;margin-top:4px}
@@ -255,7 +256,7 @@
   </div>
 
   <footer>
-    여두 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="regime.html">시장 국면</a> · <a href="rotation.html">오늘의 로테이션</a> · <a href="sources.html">데이터 출처</a> · <a href="archive.html">기각 아카이브</a><br>
+    여두 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 리스트</a> · <a href="regime.html">시장 국면</a> · <a href="rotation.html">오늘의 전략 탐색</a> · <a href="sources.html">데이터 출처</a> · <a href="archive.html">기각 아카이브</a><br>
     가격·테크니컬·EPS: yfinance · 공매도잔량: FINRA(격주, <span id="siasof">기준일 별도</span>) · 테크니컬은 전 지표 동일 기준일 · <span id="asof"></span>
   </footer>
 </div>
@@ -309,7 +310,9 @@
     ["oh","과매수","overheat",false,"과매수",null,"s"],["os","과매도","overheat",true,"과매도",null,"s"],
     ["dip","눌림목","trend",false,"눌림목",null,"s"],["brk","52주 돌파","momentum",false,"52주돌파",null,"s"],
     ["squeeze","과밀숏","positioning",false,"과밀숏",null,"s"],
-    ["up","상승추세","trend",false,"상승추세",null,"s"],["dn","200일 이탈","trend",true,"200일이탈",null,"s"]];
+    ["up","상승추세","trend",false,"상승추세",null,"s"],["dn","200일 이탈","trend",true,"200일이탈",null,"s"],
+    ["deep","깊은 눌림","overheat",true,"깊은눌림",null,"s"],
+    ["tgt","🎯 목표주가","momentum",false,null,null,"s"]];
   var SHOWN=PRESETS;  // 데이터로딩 후 빈 프리셋 제거
   // 시그널 칩 호버 설명(툴팁)
   var TIPS={
@@ -323,8 +326,10 @@
     brk:"52주 고점 92% 이상 + MACD 상승 — 신고가 돌파 흐름",
     squeeze:"공매도 잔량 과밀(커버일수 7일↑ 또는 유동주식 15%↑) — 숏스퀴즈 소지",
     up:"종가>50일선>200일선 & ADX≥20 — 정배열 상승추세",
-    dn:"종가<200일선 — 장기 추세 이탈"};
-  var FLAGCLS={"과매수":"과매수","과매도":"과매도","상승추세":"상승추세","눌림목":"눌림목","52주돌파":"b52돌파","200일이탈":"b200이탈","과밀숏":"gmilshort"};
+    dn:"종가<200일선 — 장기 추세 이탈",
+    deep:"장기 상승추세(200일선 위)인데 단기 조정으로 50일선 아래까지 눌린 과매도 상태 — '눌림목'이 놓치는 깊은 조정을 잡는다. 상태 표시일 뿐 매매 신호가 아니며, 이 프로필의 매매 엣지는 랩이 41번째로 기각했다(강세추세 과매도 스냅백).",
+    tgt:"애널리스트 목표주가를 한 화면에서 비교 — 상승여력의 64%는 최근 하락의 기계적 반영이라 기본 정렬은 상승여력이 아니다. 컨센서스 정보일 뿐 랩의 신호가 아님."};
+  var FLAGCLS={"과매수":"과매수","과매도":"과매도","상승추세":"상승추세","눌림목":"눌림목","깊은눌림":"deepdip","52주돌파":"b52돌파","200일이탈":"b200이탈","과밀숏":"gmilshort"};
   var PERIODS=[["1주",5],["1개월",21],["3개월",63],["6개월",126],["1년",252]];
   var state={q:"",preset:"swingbuy",idx:new Set(),sel:null,period:252};
   function cc(k){return 'var('+({overheat:'--hot',trend:'--good',momentum:'--accent',volatility:'--watch'}[k]||'--accent')+')';}
@@ -398,12 +403,15 @@
       if(tim && tim.indexOf(s.timing)<0)return false;
       if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
       if(state.q){var hay=(s.t+' '+(s.name||'')+' '+(s.sector||'')).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
+      if(p[0]==='tgt')return (s.fund||{}).tpm!=null;   // 목표주가 탭: 목표가 보유 종목만
       if(sk)return swFresh(s,sk);                 // 스윙: 최근 SW_WIN일 내 마커 보유만
       return s.comp[comp]!=null;
     });
     // 스윙=최근 마커순(동점은 신호강도) / 매수·매도 신호=종합점수 내림차순 + 상위 50 캡(종목수 과다 방지) / 나머지=컴포짓 정렬
     var total=rows.length;
     if(sk)rows.sort(function(a,b){var d=lastMk(b,sk)-lastMk(a,sk);return d||((b[sc]||0)-(a[sc]||0));});
+    else if(p[0]==='tgt')rows.sort(function(a,b){   // 기본은 커버 애널리스트 수(신뢰도)순 — 상승여력순을 기본값으로 두지 않는다
+      var d=((b.fund||{}).nan||0)-((a.fund||{}).nan||0); return d||a.t.localeCompare(b.t);});
     else rows.sort(function(a,b){var d=(a.comp[comp]||0)-(b.comp[comp]||0);return asc?d:-d;});
     return {rows:rows,comp:comp,total:total};
   }
@@ -420,7 +428,13 @@
       var v=s.comp[comp]||0, fl=(s.flags||[]).slice(0,2).map(flagHtml).join(''), metric;
       if(sk){var mp=lastMkP(s,state.preset),mi=mp.i,dt=(dts[mi]||'').slice(5),ago=NN-1-mi,mc=state.preset==='swingbuy'?'--good':'--hot';
         metric='<span class="metric"><div class="mv" style="color:var('+mc+');font-size:13px">'+dt+(mp.prov?' <span style="color:var(--watch);font-size:9px;font-weight:700">잠정</span>':'')+'</div><div class="nm" style="text-align:right;margin-top:2px">'+(ago<=0?'당일':ago+'일 전')+(mp.prov?' · 이동가능':'')+'</div></span>';
-            }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
+      }else if(state.preset==='tgt'){
+        // 목표주가 탭 — 목표평균·상승여력·커버 애널 수. 상승여력은 무채색(강조하지 않는다: 검증상 최근 하락의 기계적 반영)
+        var fu=s.fund||{}, upv=fu.up, tpm=fu.tpm;
+        metric='<span class="metric"><div class="mv" style="font-size:12.5px">'+(tpm!=null?Math.round(tpm).toLocaleString():'—')+'</div>'+
+          '<div class="nm" style="text-align:right;margin-top:2px">'+(upv!=null?(upv>=0?'+':'')+Math.round(upv)+'%':'—')+
+          (fu.nan?' · 애널 '+fu.nan:'')+'</div></span>';
+      }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
       return '<button class="item" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
         '<span><span class="tkline"><span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
         '<div class="nm">'+esc(s.name||'')+(s.sector?' · '+esc(s.sector):'')+'</div></span>'+metric+'</button>';
