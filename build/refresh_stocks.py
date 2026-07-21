@@ -692,13 +692,25 @@ def main():
         def _lastmk(s, key):
             a = s.get(key) or []
             return a[-1] if a else -1
-        def _reco(key):
-            c = [(_lastmk(s, key), s) for s in stocks]
-            c = [(m, s) for m, s in c if m >= 0 and (_N - 1 - m) <= _WIN]
+        # GICS 영문 섹터는 홈의 좁은 행에서 길어 잘린다 — 짧은 한글로 매핑
+        SECKO = {"Information Technology": "IT", "Health Care": "헬스케어", "Financials": "금융",
+                 "Consumer Discretionary": "경기소비", "Consumer Staples": "필수소비", "Industrials": "산업재",
+                 "Communication Services": "커뮤니케이션", "Energy": "에너지", "Utilities": "유틸리티",
+                 "Real Estate": "부동산", "Materials": "소재"}
+
+        def _reco(conf_key, prov_key):
+            """확정(conf) + 잠정(prov) 타점을 함께 보고 최신 것을 취한다. prov=True면 아직 이동 가능."""
+            c = []
+            for s in stocks:
+                mc, mp = _lastmk(s, conf_key), _lastmk(s, prov_key)
+                m = max(mc, mp)
+                if m < 0 or (_N - 1 - m) > _WIN: continue
+                c.append((m, mp > mc, s))
             c.sort(key=lambda x: -x[0])
             return ([{"t": s["t"], "name": (s.get("name") or "")[:16], "dt": _dts[m][5:], "ago": _N - 1 - m,
-                      "oh": s["comp"].get("overheat")} for m, s in c[:8]], len(c))
-        _bl, _nb = _reco("bms"); _sl, _ns = _reco("sms")
+                      "sec": SECKO.get(s.get("sector") or "", (s.get("sector") or "")[:6]),
+                      **({"prov": 1} if pv else {})} for m, pv, s in c[:8]], len(c))
+        _bl, _nb = _reco("bms", "bmw"); _sl, _ns = _reco("sms", "smw")
         HOME = os.path.join(HERE, "..", "data", "home_reco.json")
         json.dump({"as_of": as_of, "buy": _bl, "sell": _sl, "nbuy": _nb, "nsell": _ns},
                   open(HOME, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
