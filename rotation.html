@@ -137,7 +137,7 @@
     var tb=isToday?'<span class="todaybadge">오늘의 9선</span>':'';
     function row(k,v,cls){return v?'<div class="srow '+(cls||'')+'"><span class="sk">'+k+'</span><p>'+esc(v)+'</p></div>':'';}
     var src=(s.sources||[]).map(function(x){return esc(x);}).join(' · ');
-    return '<div class="scard"><div class="stop"><span class="cid" style="background:'+col+'">'+esc(s.id||s.cat)+'</span>'+
+    return '<div class="scard" id="s-'+esc(s.id||'')+'"><div class="stop"><span class="cid" style="background:'+col+'">'+esc(s.id||s.cat)+'</span>'+
       '<h3>'+esc(s.name)+'</h3>'+tb+'<span class="stag">'+esc(s.type||'')+(s.target?' · 타겟: '+esc(s.target):'')+'</span></div>'+
       row('목적·타겟',s.purpose,'purpose')+row('핵심 원리',s.principle)+row('진입 기준',s.entry)+
       row('성과',s.performance)+
@@ -193,8 +193,19 @@
     });
     el('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase().trim();render();});
     el('modebtn').addEventListener('click',function(){state.mode=state.mode==='all'?'today':'all';syncMode();render();});
-    syncMode(); render();
+    syncMode(); render(); gotoHash();
+    window.addEventListener('hashchange',gotoHash);
   }).catch(function(){el('content').innerHTML='<div class="empty">데이터 로드 오류</div>';});
+  // 딥링크: #E12 처럼 전략 id로 바로 이동(현재 뷰에 없으면 전체 보기로 전환)
+  function gotoHash(){
+    var h=(location.hash||'').replace('#','').trim();
+    if(!h||!DATA)return;
+    var hit=null; DATA.strategies.forEach(function(x){if(x.id===h)hit=x;});
+    if(!hit)return;
+    if(selection().indexOf(hit)<0){state.mode='all';syncMode();render();}
+    var node=document.getElementById('s-'+h);
+    if(node)node.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+  }
 })();
 </script>
 <script>(function(){var r=document.documentElement,b=document.getElementById('themebtn');function c(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}b.addEventListener('click',function(){var n=c()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('yeouido-theme',n);}catch(e){}});try{var s=localStorage.getItem('yeouido-theme');if(s)r.setAttribute('data-theme',s);}catch(e){}})();</script>
