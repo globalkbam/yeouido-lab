@@ -443,8 +443,9 @@ def main():
                                 smw.append(pos); smr[pos] = "잠정 고점(미확정) — " + _reason(pos, "H", "zz").split(" — ", 1)[1].replace(" · 전환점은 며칠 뒤 확정되므로 표시는 사후 기준", "") + f" · {len(pxd_dates)-1-pos}일 유지 중 — 과거 통계상 이 시점 잠정고점의 ~{_pmv}%는 더 높은 고점으로 이동(5y·512종목)"
 
             # (b) 추세 내 눌림목·반등 타점 — 지그재그가 놓치는 '추세 유지 중 되돌림'을 잡는다.
-            #     확정 중심 피봇(K=3, 3봉 뒤에야 확정되므로 미래참조 아님) + 추세·과열·낙폭 조건 + 간격 8봉.
-            K = 3; W = 2*K + 1
+            #     확정 중심 피봇(K=5, 5봉 뒤에야 확정 — 미래참조 아님) + 추세·과열·낙폭 조건 + 간격 8봉.
+            #     K 선택 근거(5y·512종목 실측): 진짜확률(확정 후 20일 미이탈) K3=41%→K5=50%, 수익차 없음 — 정확도 우선 사용자 결정(2026-07).
+            K = 5; W = 2*K + 1
             cwin = pd.Series(dv, index=daily.index)
             piv_lo = cwin == cwin.rolling(W, center=True, min_periods=W).min()
             piv_hi = cwin == cwin.rolling(W, center=True, min_periods=W).max()
@@ -538,6 +539,19 @@ def main():
     # ⚠ 워크플로 커밋 대상에 data/sd 포함 필수(home_reco 누락 사고와 동일 함정) · stocks.html이 선택 시 fetch.
     SD_DIR = os.path.join(HERE, "..", "data", "sd")
     os.makedirs(SD_DIR, exist_ok=True)
+    # 홈 추천용 스냅샷(strip 전에 캡처): 현재가·최근 스윙저점가(확정+잠정)·200MA 이격
+    _snap = {}
+    for s in stocks:
+        _pxa = [x for x in (s.get("pxd") or []) if x is not None]
+        _pxnow = _pxa[-1] if _pxa else None
+        _lows = (s.get("bms") or []) + (s.get("bmw") or [])
+        _lowpx = None
+        if _lows and s.get("pxd"):
+            _li = max(_lows)
+            _lowpx = s["pxd"][_li] if s["pxd"][_li] is not None else None
+        if _lowpx is None and len(_pxa) >= 20: _lowpx = min(_pxa[-20:])
+        _d2 = ((s.get("sig") or {}).get("d200") or {}).get("v")
+        _snap[s["t"]] = {"px": _pxnow, "lowpx": _lowpx, "d2": _d2}
     _keep = set()
     for s in stocks:
         det = {"as_of": as_of, "t": s["t"]}
@@ -553,23 +567,23 @@ def main():
     print(f"→ {OUT} ({len(stocks)}종목 · 슬림 {os.path.getsize(OUT)//1024}KB · 상세 {len(_keep)}파일 · 기준일 {as_of})")
     # ── 홈 전용 초소형 요약(주목종목) — 홈이 대형 stocks.json 대신 이것만 fetch(LCP 개선) ──
     try:
-        _dts = out["pxd_dates"]; _N = len(_dts); _WIN = 10
-        def _lastmk(s, keys):
-            m = -1
-            for k in keys:
-                for i in (s.get(k) or []):
-                    if i > m: m = i
-            return m
-        def _reco(keys):
-            c = [(_lastmk(s, keys), s) for s in stocks]
-            c = [(m, s) for m, s in c if m >= 0 and (_N - 1 - m) <= _WIN]
-            c.sort(key=lambda x: -x[0])
-            return ([{"t": s["t"], "name": (s.get("name") or "")[:16], "dt": _dts[m][5:], "ago": _N - 1 - m} for m, s in c[:6]], len(c))
-        _bl, _nb = _reco(["bms"]); _sl, _ns = _reco(["sms"])   # 홈 리스트는 확정 타점만(잠정 bmw/smw 제외 — 리페인팅 방지)
+        # 루틴 기반 추천(사용자 3단계): ①매수신호(상승추세) ②저점 근처·과열도 낮음=진입 유리 ③매도신호(200MA 이탈)=비중축소
+        def _row(s, buy):
+            sn = _snap.get(s["t"]) or {}
+            r = {"t": s["t"], "name": (s.get("name") or "")[:16], "oh": s["comp"].get("overheat")}
+            if sn.get("d2") is not None: r["d2"] = round(sn["d2"], 1)
+            if buy and sn.get("px") and sn.get("lowpx"): r["ld"] = round((sn["px"]/sn["lowpx"] - 1)*100, 1)  # 최근 스윙저점 대비 %
+            return r
+        _buyside = [s for s in stocks if s["timing"] in ("매수", "매수우세")]
+        _cand = [s for s in _buyside if (s["comp"].get("overheat") or 100) <= 45]   # ② 과열도 낮음
+        _cand.sort(key=lambda s: -(s.get("bscore") or 0))
+        _sellside = [s for s in stocks if s["timing"] in ("매도", "매도우세")]
+        _sellside.sort(key=lambda s: -(s.get("sscore") or 0))
         HOME = os.path.join(HERE, "..", "data", "home_reco.json")
-        json.dump({"as_of": as_of, "buy": _bl, "sell": _sl, "nbuy": _nb, "nsell": _ns},
+        json.dump({"as_of": as_of, "buy": [_row(s, True) for s in _cand[:8]], "sell": [_row(s, False) for s in _sellside[:8]],
+                   "nbuy": len(_cand), "nsell": len(_sellside)},
                   open(HOME, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-        print(f"→ {HOME} (홈 요약 · 매수 {_nb}·매도 {_ns})")
+        print(f"→ {HOME} (홈 추천 · 매수후보 {len(_cand)}·매도 {len(_sellside)})")
     except Exception as e:
         print("  home_reco 생성 실패(무시):", e)
 

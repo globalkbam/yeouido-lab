@@ -84,6 +84,10 @@
   .rcol{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;box-shadow:var(--shadow)}
   .rcol h4{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin:0 0 8px;display:flex;justify-content:space-between}
   a.rstk{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;text-decoration:none}
+  a.rstk.brec{background:color-mix(in srgb,var(--deploy) 9%,transparent);border-bottom:0;border-radius:7px;padding:5px 8px;margin:2px 0}
+  a.rstk.srec{background:color-mix(in srgb,var(--hot) 9%,transparent);border-bottom:0;border-radius:7px;padding:5px 8px;margin:2px 0}
+  a.rstk.brec:hover{background:color-mix(in srgb,var(--deploy) 16%,transparent)}
+  a.rstk.srec:hover{background:color-mix(in srgb,var(--hot) 16%,transparent)}
   a.rstk:last-child{border-bottom:none} a.rstk:hover .rk{color:var(--accent)}
   .rstk .rk{font-family:var(--mono);font-weight:700;color:var(--ink)}
   .rstk .rn2{color:var(--muted);font-size:10.5px;font-weight:400;margin-left:5px}
@@ -135,7 +139,7 @@
     </a>
   </div>
 
-  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 최근 확정된 <b>스윙 저점(매수)·고점(매도)</b> — 타이밍 참고용, 후보 선별은 <a href="stocks.html" style="color:var(--accent)">매수 신호 탭</a>에서 · 열면 근거 표시 · <span id="stkasof"></span></span></p>
+  <p class="lbl">매수·매도 추천 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 루틴 기반: ①상승추세(매수신호) ②저점 근처·과열 낮음＝진입 유리 ③200일선 이탈(매도신호)＝비중축소 · <a href="stocks.html" style="color:var(--accent)">종목 시그널</a>에서 근거 확인 · 참고용, 자문 아님 · <span id="stkasof"></span></span></p>
   <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <p class="lbl">전략 리서치</p>
@@ -206,28 +210,35 @@
       }
     }).catch(function(){});
   }
-  function recoCol(title,cnt,arr,tri,tricol){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
-    (arr.length?arr.map(function(x){return '<a class="rstk" href="stocks.html"><span><span aria-hidden="true" style="color:'+tricol+';margin-right:5px;font-size:11px">'+tri+'</span><span class="rk">'+x.t+'</span><span class="rn2">'+(x.name||'')+'</span></span><span class="rv">'+x.dt+' · '+(x.ago<=0?'당일':x.ago+'일전')+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
+  // 루틴 기반 추천: ①매수신호(상승추세) ②저점 근처·과열도 낮음 ③매도신호(200MA 이탈)=비중축소
+  function recoVal(x,buy){
+    var parts=[];
+    if(buy&&x.ld!=null)parts.push('저점 '+(x.ld>=0?'+':'')+x.ld+'%');
+    if(!buy&&x.d2!=null)parts.push('200MA '+(x.d2>=0?'+':'')+x.d2+'%');
+    if(x.oh!=null)parts.push('과열 '+Math.round(x.oh));
+    return parts.join(' · ')||'—';
+  }
+  function recoCol(title,sub,cnt,arr,cls,buy){return '<div class="rcol"><h4><span>'+title+' <span style="font-weight:400;text-transform:none;letter-spacing:0">'+sub+'</span></span><span>'+cnt+'종 중</span></h4>'+
+    (arr.length?arr.map(function(x){return '<a class="rstk '+cls+'" href="stocks.html"><span><span class="rk">'+x.t+'</span><span class="rn2">'+(x.name||'')+'</span></span><span class="rv">'+recoVal(x,buy)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
   function renderReco(h){
     var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(h.as_of||'');
     var ma=document.getElementById('mainasof'); if(ma)ma.textContent=(h.as_of||'—');
     document.getElementById('recostocks').innerHTML=
-      recoCol('스윙 저점매수', h.nbuy!=null?h.nbuy:(h.buy||[]).length, h.buy||[], '▲', 'var(--deploy)')+
-      recoCol('스윙 고점매도', h.nsell!=null?h.nsell:(h.sell||[]).length, h.sell||[], '▼', 'var(--hot)');
+      recoCol('🟢 매수 추천','상승추세 · 과열 낮음 · 종합점수순', h.nbuy!=null?h.nbuy:(h.buy||[]).length, h.buy||[], 'brec', true)+
+      recoCol('🔴 매도 추천','200일선 이탈 — 비중축소 주의', h.nsell!=null?h.nsell:(h.sell||[]).length, h.sell||[], 'srec', false);
     staleCheck(h.as_of);
     regimeCheck(h.as_of);
   }
-  function loadFull(){   // 폴백: 대형 stocks.json에서 직접 계산
+  function loadFull(){   // 폴백: 대형 stocks.json에서 직접 계산(슬림 스키마 — ld/d2 없이 과열도만)
     fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
       if(!d){stkFail();return;}
-      var st=d.stocks||[], dts=d.pxd_dates||[], N=dts.length, WIN=10;
-      function lastMk(s,keys){var m=-1;keys.forEach(function(k){(s[k]||[]).forEach(function(i){if(i>m)m=i;});});return m;}
-      function mkList(keys){var all=st.filter(function(s){var mi=lastMk(s,keys);return mi>=0&&(N-1-mi)<=WIN;});
-        var top=all.slice().sort(function(a,b){return lastMk(b,keys)-lastMk(a,keys);}).slice(0,6)
-          .map(function(s){var mi=lastMk(s,keys);return {t:s.t,name:(s.name||'').slice(0,16),dt:(dts[mi]||'').slice(5),ago:N-1-mi};});
-        return {list:top,n:all.length};}
-      var b=mkList(['bms','bmw']), s=mkList(['sms','smw']);
-      renderReco({as_of:d.as_of,buy:b.list,sell:s.list,nbuy:b.n,nsell:s.n});
+      var st=d.stocks||[];
+      function row(s){return {t:s.t,name:(s.name||'').slice(0,16),oh:(s.comp||{}).overheat};}
+      var cand=st.filter(function(s){return (s.timing==='매수'||s.timing==='매수우세')&&((s.comp||{}).overheat||100)<=45;})
+        .sort(function(a,b){return (b.bscore||0)-(a.bscore||0);});
+      var sside=st.filter(function(s){return s.timing==='매도'||s.timing==='매도우세';})
+        .sort(function(a,b){return (b.sscore||0)-(a.sscore||0);});
+      renderReco({as_of:d.as_of,buy:cand.slice(0,8).map(row),sell:sside.slice(0,8).map(row),nbuy:cand.length,nsell:sside.length});
     }).catch(stkFail);
   }
   fetch('data/home_reco.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(h){
