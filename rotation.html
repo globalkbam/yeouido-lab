@@ -138,7 +138,8 @@
     return '<div class="scard"><div class="stop"><span class="cid" style="background:'+col+'">'+esc(s.id||s.cat)+'</span>'+
       '<h3>'+esc(s.name)+'</h3><span class="stag">'+esc(s.type||'')+(s.target?' · 타겟: '+esc(s.target):'')+'</span></div>'+
       row('목적·타겟',s.purpose,'purpose')+row('핵심 원리',s.principle)+row('진입 기준',s.entry)+
-      row('성과',s.performance)+row('최근 동향',s.recent)+
+      row('성과',s.performance)+
+      row('최근 동향'+(s.recent_at?'<span style="display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:9.5px;margin-top:2px">'+esc(s.recent_at)+' 갱신</span>':''),s.recent)+
       (src?'<div class="ssrc"><b>출처</b> · '+src+'</div>':'')+'</div>';
   }
   var CATNM={A:'A. S&P 500 초과성과',B:'B. NASDAQ 100 초과성과',C:'C. 단기 마켓타이밍',D:'D. 자산배분·리스크관리',E:'E. 추가 알파·팩터·이벤트'};
