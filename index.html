@@ -139,7 +139,7 @@
     </a>
   </div>
 
-  <p class="lbl">매수·매도 추천 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 루틴 기반: ①상승추세(매수신호) ②저점 근처·과열 낮음＝진입 유리 ③200일선 이탈(매도신호)＝비중축소 · <a href="stocks.html" style="color:var(--accent)">종목 시그널</a>에서 근거 확인 · 참고용, 자문 아님 · <span id="stkasof"></span></span></p>
+  <p class="lbl"><span style="white-space:nowrap">매수·매도 추천</span> <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· ①상승추세 ②저점 근처·과열 낮음 ③200일선 이탈＝비중축소 · 참고용 · <span id="stkasof"></span></span></p>
   <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <p class="lbl">전략 리서치</p>
@@ -218,7 +218,7 @@
     if(x.oh!=null)parts.push('과열 '+Math.round(x.oh));
     return parts.join(' · ')||'—';
   }
-  function recoCol(title,sub,cnt,arr,cls,buy){return '<div class="rcol"><h4><span>'+title+' <span style="font-weight:400;text-transform:none;letter-spacing:0">'+sub+'</span></span><span>'+cnt+'종 중</span></h4>'+
+  function recoCol(title,sub,cnt,arr,cls,buy){return '<div class="rcol"><h4><span>'+title+' <span style="font-weight:400;text-transform:none;letter-spacing:0">'+sub+'</span></span><span style="white-space:nowrap">후보 '+cnt+'</span></h4>'+
     (arr.length?arr.map(function(x){return '<a class="rstk '+cls+'" href="stocks.html"><span><span class="rk">'+x.t+'</span><span class="rn2">'+(x.name||'')+'</span></span><span class="rv">'+recoVal(x,buy)+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
   function renderReco(h){
     var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(h.as_of||'');
