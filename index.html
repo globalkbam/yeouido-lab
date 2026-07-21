@@ -49,6 +49,8 @@
   .asofbar .asoftag{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600}
   .asofbar b{color:var(--ink);font-size:14px;font-weight:700}
   .asofbar .asofnote{color:var(--muted);font-size:10.5px;border-left:1px solid var(--line);padding-left:9px}
+  /* 자동갱신(GitHub cron)이 조용히 실패하면 낡은 신호가 최신처럼 보이므로 명시 경고 */
+  .stalewarn{color:var(--hot);font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--hot) 45%,transparent);border-radius:5px;padding:2px 7px}
   @media(max-width:560px){.asofbar .asofnote{border-left:0;padding-left:0;flex-basis:100%}}
   .lede b{color:var(--ink)}
 
@@ -128,6 +130,7 @@
     <div class="asofbar" id="asofbar">
       <span class="asoftag">데이터 기준일</span><b id="mainasof">불러오는 중…</b>
       <span class="asofnote">가격·테크니컬·EPS·시장국면 통일 · 공매도잔량만 격주(FINRA)</span>
+      <span class="stalewarn" id="stalewarn" hidden></span>
     </div>
   </header>
 
@@ -187,6 +190,20 @@
   // 주목 종목 — 홈 전용 요약(data/home_reco.json ~1KB) 우선, 실패 시 대형 stocks.json 폴백
   function stkFail(){var ma=document.getElementById('mainasof');if(ma)ma.textContent='—';
     var rc=document.getElementById('recostocks');if(rc)rc.innerHTML='<div class="rcol"><h4>데이터를 불러오지 못했습니다</h4></div>';}
+  // 데이터 신선도: as_of 이후 흐른 영업일(주말 제외) 수. 미국 휴장일·1회 결측은 허용(3영업일부터 경고).
+  function bdGap(asof){
+    var p=String(asof||'').split('-'); if(p.length!==3)return 0;
+    var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])), t=new Date(), n=0;
+    var end=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());
+    while(d.getTime()<end&&n<40){d.setUTCDate(d.getUTCDate()+1);var w=d.getUTCDay();if(w!==0&&w!==6)n++;}
+    return n;
+  }
+  function staleCheck(asof){
+    var el=document.getElementById('stalewarn'); if(!el)return;
+    var n=bdGap(asof);
+    if(n>=3){el.textContent='⚠ 데이터가 '+n+'영업일 지연 — 자동갱신 확인 필요';el.hidden=false;}
+    else{el.hidden=true;}
+  }
   function regimeCheck(asof){
     fetch('data/regime.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(rg){
       var note=document.querySelector('.asofnote');
@@ -201,6 +218,7 @@
     document.getElementById('recostocks').innerHTML=
       recoCol('스윙 저점매수', h.nbuy!=null?h.nbuy:(h.buy||[]).length, h.buy||[], '▲', 'var(--deploy)')+
       recoCol('스윙 고점매도', h.nsell!=null?h.nsell:(h.sell||[]).length, h.sell||[], '▼', 'var(--hot)');
+    staleCheck(h.as_of);
     regimeCheck(h.as_of);
   }
   function loadFull(){   // 폴백: 대형 stocks.json에서 직접 계산

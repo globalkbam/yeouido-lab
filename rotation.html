@@ -185,13 +185,21 @@
     el('content').innerHTML=html||'<div class="empty">'+(br?'조건에 맞는 전략이 없습니다.':'오늘의 전략이 없습니다.')+'</div>';
   }
   function syncMode(){var b=el('modebtn');b.setAttribute('aria-pressed',state.mode==='all');b.textContent=state.mode==='all'?'오늘의 9선':'전체 풀 보기';}
+  // 일일 자동갱신(최근동향 웹리서치 잡)이 멈추면 조용히 오래된 동향이 남으므로 명시 경고
+  function staleStat(gen){
+    var p=String(gen||'').split('-'); if(p.length!==3)return '';
+    var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])), t=new Date(), n=0;
+    var end=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());
+    while(d.getTime()<end&&n<40){d.setUTCDate(d.getUTCDate()+1);var w=d.getUTCDay();if(w!==0&&w!==6)n++;}
+    return n>=3?'<span class="stat" style="color:var(--hot);font-weight:700">⚠ 최근동향 '+n+'영업일 미갱신</span>':'';
+  }
   fetch('data/rotation_pool.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d||!d.strategies){el('content').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;
     el('statline').innerHTML='<span class="stat"><b>9</b> 오늘의 전략</span>'+
       '<span class="stat">풀 <b>'+d.strategies.length+'</b>종</span>'+
       '<span class="stat">기준일 <b>'+today()+'</b></span>'+
-      '<span class="stat">갱신 '+esc(d.generated||'—')+'</span>';
+      '<span class="stat">갱신 '+esc(d.generated||'—')+'</span>'+staleStat(d.generated);
     // 카테고리 필터 칩(개수 포함)
     var cf=el('catf');
     CATORD.forEach(function(c){

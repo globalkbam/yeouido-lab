@@ -466,12 +466,20 @@
       mk.sms.concat(mk.smw).forEach(function(i){tri(i,false,h);});}
   }
 
+  // 자동갱신(GitHub cron) 조용한 실패 대비 — 기준일 이후 흐른 영업일이 3일 이상이면 명시 경고(휴장·1회 결측은 허용)
+  function staleStat(asof){
+    var p=String(asof||'').split('-'); if(p.length!==3)return '';
+    var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])), t=new Date(), n=0;
+    var end=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());
+    while(d.getTime()<end&&n<40){d.setUTCDate(d.getUTCDate()+1);var w=d.getUTCDay();if(w!==0&&w!==6)n++;}
+    return n>=3?'<span class="stat" style="color:var(--hot);font-weight:700">⚠ '+n+'영업일 지연 — 자동갱신 확인 필요</span>':'';
+  }
   fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d){detailEl.innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;F=d.factor_defs;
     // 공매도잔량(FINRA) 기준일 — 가격·테크니컬 기준일보다 오래됨(격주). 정직 고지용으로 데이터에서 추출.
     (function(){for(var i=0;i<d.stocks.length;i++){var dt=d.stocks[i].sig&&d.stocks[i].sig.dtc&&d.stocks[i].sig.dtc.dt;if(dt){SI_ASOF=dt;break;}}})();
-    el('statline').innerHTML='<span class="stat"><b>'+d.n_stocks+'</b> 종목</span><span class="stat">NDX+SPX</span><span class="stat">테크니컬 <b>'+Object.keys(F).length+'</b>개</span><span class="stat">기준일 <b>'+(d.as_of||'—')+'</b></span>';
+    el('statline').innerHTML='<span class="stat"><b>'+d.n_stocks+'</b> 종목</span><span class="stat">NDX+SPX</span><span class="stat">테크니컬 <b>'+Object.keys(F).length+'</b>개</span><span class="stat">기준일 <b>'+(d.as_of||'—')+'</b></span>'+staleStat(d.as_of);
     el('asof').textContent='기준일 '+(d.as_of||'—')+' (전 지표 동일, yfinance 최신 거래일)';
     var sia=el('siasof');if(sia&&SI_ASOF)sia.textContent='기준일 '+SI_ASOF;
     var pf=el('presets');SHOWN=[];PRESETS.forEach(function(p){

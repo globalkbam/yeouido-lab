@@ -134,6 +134,13 @@
   fetch('data/regime.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d){el('main').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d; el('asof').textContent=d.as_of||'—';
+    (function(){   // 자동갱신 조용한 실패 대비 — 기준일이 3영업일 이상 밀리면 경고(과거 FRED 시크릿 미설정으로 전 시리즈 실패 사례)
+      var p=String(d.as_of||'').split('-'); if(p.length!==3)return;
+      var dd=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])), t=new Date(), n=0;
+      var end=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());
+      while(dd.getTime()<end&&n<40){dd.setUTCDate(dd.getUTCDate()+1);var w=dd.getUTCDay();if(w!==0&&w!==6)n++;}
+      var a=el('asof'); if(n>=3&&a&&a.parentNode)a.parentNode.insertAdjacentHTML('beforeend',' <b style="color:var(--hot)">⚠ '+n+'영업일 지연 — 자동갱신 확인 필요</b>');
+    })();
     render();
     var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(drawHist,150);});
     new MutationObserver(drawHist).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
