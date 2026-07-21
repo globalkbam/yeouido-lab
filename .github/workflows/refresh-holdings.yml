@@ -1,0 +1,42 @@
+name: Refresh strategy holdings (free data)
+
+# 월말 리밸런스 구성이라 월 1회면 충분 — 매월 1일 08:25 KST(+2일 백업 슬롯, cron 신뢰성).
+# ⚠ 데이터 정책: build/refresh_holdings.py는 yfinance(무료)만 사용 — 라이선스 데이터 파생 보유는 공개 금지.
+on:
+  schedule:
+    - cron: '25 23 1 * *'    # 매월 1일 08:25 KST (전일 23:25 UTC)
+    - cron: '25 23 2 * *'    # 매월 2일 백업
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-holdings
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: pip install --quiet pandas numpy yfinance
+      - name: Compute holdings
+        run: python build/refresh_holdings.py
+      - name: Validate
+        run: python build/validate_site.py
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/strategy_holdings.json)" ]; then
+            git add data/strategy_holdings.json
+            git commit -m "chore(data): 현재 포트폴리오 구성 자동 갱신 (무료 데이터 3전략)"
+            git push || (git pull --rebase origin main && git push)
+          else
+            echo "변경 없음 — 스킵"
+          fi

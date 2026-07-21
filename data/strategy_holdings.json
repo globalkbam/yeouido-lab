@@ -1,0 +1,164 @@
+{
+ "generated": "2026-07-21",
+ "note": "무료 공개 데이터(yfinance)로 재현 가능한 전략만 보유 구성을 공개합니다. 라이선스 데이터 파생 전략(챔피언·단일팩터 top10·팩터모멘텀)의 보유는 비공개.",
+ "strategies": {
+  "크로스에셋 리스크패리티 + vol타겟": {
+   "as_of": "2026-06-30",
+   "kind": "assets",
+   "note": "12개 자산 ETF를 60일 역변동성 가중(월말리밸). 위험자산은 12M 추세>0일 때만 편입, 목표변동성 10%로 익스포저 레버 조절(0.3~2.5x, 익일 적용). 가격 소스=yfinance(무료).",
+   "positions": [
+    {
+     "t": "HYG",
+     "name": "iShares 하이일드 회사채",
+     "w": 0.1906
+    },
+    {
+     "t": "UUP",
+     "name": "Invesco 달러인덱스",
+     "w": 0.1541
+    },
+    {
+     "t": "IEF",
+     "name": "iShares 7-10Y 미국 중기국채",
+     "w": 0.1531
+    },
+    {
+     "t": "LQD",
+     "name": "iShares 투자등급 회사채",
+     "w": 0.1451
+    },
+    {
+     "t": "TLT",
+     "name": "iShares 20+Y 미국 장기국채",
+     "w": 0.0868
+    },
+    {
+     "t": "SPY",
+     "name": "SPDR S&P 500 (미국 대형주)",
+     "w": 0.055
+    },
+    {
+     "t": "VNQ",
+     "name": "Vanguard 미국 리츠",
+     "w": 0.0493
+    },
+    {
+     "t": "EFA",
+     "name": "iShares MSCI EAFE (선진국 ex-US)",
+     "w": 0.0409
+    },
+    {
+     "t": "DBC",
+     "name": "Invesco DB Commodity (원자재)",
+     "w": 0.0364
+    },
+    {
+     "t": "QQQ",
+     "name": "Invesco QQQ (나스닥100)",
+     "w": 0.0328
+    },
+    {
+     "t": "GLD",
+     "name": "SPDR Gold (금)",
+     "w": 0.0326
+    },
+    {
+     "t": "EEM",
+     "name": "iShares MSCI EM (신흥국)",
+     "w": 0.0233
+    }
+   ],
+   "extra": {
+    "vol타겟_레버리지": 2.0,
+    "목표변동성": "10%",
+    "추세게이트_제외": "없음(전 위험자산 추세 양호)"
+   }
+  },
+  "섹터 리스크패리티 (역변동성)": {
+   "as_of": "2026-06-30",
+   "kind": "assets",
+   "note": "11개 SPDR 섹터 ETF를 최근 60일 역변동성으로 가중(합=1), 월말리밸. 가격 소스=yfinance(무료).",
+   "positions": [
+    {
+     "t": "XLF",
+     "name": "Financials (금융)",
+     "w": 0.1253
+    },
+    {
+     "t": "XLC",
+     "name": "Communication Services (커뮤니케이션)",
+     "w": 0.1133
+    },
+    {
+     "t": "XLP",
+     "name": "Consumer Staples (필수소비)",
+     "w": 0.1046
+    },
+    {
+     "t": "XLRE",
+     "name": "Real Estate (부동산)",
+     "w": 0.1021
+    },
+    {
+     "t": "XLV",
+     "name": "Health Care (헬스케어)",
+     "w": 0.0963
+    },
+    {
+     "t": "XLU",
+     "name": "Utilities (유틸리티)",
+     "w": 0.0955
+    },
+    {
+     "t": "XLB",
+     "name": "Materials (소재)",
+     "w": 0.0847
+    },
+    {
+     "t": "XLY",
+     "name": "Consumer Discretionary (경기소비)",
+     "w": 0.0809
+    },
+    {
+     "t": "XLI",
+     "name": "Industrials (산업재)",
+     "w": 0.0786
+    },
+    {
+     "t": "XLE",
+     "name": "Energy (에너지)",
+     "w": 0.0661
+    },
+    {
+     "t": "XLK",
+     "name": "Technology (기술)",
+     "w": 0.0526
+    }
+   ],
+   "extra": {
+    "룩백": "60거래일 실현변동성"
+   }
+  },
+  "변동성 관리 (σ타겟 익스포저)": {
+   "as_of": "2026-06-30",
+   "kind": "assets",
+   "note": "NDX 익스포저 = min(목표σ15% / 21일 실현σ, 100%), 나머지는 현금. 월말 산출·익일 적용(무레버). 가격 소스=yfinance(무료).",
+   "positions": [
+    {
+     "t": "NDX",
+     "name": "나스닥100 지수",
+     "w": 0.4626
+    },
+    {
+     "t": "CASH",
+     "name": "현금",
+     "w": 0.5374
+    }
+   ],
+   "extra": {
+    "실현변동성_21일": "32.4%",
+    "목표변동성": "15%"
+   }
+  }
+ }
+}
