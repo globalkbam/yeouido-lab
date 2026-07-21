@@ -551,11 +551,13 @@ def main():
                     high = (cc["up20"] is not None and cc["up20"] >= 4.0)
                     if (cc["rsi"] > 55 or high) and (cc["oh"] != cc["oh"] or cc["oh"] >= 45):
                         sms.append(pos); smr[pos] = _reason(pos, "H", "bounce")
-            # (b') 눌림목/반등 '잠정' 후보 — 확정(5봉 유지) 전 예고. 2일 이상 유지 시 표시(최근성 가중 사용자 조정:
-            #     저점 2일 68%·3일 80%·4일 91% / 고점 2일 63%·3일 77%·4일 90% — 1일(52%)·0일(28%)은 동전던지기라 제외).
+            # (b') 눌림목/반등 '잠정' 후보 — 확정(5봉 유지) 전 예고. 실측 확정확률(5y·512종목):
+            #     저점 1일 52%·2일 68%·3일 80%·4일 91% / 고점 1일 46%·2일 63%·3일 77%·4일 90%.
+            #     저점은 사용자 지정으로 1일부터 표시(선행성 우선, 대신 확정확률 52% = 사실상 동전던지기 — 근거 문구에 그대로 노출).
+            #     고점은 1일이 46%로 50% 미만(확정보다 이동이 더 잦음)이라 2일 유지.
             _lastp = len(pxd_dates) - 1
-            _PL = {2: 68, 3: 80, 4: 91}; _PH = {2: 63, 3: 77, 4: 90}
-            for m in range(_lastp - 4, _lastp - 1):   # age = _lastp-m ∈ {4,3,2}
+            _PL = {1: 52, 2: 68, 3: 80, 4: 91}; _PH = {2: 63, 3: 77, 4: 90}
+            for m in range(_lastp - 4, _lastp):   # age = _lastp-m ∈ {4,3,2,1}
                 if m < K: continue
                 age = _lastp - m
                 base = _f(dv[m])
@@ -564,12 +566,11 @@ def main():
                 if np.isnan(prev.astype(float)).any() or np.isnan(fut.astype(float)).any(): continue
                 cc = _ctx(m)
                 if cc["d200"] is None or cc["rsi"] != cc["rsi"]: continue
-                if age not in _PL: continue
-                if base < prev.min() and (fut > base).all() and cc["d200"] > 0 and _spaced(bms, m) and m not in bmw:
+                if age in _PL and base < prev.min() and (fut > base).all() and cc["d200"] > 0 and _spaced(bms, m) and m not in bmw:
                     deep = (cc["dd20"] is not None and cc["dd20"] <= -4.0)
                     if (cc["rsi"] < 48 or deep) and (cc["oh"] != cc["oh"] or cc["oh"] <= 55):
                         bmw.append(m); bmr[m] = "잠정 눌림목 저점(미확정) — " + _reason(m, "L", "pull").split(" — ", 1)[1].replace(" · 전환점은 며칠 뒤 확정되므로 표시는 사후 기준", "") + f" · {age}일 유지 — 5거래일 채우면 확정, 과거 통계상 확정 확률 ~{_PL[age]}% (5y·512종목)"
-                if base > prev.max() and (fut < base).all() and cc["d200"] < 0 and _spaced(sms, m) and m not in smw:
+                if age in _PH and base > prev.max() and (fut < base).all() and cc["d200"] < 0 and _spaced(sms, m) and m not in smw:
                     high = (cc["up20"] is not None and cc["up20"] >= 4.0)
                     if (cc["rsi"] > 55 or high) and (cc["oh"] != cc["oh"] or cc["oh"] >= 45):
                         smw.append(m); smr[m] = "잠정 반등 고점(미확정) — " + _reason(m, "H", "bounce").split(" — ", 1)[1].replace(" · 전환점은 며칠 뒤 확정되므로 표시는 사후 기준", "") + f" · {age}일 유지 — 5거래일 채우면 확정, 과거 통계상 확정 확률 ~{_PH[age]}% (5y·512종목)"
