@@ -472,6 +472,8 @@ def main():
                 nconf = int(next((k for k, x in enumerate(fwd, 1) if x/base - 1 >= 0.05), 7))
                 bms.append(pos)
                 bmr[pos] = _reason(pos, "L", "rev") + f" · 저점 후 {nconf}거래일 만에 +5% 회복해 반등 확인"
+            # 같은 위치가 확정(bms/sms)과 잠정(bmw/smw)에 중복되면 확정 우선 — 차트에서 빈 도형이 확정 위를 덮는 문제 방지
+            bmw = [p for p in bmw if p not in bms]; smw = [p for p in smw if p not in sms]
             bms.sort(); sms.sort()
 
             # (c) 현재 상태 근거(왜 지금 이 라벨인가) + 최근 타점 사유
