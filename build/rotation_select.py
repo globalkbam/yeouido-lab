@@ -48,6 +48,14 @@ def main():
     print(f"UTC_DATE={today}")
     for s in sel:
         print(f'{s["id"]}\t{s["name"]}')
+    # 쿼터가 균형이라 카테고리별 재등장 주기가 다르다(E는 21종·쿼터2 → 카드당 ~10일).
+    # 오늘의 9선에 없으면서 recent_at이 가장 오래된(또는 없는) 3종을 추가 갱신 대상으로 지정해 방치 카드를 없앤다.
+    shown = {s["id"] for s in sel}
+    rest = [s for s in S if s["id"] not in shown]
+    rest.sort(key=lambda s: (s.get("recent_at") or "0000-00-00", s["id"]))
+    print("STALE3")
+    for s in rest[:3]:
+        print(f'{s["id"]}\t{s["name"]}\t(최근갱신 {s.get("recent_at") or "없음"})')
 
 
 if __name__ == "__main__":
