@@ -486,7 +486,7 @@
     if(SHOWN.length && !SHOWN.some(function(p){return p[0]===state.preset;}))state.preset=SHOWN[0][0];
     var ixf=el('idxf');['NDX','SPX'].forEach(function(x){var cnt=d.stocks.filter(function(s){return (s.idx||[]).indexOf(x)>=0;}).length;ixf.appendChild(chip(x,cnt,function(){state.idx.has(x)?state.idx.delete(x):state.idx.add(x);syncP();render();}));});
     syncP();render();
-    window.addEventListener('resize',function(){if(state.sel)renderChart(state.sel);});
+    var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(function(){if(state.sel)renderChart(state.sel);},150);});
     new MutationObserver(function(){_cssC={};if(state.sel)renderChart(state.sel);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   }).catch(function(){detailEl.innerHTML='<div class="empty">데이터 로드 오류</div>';});
   function syncP(){var pb=el('presets').querySelectorAll('.fchip');SHOWN.forEach(function(p,i){if(pb[i])pb[i].setAttribute('aria-pressed',state.preset===p[0]);});

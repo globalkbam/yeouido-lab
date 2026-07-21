@@ -135,7 +135,7 @@
     if(!d){el('main').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d; el('asof').textContent=d.as_of||'—';
     render();
-    window.addEventListener('resize',drawHist);
+    var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(drawHist,150);});
     new MutationObserver(drawHist).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   }).catch(function(){el('main').innerHTML='<div class="empty">데이터 로드 오류</div>';});
 
