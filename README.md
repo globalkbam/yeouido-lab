@@ -17,9 +17,11 @@
 ## 데이터·자동화
 | 경로 | 생성기 | 갱신 |
 |---|---|---|
-| `data/stocks.json`(슬림) + `data/sd/<티커>.json`(상세, 지연 로드) + `data/home_reco.json` | `build/refresh_stocks.py` | 매일 08:05 KST + 08:40 백업 |
-| `data/regime.json` | `build/refresh_regime.py` | 매일 08:15 KST + 08:50 백업 |
-| `data/rotation_pool.json` | 헤드리스 리서치 잡(로컬) | 매일 08:20 KST (10선 + 방치 3종) |
+| `data/stocks.json`(슬림) + `data/sd/<티커>.json`(상세, 지연 로드) + `data/home_reco.json` | `build/refresh_stocks.py` | 매일 07:37 KST + 08:11 백업 |
+| `data/regime.json` | `build/refresh_regime.py` | 매일 07:47 KST + 08:21 백업 |
+| `data/rotation_pool.json` | 헤드리스 리서치 잡(로컬) | 매일 07:51 KST (10선 + 방치 3종) |
+| `data/sentiment.json` | `build/refresh_sentiment.py` | 매일 08:03 KST + 08:33 백업 |
+| `data/strategy_holdings.json` | `build/refresh_holdings.py` | 매월 1일 07:57 KST |
 | `data/strategy_backtests.json`·`strategy_detail.json` | 비공개 repo에서 정적 생성 | 수시 |
 
 `build/validate_site.py`가 푸시마다 CI에서 JS 괄호·미정의 호출·JSON 스키마·딥링크 앵커·선별 상수(프론트↔잡)·

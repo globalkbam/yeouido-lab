@@ -2,8 +2,8 @@ name: Refresh market regime (FRED)
 
 on:
   schedule:
-    - cron: '45 22 * * *'    # 매일 07:45 KST (22:45 UTC 전일) — stocks(07:35)와 분(minute) 어긋나게: 같은 브랜치 동시 push 경쟁 회피
-    - cron: '20 23 * * *'    # 08:20 KST 백업 (stocks 08:10 백업과도 분리)
+    - cron: '47 22 * * *'    # 매일 07:47 KST (22:47 UTC 전일) — stocks(07:37)와 분(minute) 어긋나게: 같은 브랜치 동시 push 경쟁 회피
+    - cron: '21 23 * * *'    # 08:21 KST 백업 (stocks 08:11 백업과도 분리)
   workflow_dispatch:
 
 permissions:
