@@ -1,0 +1,21 @@
+name: Validate site
+
+# 브라우저 검증이 불가한 환경이라, 푸시마다 정적 검증으로 '깨진 배포'를 막는다.
+# 검사: 인라인 JS 괄호 균형·정의되지 않은 호출(오타)·data/*.json 파싱·rotation 풀 스키마·
+#       lab 링크 앵커 실재·선별 상수(QUOTA/CATORD) 프론트↔일일잡 일치.
+on:
+  push:
+    paths: ['**.html', 'data/**', 'build/**', '.github/workflows/validate.yml']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate (표준 라이브러리만 사용 — 설치 단계 없음)
+        run: python build/validate_site.py
