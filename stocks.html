@@ -110,6 +110,15 @@
   .fcv{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--ink)}
   @media(max-width:440px){.fgrid{grid-template-columns:repeat(3,1fr)}}
   /* 스크롤 컨테이너인데 내부에 포커스 가능한 요소가 없어 키보드로 스크롤 불가 → tabindex 부여 */
+  .whybox{margin:0 0 14px;padding:12px 15px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px}
+  .whybox h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+  .whyrow{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:6px 0;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .whyrow:first-of-type{border-top:none}
+  .whyrow .wl{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--muted);padding-top:2px}
+  .whyrow.buy .wl{color:var(--good)} .whyrow.sell .wl{color:var(--hot)}
+  .whyrow ul{margin:0;padding-left:16px} .whyrow li{margin-bottom:3px}
+  .whynote{margin-top:8px;padding-top:7px;border-top:1px dashed var(--line-soft);font-size:10.5px;color:var(--muted);line-height:1.6}
+  @media(max-width:560px){.whyrow{grid-template-columns:1fr;gap:2px}}
   .dbody{padding:14px 22px 20px;max-height:44vh;overflow-y:auto}
   .dbody:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .dbody::-webkit-scrollbar{width:8px}.dbody::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
@@ -383,6 +392,19 @@
       .catch(function(){s._sdLoading=0;s._sdFail=1;if(state.sel===s)drawDetail(s);});
     return false;
   }
+  // 왜 이 종목이 매수/매도 신호인가 — 생성기가 신호 시점 실제 지표로 만든 근거(sd/<티커>.json의 why)
+  function whyBlock(s){
+    var w=s.why; if(!w)return '';
+    var rows='';
+    if(w.buy)rows+='<div class="whyrow buy"><span class="wl">▲ 최근 매수 타점</span><div><b>'+esc(w.buy.dt)+'</b> — '+esc(w.buy.why||'')+'</div></div>';
+    if(w.sell)rows+='<div class="whyrow sell"><span class="wl">▼ 최근 매도 타점</span><div><b>'+esc(w.sell.dt)+'</b> — '+esc(w.sell.why||'')+'</div></div>';
+    var now=(w.now||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+    return '<div class="whybox"><h4>왜 이 신호인가</h4>'+rows+
+      (now?'<div class="whyrow now"><span class="wl">현재 상태</span><ul>'+now+'</ul></div>':'')+
+      '<div class="whynote">타점은 <b>확정형</b>이라 전환점 며칠 뒤에야 확정됩니다(사후 표시). '+
+      '매수는 <b>상승추세</b>에서만, 매도는 <b>하락추세</b>에서만 표시하며, 예외적으로 깊은 과매도 뒤 반등이 확인된 경우만 '+
+      '<b>고위험 반등</b>으로 따로 표시합니다.</div></div>';
+  }
   function drawDetail(s){
     if(!s){detailEl.innerHTML='';return;}
     if(!ensureDetail(s)){
@@ -420,7 +442,7 @@
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+fundHtml+
-      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+timing(s)+body+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 상단 리스트 랭킹은 과열도(<b>섹터 상대</b>)·추세·모멘텀·변동성 종합. <b>참고용 — 종목선택 예측력은 제한적이며, 매도는 \'확실한 하락\'이 아니라 비중축소 주의입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA.</div></div>';
+      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 타점은 ①스윙 전환점 확정 ②상승추세 눌림목 저점 ③깊은 과매도 뒤 반등 확인(고위험) 세 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 표시됩니다. 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 상단 리스트 랭킹은 과열도(<b>섹터 상대</b>)·추세·모멘텀·변동성 종합. <b>참고용 — 종목선택 예측력은 제한적이며, 매도는 \'확실한 하락\'이 아니라 비중축소 주의입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA.</div></div>';
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}

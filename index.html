@@ -46,32 +46,6 @@
   h1.title span.gx{background:linear-gradient(92deg,var(--accent),var(--champ) 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
   /* 현재 국면 배지 — regime.json에서 라이브 */
   .rgchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--rgc,var(--ink-2));background:color-mix(in srgb,var(--rgc,var(--muted)) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--rgc,var(--muted)) 40%,transparent);border-radius:999px;padding:3px 11px}
-  /* 플래그십: 배포 통합 전략 10년 누적 — 실데이터 스파크라인 */
-  a.flag{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;margin-top:22px;padding:18px 22px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);text-decoration:none;border-left:5px solid var(--champ);transition:transform .14s,border-color .14s}
-  a.flag:hover{transform:translateY(-2px);border-color:var(--accent)}
-  .flag .ft{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-  .flag svg{width:100%;height:96px;display:block}
-  .flag .flg{display:flex;gap:14px;margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--muted)}
-  .flag .flg i{display:inline-block;width:14px;border-top:2px solid var(--champ);vertical-align:middle;margin-right:5px}
-  .flag .flg i.b{border-top:2px dashed var(--muted)} .flag .flg i.b2{border-top:2px dashed var(--rp)}
-  .flag .fright{display:grid;gap:10px;text-align:right;min-width:118px}
-  .flag .fm{font-family:var(--mono)} .flag .fm b{display:block;font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.02em}
-  .flag .fm span{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-  .flag .fm.pos b{color:var(--deploy)}
-  @media(max-width:620px){a.flag{grid-template-columns:1fr}.flag .fright{grid-template-columns:repeat(3,1fr);text-align:left}}
-  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:12px}
-  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
-  h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(28px,5.4vw,46px);line-height:1.1;letter-spacing:-.015em;margin:18px 0 0;text-wrap:balance}
-  .lede{margin:16px 0 0;max-width:64ch;font-size:16px;color:var(--ink-2)}
-  .asofbar{margin:18px 0 0;display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 15px;box-shadow:var(--shadow);font-family:var(--mono);font-size:12px}
-  .asofbar .asoftag{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600}
-  .asofbar b{color:var(--ink);font-size:14px;font-weight:700}
-  .asofbar .asofnote{color:var(--muted);font-size:10.5px;border-left:1px solid var(--line);padding-left:9px}
-  /* 자동갱신(GitHub cron)이 조용히 실패하면 낡은 신호가 최신처럼 보이므로 명시 경고 */
-  .stalewarn{color:var(--hot);font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--hot) 45%,transparent);border-radius:5px;padding:2px 7px}
-  @media(max-width:560px){.asofbar .asofnote{border-left:0;padding-left:0;flex-basis:100%}}
-  .lede b{color:var(--ink)}
-
   .kstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
   .k{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px;box-shadow:var(--shadow)}
   .k .fig{font-family:var(--mono);font-size:clamp(19px,3vw,25px);font-weight:600;letter-spacing:-.02em;line-height:1}
@@ -150,14 +124,6 @@
       <span class="stalewarn" id="stalewarn" hidden></span>
       <span class="rgchip" id="rgchip" hidden></span>
     </div>
-    <a class="flag" href="explorer.html" id="flagcard" hidden>
-      <div>
-        <div class="ft">배포 통합 전략 — 10년 누적 (로그축)</div>
-        <svg id="flagsvg" viewBox="0 0 560 96" preserveAspectRatio="none" role="img" aria-label="통합 포트폴리오 누적수익 스파크라인"></svg>
-        <div class="flg"><span><i></i>통합 포트폴리오</span><span><i class="b"></i>NDX</span><span><i class="b2"></i>SPX</span></div>
-      </div>
-      <div class="fright" id="flagstats"></div>
-    </a>
   </header>
 
   <p class="lbl">매일 갱신</p>
@@ -176,7 +142,7 @@
     </a>
   </div>
 
-  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 스윙 저점≈매수·고점≈매도 · <span id="stkasof"></span></span></p>
+  <p class="lbl">주목 종목 <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· 스윙 저점≈매수·고점≈매도 · 종목을 열면 <b>왜 이 신호인지</b> 근거 표시 · <span id="stkasof"></span></span></p>
   <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
 
   <p class="lbl">전략 리서치</p>
@@ -247,29 +213,6 @@
       }
     }).catch(function(){});
   }
-  // 플래그십 스파크라인 — 배포 통합 전략의 실제 백테스트(월간 nav)를 홈에서 바로 보여준다(lazy)
-  function flagship(){
-    fetch('data/strategy_backtests.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
-      var bt=d&&d.strategies&&d.strategies['통합 포트폴리오 (EPS 리비전 + 크로스에셋 RP)']; if(!bt)return;
-      var nav=bt.nav,b=bt.bench,b2=bt.bench2,n=nav.length,W=560,H=96;
-      var all=nav.concat(b).concat(b2||[]).filter(function(v){return v>0;});
-      var lo=Math.log(Math.min.apply(null,all)),hi=Math.log(Math.max.apply(null,all));
-      function X(i){return i/(n-1)*W;} function Y(v){return H-4-(H-10)*((Math.log(v)-lo)/(hi-lo));}
-      function P(a){var p='',st=false;for(var i=0;i<n;i++){var v=a[i];if(v==null||v<=0)continue;p+=(st?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1);st=true;}return p;}
-      var svg=document.getElementById('flagsvg');
-      svg.innerHTML=(b2?'<path d="'+P(b2)+'" fill="none" stroke="var(--rp)" stroke-width="1" stroke-dasharray="4 3" opacity=".7"/>':'')+
-        '<path d="'+P(b)+'" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3" opacity=".8"/>'+
-        '<path d="'+P(nav)+'" fill="none" stroke="var(--champ)" stroke-width="2.4"/>';
-      svg.setAttribute('aria-label','통합 포트폴리오 누적수익: 100에서 '+Math.round(nav[n-1])+'로, 같은 기간 NDX '+Math.round(b[n-1])+(b2?', SPX '+Math.round(b2[n-1]):''));
-      var m=bt.metrics||{};
-      document.getElementById('flagstats').innerHTML=
-        '<div class="fm pos"><b>'+(m.cagr!=null?'+'+m.cagr+'%':'—')+'</b><span>연평균 수익</span></div>'+
-        '<div class="fm"><b>'+(m.sharpe!=null?m.sharpe:'—')+'</b><span>Sharpe</span></div>'+
-        '<div class="fm"><b>'+(m.mdd!=null?m.mdd+'%':'—')+'</b><span>최대 낙폭</span></div>';
-      document.getElementById('flagcard').hidden=false;
-    }).catch(function(){});
-  }
-  if('requestIdleCallback' in window)requestIdleCallback(flagship);else setTimeout(flagship,600);
   function recoCol(title,cnt,arr,tri,tricol){return '<div class="rcol"><h4><span>'+title+'</span><span>'+cnt+'종</span></h4>'+
     (arr.length?arr.map(function(x){return '<a class="rstk" href="stocks.html"><span><span aria-hidden="true" style="color:'+tricol+';margin-right:5px;font-size:11px">'+tri+'</span><span class="rk">'+x.t+'</span><span class="rn2">'+(x.name||'')+'</span></span><span class="rv">'+x.dt+' · '+(x.ago<=0?'당일':x.ago+'일전')+'</span></a>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">해당 없음</div>')+'</div>';}
   function renderReco(h){

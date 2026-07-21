@@ -354,31 +354,121 @@ def main():
         tp = None
         if dser is not None and not dser.isna().any() and len(dser) >= 40:
             wr = rsi(raw[t]["close"]).reindex(daily.index).values
-            theta = min(0.30, max(0.12, 6.0 * (sg.get("atrp") or 5) / 100))   # 감도↓↓ = 주요 전환점 3~4개만
+            theta = min(0.16, max(0.05, 3.0 * (sg.get("atrp") or 5) / 100))   # 감도 상향(2026-07): 전환점 6~10개
+            # 과거엔 12~30%라 추세 위 눌림목에서 타점이 아예 안 잡혔다. 품질은 아래 필터(칼·과열)로 유지.
             piv, dvg = zigzag(dser.values, wr, theta)
             if len(piv) >= 2: tp = {"zz": piv, "dvg": dvg}
         # 매수/매도 타점(마커) — 스윙 저점≈매수·고점≈매도(지그재그 전환점), 과열도·추세·모멘텀·변동성으로 필터 + 국면 조정.
         #   저점 매수: 깊은 붕괴(200MA −KNIFE 아래 & 6M<−15%)·아직 과매수(oh>65)면 제외 → 떨어지는 칼 회피.
         #   고점 매도: 강세 지속(상승추세 & 모멘텀↑ & oh<70)·아직 과매도(oh<35)면 제외 → 강세종목 조기매도 회피.
         bms, sms = [], []
-        if tp and dser is not None and t in px:
+        bmr, smr = {}, {}      # 타점별 근거 문자열 {인덱스: "사유"}
+        whyb = None
+        if dser is not None and t in px:
             cf = raw[t]["close"]; hf = px[t]["High"].reindex(cf.index); lf = px[t]["Low"].reindex(cf.index); vf = px[t]["Volume"].reindex(cf.index)
             ohb = overheat_series(hf, lf, cf, vf).reindex(daily.index)
-            s2b = sma(cf, 200).reindex(daily.index); r6b = cf.pct_change(126).reindex(daily.index)
+            s2b = sma(cf, 200).reindex(daily.index); s5b = sma(cf, 50).reindex(daily.index)
+            r6b = cf.pct_change(126).reindex(daily.index); rsb = rsi(cf).reindex(daily.index)
             _, _, mhb = macd(cf); mhb = mhb.reindex(daily.index)
+            vmb = vf.reindex(daily.index); v20 = vmb.rolling(20).mean()
+            hi20 = cf.rolling(20).max().reindex(daily.index); lo20 = cf.rolling(20).min().reindex(daily.index)
             dv = dser.to_numpy(); KNIFE = 0.10 if spy_riskon else 0.05
-            for pos, typ in tp["zz"]:
+
+            def _fmt(x, unit="%", nd=1):
+                return "—" if x is None or x != x else f"{x:+.{nd}f}{unit}" if unit == "%" else f"{x:.{nd}f}"
+
+            def _ctx(pos):
+                """마커 시점의 상태값 — 근거 문장 재료."""
+                px_ = _f(dv[pos]); s2 = _f(s2b.iloc[pos]); s5 = _f(s5b.iloc[pos])
+                return {"px": px_, "d200": (px_/s2 - 1)*100 if (px_ == px_ and s2 == s2 and s2) else None,
+                        "d50": (px_/s5 - 1)*100 if (px_ == px_ and s5 == s5 and s5) else None,
+                        "rsi": _f(rsb.iloc[pos]), "oh": _f(ohb.iloc[pos]),
+                        "dd20": (px_/_f(hi20.iloc[pos]) - 1)*100 if (px_ == px_ and _f(hi20.iloc[pos]) == _f(hi20.iloc[pos])) else None,
+                        "up20": (px_/_f(lo20.iloc[pos]) - 1)*100 if (px_ == px_ and _f(lo20.iloc[pos]) == _f(lo20.iloc[pos])) else None,
+                        "vr": (_f(vmb.iloc[pos])/_f(v20.iloc[pos])) if (_f(v20.iloc[pos]) == _f(v20.iloc[pos]) and _f(v20.iloc[pos])) else None,
+                        "mh": _f(mhb.iloc[pos])}
+
+            def _reason(pos, typ, kind):
+                c_ = _ctx(pos); parts = []
+                if c_["d200"] is not None:
+                    parts.append(f"200일선 {_fmt(c_['d200'])} ({'상승추세' if c_['d200'] >= 0 else '하락추세'})")
+                if c_["rsi"] == c_["rsi"]: parts.append(f"RSI {c_['rsi']:.0f}")
+                if typ == "L" and c_["dd20"] is not None: parts.append(f"20일 고점 대비 {_fmt(c_['dd20'])} 눌림")
+                if typ == "H" and c_["up20"] is not None: parts.append(f"20일 저점 대비 {_fmt(c_['up20'])} 반등")
+                if c_["oh"] == c_["oh"]: parts.append(f"과열도 {c_['oh']:.0f}/100")
+                if c_["vr"] is not None and c_["vr"] == c_["vr"]: parts.append(f"거래량 평소의 {c_['vr']:.1f}배")
+                head = {"zz": "스윙 전환점 확정", "pull": "상승추세 눌림목 저점",
+                        "bounce": "하락추세 반등 고점", "rev": "하락추세 과매도 반등 (고위험)"}[kind]
+                tail = "" if kind == "rev" else " · 전환점은 며칠 뒤 확정되므로 표시는 사후 기준"
+                return head + " — " + " · ".join(parts) + tail
+
+            # (a) 지그재그 확정 전환점
+            for pos, typ in ((tp or {}).get("zz") or []):
                 if pos < 0 or pos >= len(pxd_dates): continue
                 oh = _f(ohb.iloc[pos])
                 if oh != oh: continue
                 s2 = _f(s2b.iloc[pos]); r6 = _f(r6b.iloc[pos]); pxp = _f(dv[pos])
                 if typ == "L":
                     knife = (s2 == s2 and pxp == pxp and pxp < s2*(1 - KNIFE)) and (r6 == r6 and r6 < -0.15)
-                    if (not knife) and oh <= 65: bms.append(pos)
+                    if (not knife) and oh <= 65:
+                        bms.append(pos); bmr[pos] = _reason(pos, "L", "zz")
                 else:
                     rising = (_f(mhb.iloc[pos]) >= _f(mhb.iloc[pos-3])) if pos >= 3 else True
                     strength = (s2 == s2 and pxp == pxp and pxp > s2) and rising and oh < 70
-                    if (not strength) and oh >= 35: sms.append(pos)
+                    if (not strength) and oh >= 35:
+                        sms.append(pos); smr[pos] = _reason(pos, "H", "zz")
+
+            # (b) 추세 내 눌림목·반등 타점 — 지그재그가 놓치는 '추세 유지 중 되돌림'을 잡는다.
+            #     확정 중심 피봇(K=3, 3봉 뒤에야 확정되므로 미래참조 아님) + 추세·과열·낙폭 조건 + 간격 8봉.
+            K = 3; W = 2*K + 1
+            cwin = pd.Series(dv, index=daily.index)
+            piv_lo = cwin == cwin.rolling(W, center=True, min_periods=W).min()
+            piv_hi = cwin == cwin.rolling(W, center=True, min_periods=W).max()
+            def _spaced(lst, pos, gap=8):
+                return all(abs(pos - q) >= gap for q in lst)
+            for pos in range(K, len(pxd_dates) - K):
+                cc = _ctx(pos)
+                if cc["d200"] is None or cc["rsi"] != cc["rsi"]: continue
+                if bool(piv_lo.iloc[pos]) and cc["d200"] > 0 and _spaced(bms, pos):
+                    deep = (cc["dd20"] is not None and cc["dd20"] <= -4.0)
+                    if (cc["rsi"] < 48 or deep) and (cc["oh"] != cc["oh"] or cc["oh"] <= 55):
+                        bms.append(pos); bmr[pos] = _reason(pos, "L", "pull")
+                if bool(piv_hi.iloc[pos]) and cc["d200"] < 0 and _spaced(sms, pos):
+                    high = (cc["up20"] is not None and cc["up20"] >= 4.0)
+                    if (cc["rsi"] > 55 or high) and (cc["oh"] != cc["oh"] or cc["oh"] >= 45):
+                        sms.append(pos); smr[pos] = _reason(pos, "H", "bounce")
+            # (c) 하락추세 과매도 반등 — 추세 필터(떨어지는 칼 회피)에 막히는 바닥을 '확인 후'에만 별도 등급으로.
+            #     조건: 200MA 아래 · RSI<35 · 과열도<25 · 저점 후 7봉 내 +5% 회복(확인). 확인 시점은 저점보다 늦다(사후 표시).
+            for pos in range(K, len(pxd_dates) - 7):
+                if not bool(piv_lo.iloc[pos]) or not _spaced(bms, pos, 10): continue
+                cc = _ctx(pos)
+                if cc["d200"] is None or cc["d200"] >= 0: continue
+                if cc["rsi"] != cc["rsi"] or cc["rsi"] >= 35: continue
+                if cc["oh"] == cc["oh"] and cc["oh"] >= 25: continue
+                base = _f(dv[pos]); fwd = dv[pos+1:pos+8]
+                if base != base or not len(fwd): continue
+                gain = (max(fwd)/base - 1)*100
+                if gain < 5.0: continue
+                nconf = int(next((k for k, x in enumerate(fwd, 1) if x/base - 1 >= 0.05), 7))
+                bms.append(pos)
+                bmr[pos] = _reason(pos, "L", "rev") + f" · 저점 후 {nconf}거래일 만에 +5% 회복해 반등 확인"
+            bms.sort(); sms.sort()
+
+            # (c) 현재 상태 근거(왜 지금 이 라벨인가) + 최근 타점 사유
+            last = len(pxd_dates) - 1
+            cl = _ctx(last); bullets = []
+            if cl["d200"] is not None:
+                bullets.append(("상승추세" if cl["d200"] >= 0 else "하락추세") + f" — 종가가 200일선 {_fmt(cl['d200'])}")
+            if cl["d50"] is not None: bullets.append(f"50일선 대비 {_fmt(cl['d50'])}")
+            if cl["rsi"] == cl["rsi"]:
+                rr = cl["rsi"]
+                bullets.append(f"RSI {rr:.0f} — " + ("과매도권(반등 여지)" if rr < 35 else "과매수권(되돌림 주의)" if rr > 70 else "중립"))
+            if cl["dd20"] is not None: bullets.append(f"최근 20일 고점 대비 {_fmt(cl['dd20'])}")
+            if cl["oh"] == cl["oh"]: bullets.append(f"과열도 {cl['oh']:.0f}/100 (0=과매도·100=과매수)")
+            if cl["vr"] is not None and cl["vr"] == cl["vr"]: bullets.append(f"거래량 평소의 {cl['vr']:.1f}배")
+            whyb = {"now": bullets}
+            if bms: whyb["buy"] = {"dt": pxd_dates[bms[-1]], "why": bmr.get(bms[-1], "")}
+            if sms: whyb["sell"] = {"dt": pxd_dates[sms[-1]], "why": smr.get(sms[-1], "")}
         bmw = []; smw = []   # timing(라벨·리스트)은 trend_signals의 추세기반 유지 · 스윙 마커는 차트 전용
         info = mem.get(t, {})
         fd = fund.get(t) or {}
@@ -394,6 +484,7 @@ def main():
                        "timing": raw[t]["timing"], "buy": raw[t]["buy"], "sell": raw[t]["sell"],
                        "bscore": round(float(buy_score.get(t, 0.0)), 3), "sscore": round(float(sell_score.get(t, 0.0)), 3),
                        "trig": trig, "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
+                       **({"why": whyb} if whyb else {}),
                        "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd,
                        **({"tp": tp} if tp else {})})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
@@ -422,7 +513,7 @@ def main():
     _keep = set()
     for s in stocks:
         det = {"as_of": as_of, "t": s["t"]}
-        for k in ("sig", "pxd", "vd", "tp"):
+        for k in ("sig", "pxd", "vd", "tp", "why"):
             v = s.pop(k, None)
             if v is not None: det[k] = v
         fn = s["t"] + ".json"; _keep.add(fn)
