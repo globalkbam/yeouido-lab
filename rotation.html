@@ -173,15 +173,16 @@
   }
   var CATNM={A:'A. S&P 500 초과성과',B:'B. NASDAQ 100 초과성과',C:'C. 단기 마켓타이밍',D:'D. 자산배분·리스크관리',E:'E. 추가 알파·팩터·이벤트'};
   var CATSHORT={A:'S&P500 초과',B:'NDX 초과',C:'단기 타이밍',D:'자산배분',E:'알파·팩터'};
-  var DATA=null, state={q:'', cats:new Set(), mode:'today'};
+  var DATA=null, state={q:'', cats:new Set(), mode:'today', labonly:false};
   function today(){return new Date().toISOString().slice(0,10);}
-  function browsing(){return state.mode==='all' || !!state.q || state.cats.size>0;}
+  function browsing(){return state.mode==='all' || !!state.q || state.cats.size>0 || state.labonly;}
   function selection(){
     var S=DATA.strategies;
     if(!browsing()) return pick(S,9,today());   // 기본: 오늘의 9선
     var q=state.q;
     return S.filter(function(s){
       if(state.cats.size && !state.cats.has(s.cat))return false;
+      if(state.labonly && !s.lab)return false;
       if(q){var lb=s.lab?(' 랩검증 '+s.lab.v+' '+s.lab.t+' '+s.lab.why):'';
         var hay=(s.id+' '+s.name+' '+s.type+' '+s.target+' '+s.purpose+' '+s.principle+' '+s.performance+' '+s.recent+lb+' '+(s.sources||[]).join(' ')).toLowerCase();if(hay.indexOf(q)<0)return false;}
       return true;
@@ -191,7 +192,10 @@
     var sel=selection(), br=browsing();
     // 전체 탐색 중일 때 '오늘의 9선'에 해당하는 전략을 배지로 구분
     var t9=br?(function(){var m={};pick(DATA.strategies,9,today()).forEach(function(s){m[s.id]=1;});return m;})():null;
-    el('rowcount').textContent = br ? (sel.length+'개 표시 / 전체 '+DATA.strategies.length) : ('오늘의 9선 · '+today()+' (검색·필터로 전체 '+DATA.strategies.length+'종 탐색)');
+    var nlab=sel.filter(function(s){return s.lab;}).length;   // 오늘 9선 중 랩이 이미 판정한 것 — 먼저 알려주는 게 정직하다
+    el('rowcount').textContent = (br ? (sel.length+'개 표시 / 전체 '+DATA.strategies.length)
+      : ('오늘의 9선 · '+today()+' (검색·필터로 전체 '+DATA.strategies.length+'종 탐색)'))
+      + (nlab?' · 이 중 '+nlab+'종은 랩 자체 검증 판정 있음':'');
     var html='';
     CATORD.forEach(function(c){
       var items=sel.filter(function(s){return s.cat===c;});
@@ -228,6 +232,14 @@
       b.addEventListener('click',function(){state.cats.has(c)?state.cats.delete(c):state.cats.add(c);b.setAttribute('aria-pressed',state.cats.has(c));render();});
       cf.appendChild(b);
     });
+    // 랩 자체 검증 판정이 붙은 전략만 보기 — 웹 주장과 자체 결론이 갈리는 지점을 한 번에 훑도록
+    (function(){
+      var n=d.strategies.filter(function(s){return s.lab;}).length; if(!n)return;
+      var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');
+      b.innerHTML='<span class="d" style="background:var(--hot)"></span>랩 검증 있음 <span class="c">'+n+'</span>';
+      b.addEventListener('click',function(){state.labonly=!state.labonly;b.setAttribute('aria-pressed',state.labonly);render();});
+      cf.appendChild(b);
+    })();
     el('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase().trim();render();});
     el('modebtn').addEventListener('click',function(){state.mode=state.mode==='all'?'today':'all';syncMode();render();});
     syncMode(); render(); gotoHash();
