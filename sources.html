@@ -98,20 +98,20 @@
       <thead><tr><th scope="col">데이터</th><th scope="col">출처</th><th scope="col">기준일</th><th scope="col">갱신</th></tr></thead>
       <tbody>
         <tr><th scope="row"><a href="stocks.html">종목 시그널</a></th>
-          <td><span class="freetag">무료</span>yfinance · FINRA · 구성종목 리스트는 사내 DB 스냅샷(정적)</td>
+          <td><span class="freetag">무료</span>yfinance · FINRA · 구성종목 리스트는 사내 DB(index_constituents) 스냅샷</td>
           <td class="dt" id="src-stk">—</td><td>매일 08:05 KST</td></tr>
         <tr><th scope="row"><a href="regime.html">시장 국면</a></th>
           <td><span class="freetag">무료</span>FRED · yfinance</td>
           <td class="dt" id="src-rg">—</td><td>매일 08:15 KST</td></tr>
         <tr><th scope="row"><a href="rotation.html">오늘의 로테이션</a></th>
           <td><span class="freetag">무료</span>웹 리서치(공개 문헌)</td>
-          <td class="dt">페이지 상단 표기</td><td>매일 08:20 KST</td></tr>
+          <td class="dt" id="src-rot">—</td><td>매일 08:20 KST</td></tr>
         <tr><th scope="row"><a href="explorer.html">현재 포트폴리오 구성</a></th>
           <td><span class="freetag">무료</span>yfinance(ETF·지수 가격)</td>
-          <td class="dt" id="src-hold">—</td><td>매월 1일</td></tr>
+          <td class="dt" id="src-hold">—</td><td>매월 1일 08:25 KST</td></tr>
         <tr class="dbrow"><th scope="row"><a href="explorer.html">전략 백테스트·판정</a></th>
-          <td><span class="dbtag">사내 DB</span>FactSet 라이선스 데이터 파생 — 집계 성과만 공개</td>
-          <td class="dt">전략별 상이(각 패널 표기)</td><td>수시(정적)</td></tr>
+          <td><span class="dbtag">사내 DB</span>사내 리서치 DB(FactSet)</td>
+          <td class="dt" id="src-bt">—</td><td>수시(정적)</td></tr>
       </tbody>
     </table>
   </div>
@@ -121,7 +121,7 @@
   <div class="card">
     <h3><span class="freetag">무료</span><a href="stocks.html">종목 시그널</a> <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">data/stocks.json · data/sd/ · data/home_reco.json</span></h3>
     <p>NDX·SPX 512종목의 가격·테크니컬 22지표·EPS(트레일링/포워드)는 <b>yfinance</b>, 공매도잔량·커버일수는 <b>FINRA</b>(격주 공시라 가격 기준일보다 오래됨 — 페이지에 별도 기준일 표기).
-      구성종목 리스트(<span style="font-family:var(--mono)">data/members.json</span>)는 사내 DB에서 만든 <b>정적 스냅샷</b>입니다 — 지수 구성·섹터 분류는 공개 정보로 재구성 가능한 수준이며, 지수 정기변경 시 수동 갱신합니다.
+      구성종목 리스트(<span style="font-family:var(--mono)">data/members.json</span>)는 사내 DB <b>index_constituents</b>의 최신 스냅샷입니다 — 지수 구성·회사명·GICS 섹터는 공개 정보로 재구성 가능한 수준이며, 지수 정기변경 시 재생성해 갱신합니다.
       갱신 잡에는 완전성 게이트가 있어 데이터 소스 부분 장애 시 갱신을 중단하고 이전본을 유지합니다.</p>
     <div class="meta"><span><b>기준일</b><span id="d-stk">—</span></span><span><b>공매도 기준일</b><span id="d-si">—</span></span><span><b>구성종목 스냅샷</b><span id="d-memb">—</span></span><span><b>갱신</b>매일 08:05 + 08:40 KST (GitHub Actions)</span></div>
   </div>
@@ -138,7 +138,7 @@
     <p>전략 풀은 <b>공개 논문·기관 리서치 웹 리서치</b>로 수집·검증한 카드이며, 카드마다 원 출처 링크를 표기합니다.
       성과 수치는 원 출처 인용(미검증)이고, 랩이 자체 검증한 전략에는 별도 판정 배지가 붙습니다.
       기준일·갱신일은 로테이션 페이지 상단에 표기됩니다.</p>
-    <div class="meta"><span><b>갱신</b>매일 08:20 KST — 그날의 10선 + 방치 3종 최근동향</span></div>
+    <div class="meta"><span><b>풀 갱신일</b><span id="d-rot">—</span></span><span><b>갱신</b>매일 08:20 KST — 그날의 10선 + 방치 3종 최근동향</span></div>
   </div>
 
   <div class="card">
@@ -155,7 +155,7 @@
       공개 범위는 <b>집계 성과(월간 누적수익·낙폭·연환산 지표)와 정성 판정</b>으로 한정하며,
       원천 수치(가격·추정치·팩터값)와 종목 선정 결과(보유 리스트)는 공개하지 않습니다.
       백테스트 구간은 전략별로 다르며 탐색기 각 패널에 표기됩니다. 무비용·월말(gross) 기준.</p>
-    <div class="meta"><span><b>기준일</b>전략별 상이 — 탐색기 패널 표기</span><span><b>갱신</b>수시(정적 재생성)</span></div>
+    <div class="meta"><span><b>생성일</b><span id="d-btgen">—</span></span><span><b>백테스트 구간</b><span id="d-btspan">전략별 상이 — 각 패널 표기</span></span><span><b>갱신</b>수시(정적 재생성)</span></div>
   </div>
 
   <footer>
@@ -177,6 +177,12 @@
     if(ks.length)put(['src-hold','d-hold'],hd.strategies[ks[0]].as_of);
   });
   j('data/members.json').then(function(m){if(m)put(['d-memb'],m.as_of_members);});
+  j('data/rotation_pool.json').then(function(rp){if(rp)put(['src-rot','d-rot'],rp.generated);});
+  j('data/strategy_backtests.json').then(function(bt){
+    if(!bt)return; put(['src-bt','d-btgen'],'생성 '+(bt.generated||'—'));
+    var st=[],en=[];Object.keys(bt.strategies||{}).forEach(function(k){var b_=bt.strategies[k];if(b_.start)st.push(b_.start);if(b_.end)en.push(b_.end);});
+    if(st.length)put(['d-btspan'],st.sort()[0].slice(0,7)+' ~ '+en.sort().pop().slice(0,7)+' (전략별 상이 — 각 패널 표기)');
+  });
   j('data/stocks.json').then(function(d){   // 225KB 슬림 — FINRA 공매도 기준일(factor_defs)만 사용
     if(d&&d.factor_defs&&d.factor_defs.dtc)put(['d-si'],d.factor_defs.dtc.as_of);
   });
