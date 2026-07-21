@@ -370,14 +370,16 @@
   function _num(a){return a.filter(function(v){return v!=null&&!isNaN(v);});}
   function svgEquity(bt,vc){
     var d=bt.dates,s=bt.nav,b=bt.bench,n=d.length,W=580,H=200,pL=42,pR=10,pT=10,pB=20,pw=W-pL-pR,ph=H-pT-pB;
-    var all=_num(s.concat(b)).filter(function(v){return v>0;});
+    var b2=bt.bench2||null;
+    var all=_num(s.concat(b).concat(b2||[])).filter(function(v){return v>0;});
     var lo=Math.log(Math.min.apply(null,all)),hi=Math.log(Math.max.apply(null,all));if(hi-lo<0.05)hi=lo+0.05;
     function X(i){return pL+pw*i/(n-1);} function Y(v){return pT+ph*(1-(Math.log(v)-lo)/(hi-lo));}
     function P(a){var p='',st=false;for(var i=0;i<n;i++){var v=a[i];if(v==null||isNaN(v)||v<=0)continue;p+=(st?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1);st=true;}return p;}
     var g='';[100,150,200,300,400,600,800,1200,1600,2400].forEach(function(gv){var lv=Math.log(gv);if(lv>=lo&&lv<=hi){var y=Y(gv);g+='<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="var(--line-soft)"/><text x="'+(pL-4)+'" y="'+(y+3).toFixed(1)+'" text-anchor="end" class="axl">'+gv+'</text>';}});
     var xt='',seen={};for(var i=0;i<n;i++){var yr=d[i].slice(0,4);if(!seen[yr]){seen[yr]=1;xt+='<text x="'+X(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" class="axl">’'+yr.slice(2)+'</text>';}}
-    var _ls=_num(s), _lb=_num(b), _al='누적수익 로그차트 · '+(d[0]||'')+'~'+(d[n-1]||'')+' · 기준 100 → 전략 '+(_ls.length?Math.round(_ls[_ls.length-1]):'—')+', 벤치마크 '+(_lb.length?Math.round(_lb[_lb.length-1]):'—');
+    var _ls=_num(s), _lb=_num(b), _lb2=_num(b2||[]), _al='누적수익 로그차트 · '+(d[0]||'')+'~'+(d[n-1]||'')+' · 기준 100 → 전략 '+(_ls.length?Math.round(_ls[_ls.length-1]):'—')+', 벤치마크 '+(_lb.length?Math.round(_lb[_lb.length-1]):'—')+(_lb2.length?', 보조벤치 '+(bt.bench2_label||'')+' '+Math.round(_lb2[_lb2.length-1]):'');
     return '<svg class="btsvg" role="img" aria-label="'+_al+'" viewBox="0 0 '+W+' '+H+'">'+g+xt+
+      (b2?'<path d="'+P(b2)+'" fill="none" stroke="var(--champ)" stroke-width="1.2" stroke-dasharray="6 3"/>':'')+
       '<path d="'+P(b)+'" fill="none" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="3 3"/>'+
       '<path d="'+P(s)+'" fill="none" stroke="'+vc+'" stroke-width="2.2"/></svg>';
   }
@@ -414,7 +416,7 @@
       '전략과 벤치는 <b>첫 월말을 100</b>으로 공통 리베이스하며, 편입 전 무포지션 구간은 제외합니다. '+
       '왼쪽 목록의 헤드라인 수치는 랩 정본 리서치의 측정 기준이라 값이 다를 수 있습니다.</div>';
     return '<div class="btsec"><h4><span>백테스트 성과</span><small>'+bt.start+' ~ '+bt.end+' · gross(무비용)</small></h4>'+mg+
-      '<div class="chartttl">누적수익 (로그축) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted);border-top-style:dashed"></i>'+bl+'</span></div>'+svgEquity(bt,vc)+
+      '<div class="chartttl">누적수익 (로그축) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted);border-top-style:dashed"></i>'+bl+'</span>'+(bt.bench2?'<span class="lg"><i style="border-color:var(--champ);border-top-style:dashed"></i>'+(bt.bench2_label||'보조')+'</span>':'')+'</div>'+svgEquity(bt,vc)+
       '<div class="chartttl">낙폭 (drawdown)</div>'+svgDD(bt)+
       '<div class="chartttl">연도별 수익 <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted)"></i>'+bl+'</span></div>'+svgYearly(bt,vc)+'</div>';
   }
@@ -423,7 +425,17 @@
   // 현재 기준 포트폴리오 구성 — 백테스트와 같은 규칙으로 뽑은 '최근 리밸런스 시점' 보유.
   // ⚠ 실시간 호가·실제 계좌가 아니라 리서치 재현 결과이며, 리밸 시점 이후 가격 변동은 반영되지 않는다.
   function holdSection(h,vc){
-    if(!h||!h.positions||!h.positions.length)return '';
+    if(!h)return '';
+    var ex=h.extra?Object.keys(h.extra).map(function(k){
+      return '<span class="hx"><b>'+esc(k)+'</b> '+esc(String(h.extra[k]))+'</span>';}).join(''):'';
+    if(h.private||!h.positions||!h.positions.length){   // 종목 비공개 전략 — 요약 칩 + 사유만
+      if(!h.private)return '';
+      return '<div class="btsec"><h4><span>현재 포트폴리오 구성</span><small>기준일 '+esc(h.as_of||'—')+'</small></h4>'+
+        (ex?'<div class="hxrow">'+ex+'</div>':'')+
+        (h.note?'<div class="btnote">'+esc(h.note)+'</div>':'')+
+        '<div class="btnote"><b>보유 종목 리스트는 비공개</b> — 라이선스 데이터(FactSet) 파생 결과이며 배포 전략 보호 목적. '+
+        '공개 범위는 위 요약(종목수·가중·규약)과 백테스트 집계 성과까지입니다.</div></div>';
+    }
     var kindLab={stocks:'종목',assets:'자산',sleeves:'슬리브'}[h.kind]||'구성';
     var mx=0; h.positions.forEach(function(p){ if(Math.abs(p.w||0)>mx)mx=Math.abs(p.w||0); });
     var rows=h.positions.map(function(p){
@@ -434,8 +446,6 @@
         '<td class="hbar"><i style="width:'+bw.toFixed(1)+'%;background:'+vc+'"></i></td></tr>';
     }).join('');
     var sum=h.positions.reduce(function(a,p){return a+(p.w||0);},0);
-    var ex=h.extra?Object.keys(h.extra).map(function(k){
-      return '<span class="hx"><b>'+esc(k)+'</b> '+esc(String(h.extra[k]))+'</span>';}).join(''):'';
     return '<div class="btsec"><h4><span>현재 포트폴리오 구성</span><small>기준일 '+esc(h.as_of||'—')+' · '+
       h.positions.length+kindLab+' · 합계 '+(sum*100).toFixed(1)+'%</small></h4>'+
       (ex?'<div class="hxrow">'+ex+'</div>':'')+
@@ -489,11 +499,12 @@
   _fromHash(); window.addEventListener('hashchange',_fromHash);
   // 플레이북(strategy_detail.json) + 백테스트 차트데이터(strategy_backtests.json) 병합
   function _get(u){return fetch(u,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
-  Promise.all([_get('data/strategy_detail.json'),_get('data/strategy_backtests.json'),_get('data/strategy_holdings.json')]).then(function(res){
-    var map=res[0],bt=res[1],hd=res[2];
+  Promise.all([_get('data/strategy_detail.json'),_get('data/strategy_backtests.json'),_get('data/strategy_holdings.json'),_get('data/strategy_holdings_db.json')]).then(function(res){
+    var map=res[0],bt=res[1],hd=res[2],hdb=res[3];
     if(map){ D.forEach(function(d){ if(map[d.n]) d.det=map[d.n]; }); buildArchetypeFilter(); }
     if(bt&&bt.strategies){ D.forEach(function(d){ if(bt.strategies[d.n]) d.bt=bt.strategies[d.n]; }); }
-    if(hd&&hd.strategies){ D.forEach(function(d){ if(hd.strategies[d.n]) d.hold=hd.strategies[d.n]; }); }
+    // 무료 데이터 상세(우선) + 사내 DB 파생 공개요약(종목 비공개) 병합
+    [hd,hdb].forEach(function(src){ if(src&&src.strategies)D.forEach(function(d){ if(!d.hold&&src.strategies[d.n]) d.hold=src.strategies[d.n]; }); });
     render();
   });
 })();

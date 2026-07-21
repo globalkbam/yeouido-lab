@@ -173,19 +173,25 @@ try:
 except Exception as e:
     errors.append(f"기준일 교차검증 실패: {e}")
 
-# 보유 구성(strategy_holdings.json): 키가 explorer D 배열 이름과 다르면 화면에 조용히 안 뜬다 + 비중합 검사
+# 보유 구성(무료 + DB요약): 키가 explorer D 배열 이름과 다르면 화면에 조용히 안 뜬다 + 비중합·비공개 정책 검사
 try:
-    _hp = os.path.join(ROOT, "data", "strategy_holdings.json")
-    if os.path.exists(_hp):
+    for _fn in ("strategy_holdings.json", "strategy_holdings_db.json"):
+        _hp = os.path.join(ROOT, "data", _fn)
+        if not os.path.exists(_hp): continue
         _hd = json.load(io.open(_hp, encoding="utf-8"))
         for nm, st in (_hd.get("strategies") or {}).items():
             if nm not in enames:
-                errors.append(f"strategy_holdings \"{nm}\": explorer.html D 배열에 없는 이름(화면 미표시)")
-            _ws = sum(p.get("w", 0) for p in st.get("positions", []))
-            if abs(_ws - 1.0) > 0.01:
-                errors.append(f"strategy_holdings \"{nm}\": 비중합 {_ws:.4f} ≠ 1")
+                errors.append(f"{_fn} \"{nm}\": explorer.html D 배열에 없는 이름(화면 미표시)")
+            if st.get("private"):
+                # 종목 비공개 항목 — positions가 비어 있어야 정상(티커 유출 방지)
+                if st.get("positions"):
+                    errors.append(f"{_fn} \"{nm}\": private인데 positions 존재 — 티커 유출 의심")
+            else:
+                _ws = sum(p.get("w", 0) for p in st.get("positions", []))
+                if abs(_ws - 1.0) > 0.01:
+                    errors.append(f"{_fn} \"{nm}\": 비중합 {_ws:.4f} ≠ 1")
             if not st.get("as_of") or not st.get("note"):
-                errors.append(f"strategy_holdings \"{nm}\": as_of/note 누락")
+                errors.append(f"{_fn} \"{nm}\": as_of/note 누락")
 except Exception as e:
     errors.append(f"strategy_holdings 검증 실패: {e}")
 if qj is None or qp is None: errors.append("선별 상수(QUOTA)를 찾지 못함")
