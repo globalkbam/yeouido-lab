@@ -345,8 +345,16 @@
       for(ci=pxa.length-1;ci>=0;ci--){if(pxa[ci]!=null){cur=pxa[ci];break;}}
       var lastH=null, lastL=null, zi;
       for(zi=s.tp.zz.length-1;zi>=0;zi--){var z=s.tp.zz[zi];if(!lastH&&z[1]==='H')lastH=z;if(!lastL&&z[1]==='L')lastL=z;}
+      // 미확정 꼬리 극점(마지막 zz)엔 확정 진행률·과거 확정확률 표시 — "왜 아직 잠정 △가 없나"를 화면이 설명
+      var tailZ=s.tp.zz[s.tp.zz.length-1];
+      var atrpv=(s.sig&&s.sig.atrp)?s.sig.atrp.v:null;
+      var th=atrpv!=null?Math.min(0.16,Math.max(0.05,3.0*atrpv/100)):null;
+      function odds(prog,lo){var T=lo?[21,40,56,70,89]:[15,30,45,61,85];return T[prog>=0.8?4:prog>=0.6?3:prog>=0.4?2:prog>=0.2?1:0];}
       var fmtPiv=function(z,lab,cv){if(!z||pxa[z[0]]==null)return '';var lv=pxa[z[0]],dd=dts[z[0]]||'',pc=cur?((cur/lv-1)*100):0;
-        return '<span class="pivchip"><b style="color:'+cv+'">'+lab+'</b> '+lv.toLocaleString()+' <span class="pm">'+(dd?dd.slice(5):'')+' · 현재 '+(pc>=0?'+':'')+pc.toFixed(1)+'%</span></span>';};
+        var extra='';
+        if(th&&cur&&z===tailZ){var lo=z[1]==='L',prog=lo?((cur/lv-1)/th):((1-cur/lv)/th);prog=Math.max(0,Math.min(prog,1));
+          extra=' · <b style="color:var(--watch)">미확정</b> 진행률 '+Math.round(prog*100)+'%/임계 '+Math.round(th*100)+'% · 확정확률 ~'+odds(prog,lo)+'%';}
+        return '<span class="pivchip"><b style="color:'+cv+'">'+lab+'</b> '+lv.toLocaleString()+' <span class="pm">'+(dd?dd.slice(5):'')+' · 현재 '+(pc>=0?'+':'')+pc.toFixed(1)+'%'+extra+'</span></span>';};
       var dvgHtml=s.tp.dvg==='bull'?'<span class="dvgbadge bull">강세 다이버전스</span>':s.tp.dvg==='bear'?'<span class="dvgbadge bear">약세 다이버전스</span>':'';
       tpHtml='<div class="tpbox"><div class="tphd"><span>스윙 전환점 구조</span>'+dvgHtml+'</div><div class="pivrow">'+fmtPiv(lastH,'최근 고점','var(--hot)')+fmtPiv(lastL,'최근 저점','var(--good)')+'</div></div>';
     }
