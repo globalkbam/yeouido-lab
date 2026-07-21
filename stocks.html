@@ -68,6 +68,9 @@
   .item .tk{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
   .item .ib{font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--muted)}
   .item .nm{font-size:11.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* 섹터 칩 — 홈의 .rsec와 동일한 결(영문 GICS 원문을 그대로 붙이면 길고 줄이 밀린다) */
+  .secchip{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent);border-radius:4px;padding:1px 5px;margin-left:6px;white-space:nowrap;vertical-align:1px}
+  .secchip.lg{font-size:10.5px;padding:2px 8px;margin-left:0}
   .flag{font-family:var(--mono);font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:4px}
   .flag.과매수,.flag.b200이탈{color:var(--hot);background:var(--hot-bg)} .flag.과매도{color:var(--cold);background:var(--cold-bg)}
   .flag.상승추세,.flag.b52돌파{color:var(--good);background:var(--good-bg)} .flag.눌림목{color:var(--watch);background:var(--watch-bg)}
@@ -264,6 +267,11 @@
 (function(){
   var el=function(i){return document.getElementById(i);};
   var listEl=el('list'), detailEl=el('detail');
+  // 섹터 한글 축약 — 홈(index.html)의 SECKO와 같은 표기를 쓴다(페이지마다 다르면 같은 종목이 달라 보인다)
+  var SECKO={'Information Technology':'IT','Health Care':'헬스케어','Financials':'금융','Consumer Discretionary':'경기소비',
+             'Consumer Staples':'필수소비','Industrials':'산업재','Communication Services':'커뮤니케이션','Energy':'에너지',
+             'Utilities':'유틸리티','Real Estate':'부동산','Materials':'소재'};
+  function secKo(x){return x?(SECKO[x]||x):'';}
   var DATA=null,F=null,SI_ASOF=null;
   var GROUPS=[["과매수·과매도","hot"],["추세","good"],["모멘텀","accent"],["변동성","watch"],["거래량","cold"],["포지셔닝","accent"]];
   var COMPS=[["overheat","과열도","hot"],["trend","추세","good"],["momentum","모멘텀","accent"],["volatility","변동성","watch"]];
@@ -412,7 +420,7 @@
       if(flag && (s.flags||[]).indexOf(flag)<0)return false;
       if(tim && tim.indexOf(s.timing)<0)return false;
       if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
-      if(state.q){var hay=(s.t+' '+(s.name||'')+' '+(s.sector||'')).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
+      if(state.q){var hay=(s.t+' '+(s.name||'')+' '+(s.sector||'')+' '+secKo(s.sector)).toLowerCase();if(hay.indexOf(state.q)<0)return false;}
       if(p[0]==='tgt')return (s.fund||{}).tpm!=null;   // 목표주가 탭: 목표가 보유 종목만
       if(sk)return swFresh(s,sk);                 // 스윙: 최근 SW_WIN일 내 마커 보유만
       return s.comp[comp]!=null;
@@ -453,7 +461,7 @@
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
       return '<button class="item'+(state.preset==='tgt'?' wide':'')+'" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
         '<span><span class="tkline"><span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
-        '<div class="nm">'+esc(s.name||'')+(s.sector?' · '+esc(s.sector):'')+'</div></span>'+metric+'</button>';
+        '<div class="nm">'+esc(s.name||'')+(s.sector?'<span class="secchip">'+esc(secKo(s.sector))+'</span>':'')+'</div></span>'+metric+'</button>';
     }).join('');
     if(!listEl._deleg){listEl._deleg=1;listEl.addEventListener('click',function(e){var it=e.target.closest('.item');if(!it)return;
       var t=it.getAttribute('data-t');for(var i=0;i<DATA.stocks.length;i++)if(DATA.stocks[i].t===t){select(DATA.stocks[i]);break;}});}
@@ -711,7 +719,7 @@
       fitems.map(function(x){if(x[2]==null)return '';var val=x[0]==="gr"?((x[2]>0?"+":"")+x[2]+"%"):x[2];var col=x[0]==="gr"?(x[2]>0?"var(--good)":"var(--hot)"):"var(--ink)";
         return '<div class="fcell"><div class="fcl">'+x[1]+(x[3]?' <span>'+x[3]+'</span>':'')+'</div><div class="fcv" style="color:'+col+'">'+val+'</div></div>';}).join('')+'</div></div>':'';
     detailEl.innerHTML='<div class="dtop"><div class="tkrow"><span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+'</div>'+
-      '<div class="nm">'+esc(s.name||'')+'</div><div class="sec">'+esc(s.sector||'')+'</div>'+(fl?'<div class="flags">'+fl+'</div>':'')+'</div>'+
+      '<div class="nm">'+esc(s.name||'')+'</div>'+(s.sector?'<div class="sec"><span class="secchip lg">'+esc(secKo(s.sector))+'</span></div>':'')+(fl?'<div class="flags">'+fl+'</div>':'')+'</div>'+
       '<div class="chartcard"><div class="charthd"><span class="cl">주가 · <span id="chgd"></span></span><span class="chartbtns" id="chartbtns"></span></div>'+
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
