@@ -4,16 +4,26 @@
 
 **라이브:** https://globalkbam.github.io/yeouido-lab/
 
-## 구성 (두 도구)
+## 구성 (여섯 페이지)
 | 파일 | 내용 |
 |---|---|
-| `index.html` | 랜딩 허브 |
-| `explorer.html` | **전략 탐색기** — 51개 전략 인터랙티브 브라우저(성과·판정·장단점·활용방안·활용 아키타입) |
-| `stocks.html` | **종목 시그널** — NDX/SPX 테크니컬(과매수/과매도·추세·모멘텀·변동성) + 매수/매도 타이밍 + 기간선택 차트 |
-| `data/stocks.json` | 종목 시그널 데이터 (일별) |
-| `data/strategy_detail.json` | 전략별 장단점·활용방안 |
-| `data/members.json` | NDX/SPX 종목 리스트(티커·회사명·섹터) |
-| `build/refresh_stocks.py` | 종목 시그널 갱신 스크립트 (자체완결·클라우드) |
+| `index.html` | 랜딩 허브 — 주목 종목(스윙 저점매수·고점매도) 요약 |
+| `explorer.html` | **전략 탐색기** — 구현·적대검증한 22개 전략(배포 3·marginal 17·비교용 기각 2) + 실제 백테스트 차트 |
+| `stocks.html` | **종목 시그널** — NDX/SPX 512종목 테크니컬(22지표)·매매 타이밍·252봉 차트 |
+| `regime.html` | **시장 국면** — FRED 매크로 39지표(성장·노동·물가·금융·금리·주택) + 추세 대비 서프라이즈 |
+| `rotation.html` | **오늘의 로테이션** — 웹 리서치 전략 풀 63종에서 날짜(KST) 시드 9선 · 미검증·외부 출처 |
+| `archive.html` | **기각 아카이브** — 배포 부적합 판정 40개 전략과 사유 |
+
+## 데이터·자동화
+| 경로 | 생성기 | 갱신 |
+|---|---|---|
+| `data/stocks.json`(슬림) + `data/sd/<티커>.json`(상세, 지연 로드) + `data/home_reco.json` | `build/refresh_stocks.py` | 매일 08:05 KST + 08:40 백업 |
+| `data/regime.json` | `build/refresh_regime.py` | 매일 08:15 KST + 08:50 백업 |
+| `data/rotation_pool.json` | 헤드리스 리서치 잡(로컬) | 매일 08:20 KST (9선 + 방치 3종) |
+| `data/strategy_backtests.json`·`strategy_detail.json` | 비공개 repo에서 정적 생성 | 수시 |
+
+`build/validate_site.py`가 푸시마다 CI에서 JS 괄호·미정의 호출·JSON 스키마·딥링크 앵커·선별 상수(프론트↔잡)·
+기준일 정합을 검사합니다.
 
 ## 배포
 GitHub Pages(branch source: `main` / root). `main`에 푸시하면 자동 재빌드.

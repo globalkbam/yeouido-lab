@@ -83,7 +83,8 @@
   .item .body{min-width:0}
   .item .nm{font-size:14px;font-weight:600;color:var(--ink);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .item .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-  .atag{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;border:1px solid;white-space:nowrap}
+  /* 하드코딩 hex는 다크에서 9px 글씨 대비 2.9:1 → 현재 테마 잉크색 기반으로 */
+  .atag{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-2);white-space:nowrap}
   .item .metric{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink-2);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
   .item .metric small{display:block;font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.03em}
   .empty{font-family:var(--mono);font-size:13px;color:var(--muted);padding:30px 6px;text-align:center}
@@ -243,7 +244,8 @@
   var state={q:"",vf:new Set(),af:new Set(),sort:"verdict",sel:0};
   var ARCHE_ORDER=['배포코어','저상관분산','위기방어','인플레·실물헤지','레짐·리스크오버레이','저비용틸트','실행타이밍','모니터링시그널','학술적참고','중복·무용'];
   var ARCH_COLOR={'배포코어':'#0E8A54','저상관분산':'#2C6E8F','위기방어':'#C0392B','인플레·실물헤지':'#B9770E','레짐·리스크오버레이':'#8256B8','저비용틸트':'#1E8A80','실행타이밍':'#3E7CB1','모니터링시그널':'#4E8A6B','학술적참고':'#8A7A5C','중복·무용':'#9A9A9A'};
-  function atag(a){if(!a)return '';var c=ARCH_COLOR[a]||'#888';return '<span class="atag" style="color:'+c+';background:color-mix(in srgb,'+c+' 16%,transparent);border-color:color-mix(in srgb,'+c+' 38%,transparent)">'+a+'</span>';}
+  // 9px 글씨에 하드코딩 hex를 쓰면 다크에서 대비 2.9:1 → 색은 테두리·배경 힌트로만 쓰고 글씨는 테마 잉크색
+  function atag(a){if(!a)return '';var c=ARCH_COLOR[a]||'#888';return '<span class="atag" style="background:color-mix(in srgb,'+c+' 16%,var(--panel-2));border-color:color-mix(in srgb,'+c+' 45%,transparent)">'+a+'</span>';}
 
   var el=function(id){return document.getElementById(id);};
   var listEl=el('list'), detailEl=el('detail');

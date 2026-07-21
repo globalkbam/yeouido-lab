@@ -280,9 +280,13 @@ def main():
                 if len(sub) > 200: px[t] = sub
             except Exception: pass
     spy = px.get("SPY", {}).get("Close") if "SPY" in px else None
-    spy3 = _f(spy.iloc[-1]/spy.iloc[-1-63]-1) if spy is not None and len(spy) > 63 else 0.0
+    # ⚠ SPY가 없으면 rs3m이 'vs SPY'가 아니라 절대수익률이 되고 국면도 무조건 리스크온으로 고정된다.
+    #   라벨은 그대로라 화면상 구분이 불가능하므로, 조용히 넘어가지 말고 중단한다(이전본 유지).
+    if spy is None or len(spy) <= 200:
+        raise SystemExit("SPY 로드 실패 — 상대강도·시장국면 계산 불가, 갱신 중단(이전본 유지)")
+    spy3 = _f(spy.iloc[-1]/spy.iloc[-1-63]-1)
     # 시장 국면: SPY가 200MA 위=리스크온(눌림매수 관대·매도 엄격), 아래=리스크오프(매수 엄격·매도 관대)
-    spy_riskon = bool(spy.iloc[-1] > sma(spy, 200).iloc[-1]) if spy is not None and len(spy) > 200 else True
+    spy_riskon = bool(spy.iloc[-1] > sma(spy, 200).iloc[-1])
     raw = {}; as_of = None
     for t in tickers:
         if t not in px: continue
@@ -303,8 +307,14 @@ def main():
         for t, f in ex.map(fetch_fund, list(raw.keys())):
             if f: fund[t] = f
     print(f"펀더멘털 {len(fund)}종목")
+    # ⚠ 아래 두 소스는 개별 실패를 예외로 삼키므로, 전량 실패해도 잡은 '성공'으로 끝나고 화면의 패널만 조용히 사라진다.
+    #   커버리지가 절반 미만이면 중단해 이전본을 유지하고 워크플로를 빨간불로 알린다.
+    if len(fund) < len(raw) * 0.5:
+        raise SystemExit(f"펀더멘털(EPS·PER) 수집 {len(fund)}/{len(raw)} — 절반 미만, 갱신 중단(이전본 유지)")
     # 공매도 포지셔닝(FINRA) → 지표에 주입(dtc·sipct)
     short = fetch_short_interest(); si_asof = short.get("_asof")
+    if not si_asof or sum(1 for t in raw if short.get(t)) < len(raw) * 0.3:
+        raise SystemExit("FINRA 공매도잔량 수집 실패(커버 30% 미만) — 갱신 중단(이전본 유지)")
     for t in raw:
         s = short.get(t)
         if not s: continue
