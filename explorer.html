@@ -143,6 +143,11 @@
     .detail{position:static;order:1;margin-bottom:18px}
     .rowcount{order:2;margin-top:16px}
   }
+  /*a11y-fixes*/
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .fchip[aria-pressed="true"]{color:var(--ground)}}
+  :root[data-theme="dark"] .fchip[aria-pressed="true"]{color:var(--ground)}
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  a:focus-visible,button:focus-visible,input:focus-visible,[role="option"]:focus-visible,.fchip:focus-visible,.item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 
 </head>
@@ -410,7 +415,7 @@
   }
 
   // 플레이북(strategy_detail.json) + 백테스트 차트데이터(strategy_backtests.json) 병합
-  function _get(u){return fetch(u,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
+  function _get(u){return fetch(u,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
   Promise.all([_get('data/strategy_detail.json'),_get('data/strategy_backtests.json')]).then(function(res){
     var map=res[0],bt=res[1];
     if(map){ D.forEach(function(d){ if(map[d.n]) d.det=map[d.n]; }); buildArchetypeFilter(); }

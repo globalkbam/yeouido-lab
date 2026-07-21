@@ -79,6 +79,11 @@
   .fchip .c{opacity:.65;font-size:10px}
   .fchip .d{width:8px;height:8px;border-radius:50%}
   .rowcount{font-family:var(--mono);font-size:11px;color:var(--muted);margin:16px 2px 0;text-transform:uppercase;letter-spacing:.06em}
+  /*a11y-fixes*/
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .fchip[aria-pressed="true"]{color:var(--ground)}}
+  :root[data-theme="dark"] .fchip[aria-pressed="true"]{color:var(--ground)}
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  a:focus-visible,button:focus-visible,input:focus-visible,[role="option"]:focus-visible,.fchip:focus-visible,.item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -105,7 +110,7 @@
   <div class="rowcount" id="rowcount"></div>
   <div id="content"><div class="empty">불러오는 중…</div></div>
   <footer>
-    여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a><br>
+    여의도 전략 랩 · <a href="index.html">홈</a> · <a href="explorer.html">전략 탐색기</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="archive.html">기각 아카이브</a><br>
     로테이션 전략은 매일 웹 리서치로 최근동향 갱신 · 풀에서 날짜 시드 기반 9선 · 외부 출처 · 미검증 · 투자자문·매매권유 아님.
   </footer>
 </div>
@@ -160,7 +165,7 @@
     el('content').innerHTML=html||'<div class="empty">'+(br?'조건에 맞는 전략이 없습니다.':'오늘의 전략이 없습니다.')+'</div>';
   }
   function syncMode(){var b=el('modebtn');b.setAttribute('aria-pressed',state.mode==='all');b.textContent=state.mode==='all'?'오늘의 9선':'전체 풀 보기';}
-  fetch('data/rotation_pool.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+  fetch('data/rotation_pool.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d||!d.strategies){el('content').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;
     el('statline').innerHTML='<span class="stat"><b>9</b> 오늘의 전략</span>'+

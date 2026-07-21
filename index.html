@@ -61,10 +61,10 @@
 
   .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:40px 0 14px;display:flex;align-items:center;gap:10px}
 
-  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
   a.tool{display:flex;flex-direction:column;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 24px 22px;box-shadow:var(--shadow);border-top:4px solid var(--edge,var(--accent));transition:transform .14s,border-color .14s,box-shadow .14s}
   a.tool:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 1px 2px rgba(20,28,26,.05),0 18px 40px -16px rgba(20,28,26,.32)}
-  a.tool.reg{--edge:var(--champ)} a.tool.expl{--edge:var(--rp)} a.tool.stk{--edge:var(--deploy)}
+  a.tool.reg{--edge:var(--champ)} a.tool.expl{--edge:var(--rp)} a.tool.stk{--edge:var(--deploy)} a.tool.rot{--edge:var(--marg)}
   .tool .ico{font-size:30px;line-height:1}
   .tool h2{font-family:var(--mono);font-size:19px;font-weight:600;margin:14px 0 0;color:var(--ink);letter-spacing:-.01em}
   .tool p{margin:8px 0 0;font-size:14px;color:var(--ink-2);flex:1}
@@ -104,7 +104,13 @@
   .live{display:inline-flex;align-items:center;gap:6px;color:var(--deploy)}
   .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--deploy)}
 
-  @media(max-width:860px){.tools{grid-template-columns:1fr}}
+  @media(max-width:680px){.reco-strat{grid-template-columns:1fr}}
+  @media(max-width:520px){.kstrip{grid-template-columns:repeat(2,1fr)}}
+  /*a11y-fixes*/
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .fchip[aria-pressed="true"]{color:var(--ground)}}
+  :root[data-theme="dark"] .fchip[aria-pressed="true"]{color:var(--ground)}
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  a:focus-visible,button:focus-visible,input:focus-visible,[role="option"]:focus-visible,.fchip:focus-visible,.item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -126,7 +132,7 @@
     <a class="tool expl" href="explorer.html">
       <span class="ico">🔬</span>
       <h2>전략 탐색기</h2>
-      <p>적대검증을 통과한 <b>17개 전략</b>(배포 3·marginal 14)을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 못 써먹을 <b>기각 40개는 별도 아카이브</b>로.</p>
+      <p>적대검증을 통과한 <b>20개 전략</b>(배포 3·marginal 17)을 클릭해서 성과·상관·판정과 장단점·활용방안을 둘러보기 — 배포 통합전략도 여기 담겨 있습니다. 못 써먹을 <b>기각 40개는 별도 아카이브</b>로.</p>
       <span class="go">전략 둘러보기</span>
     </a>
     <a class="tool stk" href="stocks.html">
@@ -138,8 +144,14 @@
     <a class="tool reg" href="regime.html">
       <span class="ico">🌐</span>
       <h2>시장 국면</h2>
-      <p>FRED 무료 매크로로 현재 <b>시장 레짐</b>을 판별 — 수익률곡선·신용스프레드·실질금리·금융여건·Sahm 침체룰. 레짐별 자산·섹터 조건부 성과와 배포 포트폴리오 맥락.</p>
+      <p>FRED 무료 매크로 <b>39개 지표</b>(성장·노동·물가·금융·금리·주택)로 현재 <b>시장 레짐</b>을 판별 — 수익률곡선·신용스프레드·실질금리·Sahm 침체룰 + 직전·추세 대비 서프라이즈. 레짐별 자산·섹터 조건부 성과.</p>
       <span class="go">국면 보기</span>
+    </a>
+    <a class="tool rot" href="rotation.html">
+      <span class="ico">🔁</span>
+      <h2>오늘의 로테이션</h2>
+      <p>시장 초과성과·타이밍·리스크관리 <b>전략 풀(29종)</b>에서 <b>날짜별 9선</b> — 목적·핵심원리·진입기준·성과·최근동향·출처. 매일 웹 리서치로 최근동향 갱신. <b>미검증·외부 출처·참고용</b>(검증 랩 전략과 분리).</p>
+      <span class="go">로테이션 보기</span>
     </a>
   </div>
 
@@ -169,12 +181,12 @@
   });
   try{var s=localStorage.getItem('yeouido-theme'); if(s)root.setAttribute('data-theme',s);}catch(e){}
   // 주목 종목 — 종목 시그널에서
-  fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+  fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d)return;
     var as=document.getElementById('stkasof'); if(as)as.textContent='기준일 '+(d.as_of||'');
     var ma=document.getElementById('mainasof'); if(ma)ma.textContent=(d.as_of||'—');
     // 시장국면 기준일 교차확인 — 통일 여부 표기
-    fetch('data/regime.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(rg){
+    fetch('data/regime.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(rg){
       if(!rg||!ma)return; var note=document.querySelector('.asofnote');
       if(rg.as_of && rg.as_of!==d.as_of && note){note.textContent='종목시그널 '+d.as_of+' · 시장국면 '+rg.as_of+' · 공매도잔량 격주(FINRA)';}
     }).catch(function(){});

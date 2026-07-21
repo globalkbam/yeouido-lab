@@ -162,6 +162,11 @@
   footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.8}
   footer a{color:var(--accent);text-decoration:none}
   @media(max-width:840px){.board{grid-template-columns:1fr}.listwrap{max-height:none;order:2}.detail{position:static;order:1;margin-bottom:16px}.dbody{max-height:none}}
+  /*a11y-fixes*/
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .fchip[aria-pressed="true"]{color:var(--ground)}}
+  :root[data-theme="dark"] .fchip[aria-pressed="true"]{color:var(--ground)}
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  a:focus-visible,button:focus-visible,input:focus-visible,[role="option"]:focus-visible,.fchip:focus-visible,.item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -454,7 +459,7 @@
       mk.sms.concat(mk.smw).forEach(function(i){tri(i,false,h);});}
   }
 
-  fetch('data/stocks.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+  fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
     if(!d){detailEl.innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;F=d.factor_defs;
     // 공매도잔량(FINRA) 기준일 — 가격·테크니컬 기준일보다 오래됨(격주). 정직 고지용으로 데이터에서 추출.
