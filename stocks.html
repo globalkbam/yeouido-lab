@@ -410,15 +410,19 @@
     // 스윙=최근 마커순(동점은 신호강도) / 매수·매도 신호=종합점수 내림차순 + 상위 50 캡(종목수 과다 방지) / 나머지=컴포짓 정렬
     var total=rows.length;
     if(sk)rows.sort(function(a,b){var d=lastMk(b,sk)-lastMk(a,sk);return d||((b[sc]||0)-(a[sc]||0));});
-    else if(p[0]==='tgt')rows.sort(function(a,b){   // 기본은 커버 애널리스트 수(신뢰도)순 — 상승여력순을 기본값으로 두지 않는다
-      var d=((b.fund||{}).nan||0)-((a.fund||{}).nan||0); return d||a.t.localeCompare(b.t);});
+    else if(p[0]==='tgt')rows.sort(function(a,b){   // 상승여력(목표평균/현재가−1) 내림차순 — 사용자 지정
+      var d=((b.fund||{}).up!=null?b.fund.up:-1e9)-((a.fund||{}).up!=null?a.fund.up:-1e9); return d||a.t.localeCompare(b.t);});
     else rows.sort(function(a,b){var d=(a.comp[comp]||0)-(b.comp[comp]||0);return asc?d:-d;});
     return {rows:rows,comp:comp,total:total};
   }
   function render(){
     var f=filtered(),rows=f.rows,comp=f.comp;
     // 프리셋 라벨은 색상 마크업(▲/▼)을 품고 있으므로 textContent로 쓰면 태그가 그대로 노출된다 — 개수만 이스케이프하고 라벨은 HTML로
-    el('rowcount').innerHTML=esc(rows.length+"종목")+(f.total>rows.length?esc(" / 전체 "+f.total+" · 종합점수 상위"):"")+esc(" · ")+curP()[1];
+    el('rowcount').innerHTML=esc(rows.length+"종목")+(f.total>rows.length?esc(" / 전체 "+f.total+" · 종합점수 상위"):"")+esc(" · ")+curP()[1]+
+      // 상승여력 내림차순은 구조적으로 '최근 급락 종목' 목록이 된다 — 실측 근거를 리스트 상단에 상시 노출
+      (state.preset==='tgt'?'<div style="margin-top:5px;font-size:10.5px;line-height:1.5;color:var(--watch);text-transform:none;letter-spacing:0;font-weight:400">'+
+        '⚠ 상승여력 높은 순 — 상승여력의 <b>64%는 최근 하락의 기계적 반영</b>(목표가는 1~3개월 시차로 주가를 따라옴)이라 이 정렬은 사실상 <b>급락 종목 순</b>입니다. '+
+        '검증 시점 상위 20종목의 <b>90%가 200일선 아래</b>였고, 예측력은 확인되지 않았습니다(5분위 최상−최하 60일 초과 +0.83%p, t=0.89). 컨센서스 정보일 뿐 랩의 신호가 아닙니다.</div>':'');
     listEl.innerHTML="";
     if(!rows.length){listEl.innerHTML='<div class="empty">해당 종목 없음</div>';drawDetail(null);return;}
     if(!state.sel||rows.indexOf(state.sel)<0)state.sel=rows[0];
@@ -431,8 +435,12 @@
       }else if(state.preset==='tgt'){
         // 목표주가 탭 — 목표평균·상승여력·커버 애널 수. 상승여력은 무채색(강조하지 않는다: 검증상 최근 하락의 기계적 반영)
         var fu=s.fund||{}, upv=fu.up, tpm=fu.tpm;
+        // 상승여력이 클수록 하락추세일 확률이 높다 — 200일선 이탈 여부를 같은 행에 병기해 오독을 막는다
+        var dn200=(s.flags||[]).indexOf('200일이탈')>=0;
         metric='<span class="metric"><div class="mv" style="font-size:12.5px">'+(tpm!=null?Math.round(tpm).toLocaleString():'—')+'</div>'+
-          '<div class="nm" style="text-align:right;margin-top:2px">'+(upv!=null?(upv>=0?'+':'')+Math.round(upv)+'%':'—')+
+          '<div class="nm" style="text-align:right;margin-top:2px">'+
+          (upv!=null?'<b style="color:var(--muted)">'+(upv>=0?'+':'')+Math.round(upv)+'%</b>':'—')+
+          (dn200?' <span style="color:var(--hot);font-weight:700">200MA↓</span>':'')+
           (fu.nan?' · 애널 '+fu.nan:'')+'</div></span>';
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
       return '<button class="item" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
