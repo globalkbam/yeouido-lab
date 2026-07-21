@@ -436,8 +436,8 @@ def main():
                         if typ == "L" and pxp == pxp and pxp > 0:
                             prog = (_pxl/pxp - 1) / _th
                             knife = (s2 == s2 and pxp < s2*(1 - KNIFE)) and (r6 == r6 and r6 < -0.15)
-                            if (not knife) and oh <= 65 and prog >= 0.6:
-                                _pc = 89 if prog >= 0.8 else 70
+                            if (not knife) and oh <= 65 and prog >= 0.5:
+                                _pc = 89 if prog >= 0.8 else (70 if prog >= 0.6 else 57)
                                 bmw.append(pos); bmr[pos] = "잠정 저점(미확정) — " + _reason(pos, "L", "zz").split(" — ", 1)[1].replace(" · 전환점은 며칠 뒤 확정되므로 표시는 사후 기준", "") + f" · 반전 진행률 {min(int(prog*100),99)}%(확정 임계 {int(_th*100)}%) — 과거 통계상 확정 확률 ~{_pc}% (5y·512종목)"
                         elif typ == "H" and pxp == pxp and pxp > 0:
                             prog = (1 - _pxl/pxp) / _th
@@ -467,11 +467,11 @@ def main():
                     high = (cc["up20"] is not None and cc["up20"] >= 4.0)
                     if (cc["rsi"] > 55 or high) and (cc["oh"] != cc["oh"] or cc["oh"] >= 45):
                         sms.append(pos); smr[pos] = _reason(pos, "H", "bounce")
-            # (b') 눌림목/반등 '잠정' 후보 — 확정(5봉 유지) 전 예고. 3일 이상 유지 시 표시(임계 최적화 실측:
-            #     순선행 기대값 = 리드×(2·확정확률−1)이 3일에서 최대(1.21). 저점 3일 80%·4일 91% / 고점 3일 77%·4일 90%).
+            # (b') 눌림목/반등 '잠정' 후보 — 확정(5봉 유지) 전 예고. 2일 이상 유지 시 표시(최근성 가중 사용자 조정:
+            #     저점 2일 68%·3일 80%·4일 91% / 고점 2일 63%·3일 77%·4일 90% — 1일(52%)·0일(28%)은 동전던지기라 제외).
             _lastp = len(pxd_dates) - 1
-            _PL = {3: 80, 4: 91}; _PH = {3: 77, 4: 90}
-            for m in range(_lastp - 4, _lastp - 2):   # age = _lastp-m ∈ {4,3}
+            _PL = {2: 68, 3: 80, 4: 91}; _PH = {2: 63, 3: 77, 4: 90}
+            for m in range(_lastp - 4, _lastp - 1):   # age = _lastp-m ∈ {4,3,2}
                 if m < K: continue
                 age = _lastp - m
                 base = _f(dv[m])
