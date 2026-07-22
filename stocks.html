@@ -415,15 +415,16 @@
     rss:"3개월 초과수익(vs SPY) +20%p 이상 — 상대강도 상위. 랩 검증상 추세추종 계열이 역추세보다 우위였다.",
     tgt:"애널리스트 목표주가를 한 화면에서 비교 — 상승여력의 64%는 최근 하락의 기계적 반영이라 기본 정렬은 상승여력이 아니다. 컨센서스 정보일 뿐 랩의 신호가 아님."};
   var FLAGCLS={"과매수":"과매수","과매도":"과매도","상승추세":"상승추세","눌림목":"눌림목","깊은눌림":"deepdip","약세반등":"bearrally","골든임박":"goldnear","거래급증":"volsurge","변동수축":"squeeze2","시장강세":"rsstrong","52주돌파":"b52돌파","200일이탈":"b200이탈","과밀숏":"gmilshort"};
-  // [라벨, 점 개수, 소스] — 소스 w=주봉(장기). 데이터가 없는 기간은 아래에서 걸러 칩 자체가 안 뜬다.
-  var PERIODS=[["1일",2],["1주",5],["1개월",21],["3개월",63],["6개월",126],["1년",252],["3년",156,"w"]];
+  // [라벨, 거래일 수] — 전부 일봉 한 배열에서 자른다. 주봉 배열을 따로 두면 타점 인덱스 도메인이
+  //   갈려 매핑·음영 같은 보정 코드가 붙는다(실제로 붙었다가 걷어냈다).
+  var PERIODS=[["1일",2],["1주",5],["1개월",21],["3개월",63],["6개월",126],["1년",252],["3년",756]];
   function perAvail(s,p){
-    var n=(p[2]==="w"?(s.wx||[]):(s.pxd||[])).length;
-    return n>=Math.min(p[1],20);   // 생성기가 아직 안 구운 구간은 칩을 내지 않는다(빈 차트·오표기 방지)
+    var n=(s.pxd||[]).length;
+    return n>=Math.min(p[1],20);   // 이력이 짧은 종목은 긴 구간 칩을 내지 않는다(빈 차트 방지)
   }
   // 기본은 '전체' — 들어오자마자 특정 신호로 좁혀 놓으면 그 신호가 이 화면의 결론처럼 읽힌다.
   // 스윙 타점은 랩 검증에서 수익 예측력이 확인되지 않았으므로 첫 화면을 차지할 이유가 더더욱 없다.
-  var state={q:"",preset:"all",idx:new Set(),sel:null,period:252,psrc:""};
+  var state={q:"",preset:"all",idx:new Set(),sel:null,period:252};
   function cc(k){return 'var('+({overheat:'--hot',trend:'--good',momentum:'--accent',volatility:'--watch'}[k]||'--accent')+')';}
   function gc(g){return 'var('+({hot:'--hot',good:'--good',accent:'--accent',watch:'--watch',cold:'--cold',muted:'--muted'}[g]||'--accent')+')';}
   var _cssC={};   // 테마별 CSS변수 캐시 — getComputedStyle 반복호출/리플로우 축소
@@ -908,56 +909,36 @@
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}
-  // 타점 인덱스는 일봉 배열(최근 252거래일) 위치다. 주봉 차트에 얹으려면 '그 타점이 속한 주'를 찾아야 한다.
-  //   ⚠ 더 중요한 제약: 타점 자체가 최근 1년치만 산출된다. 3년 차트의 앞 2년은 '신호 없음'이 아니라
-  //   '미산출'이라, 그대로 비워두면 없는 사실을 말하게 된다 → 경계선을 그어 구분한다.
-  function d2w(i){
-    var dd=(DATA.pxd_dates||[])[i], W=DATA.wxd_dates||[];
-    if(dd==null)return -1;
-    for(var j=0;j<W.length;j++)if(W[j]>=dd)return j;   // 그 날짜를 담는 주(주봉 라벨=그 주 마지막 거래일)
-    return -1;
-  }
-  function covStartW(){   // 타점 산출이 시작되는 주봉 위치
-    var d0=(DATA.pxd_dates||[])[0]; if(d0==null)return -1;
-    var W=DATA.wxd_dates||[];
-    for(var j=0;j<W.length;j++)if(W[j]>=d0)return j;
-    return -1;
-  }
   function renderChart(s){
     var avail=PERIODS.filter(function(p){return perAvail(s,p);});
-    if(!avail.some(function(p){return p[1]===state.period&&(p[2]||"")===state.psrc;})){
-      var last=avail[avail.length-1]||PERIODS[0]; state.period=last[1]; state.psrc=last[2]||"";
+    if(!avail.some(function(p){return p[1]===state.period;})){
+      var last=avail[avail.length-1]||PERIODS[0]; state.period=last[1];
     }
-    var wkly=state.psrc==='w';
-    var pxd=(wkly?s.wx:s.pxd)||[], dates=(wkly?DATA.wxd_dates:DATA.pxd_dates)||[];
+    var pxd=s.pxd||[], dates=DATA.pxd_dates||[];
     var n=Math.min(state.period, pxd.length);
     var slice=pxd.slice(pxd.length-n), sdates=dates.slice(dates.length-n);
     var bts=el('chartbtns');
-    if(bts){bts.innerHTML=avail.map(function(p){return '<button class="cbtn'+((state.period===p[1]&&(p[2]||"")===state.psrc)?' on':'')+'" data-d="'+p[1]+'" data-s="'+(p[2]||"")+'">'+p[0]+'</button>';}).join('');
+    if(bts){bts.innerHTML=avail.map(function(p){return '<button class="cbtn'+(state.period===p[1]?' on':'')+'" data-d="'+p[1]+'">'+p[0]+'</button>';}).join('');
       bts.querySelectorAll('.cbtn').forEach(function(b){b.addEventListener('click',function(){
-        state.period=+b.getAttribute('data-d'); state.psrc=b.getAttribute('data-s')||''; renderChart(s);});});}
+        state.period=+b.getAttribute('data-d'); renderChart(s);});});}
     var vals=slice.filter(function(x){return x!=null;}), f=vals[0], l=vals[vals.length-1], chg=(f&&l)?((l/f-1)*100):null;
     var cd=el('chgd');
     if(cd)cd.innerHTML=(l!=null?l.toLocaleString():'—')+(chg!=null?' <b style="color:'+(chg>=0?'var(--good)':'var(--hot)')+'">'+(chg>=0?'+':'')+chg.toFixed(1)+'%</b>':'')+' <span style="color:var(--muted);font-weight:400">· '+(sdates[0]||'')+' ~ '+(DATA.as_of||'')+'</span>';
     var off=pxd.length-n;
     var sl=function(a){return (a||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});};
-    // 주봉 뷰: 일봉 타점을 '그 타점이 속한 주'로 옮겨 그린다. 정확한 날짜는 상세 패널이 그대로 보여준다.
-    var wmap=function(a){return (a||[]).map(d2w).filter(function(j){return j>=off;}).map(function(j){return j-off;});};
-    var mk=wkly?{bms:wmap(s.bms),bmw:wmap(s.bmw),sms:wmap(s.sms),smw:wmap(s.smw)}
-               :{bms:sl(s.bms),bmw:sl(s.bmw),sms:sl(s.sms),smw:sl(s.smw)};
+    var mk={bms:sl(s.bms),bmw:sl(s.bmw),sms:sl(s.sms),smw:sl(s.smw)};
     var nb=mk.bms.length+mk.bmw.length, ns=mk.sms.length+mk.smw.length;
     var ma20=sma(pxd,20).slice(off), ma60=sma(pxd,60).slice(off);   // 주봉이면 20주·60주
-    var vsl=((wkly?s.wv:s.vd)||[]).slice(off);
+    var vsl=(s.vd||[]).slice(off);
     var zzf=((s.tp&&s.tp.zz)||[]);   // 마지막 원소 = 미확정 진행 중 극점 → prov 플래그로 빈 원 표시
-    var zz=zzf.map(function(p,k){return [wkly?d2w(p[0]):p[0],p[1],k===zzf.length-1];})
+    var zz=zzf.map(function(p,k){return [p[0],p[1],k===zzf.length-1];})
               .filter(function(p){return p[0]>=off;}).map(function(p){return [p[0]-off,p[1],p[2]];});
     var ml=el('marklg');
-    if(ml&&wkly)ml.innerHTML='<span style="color:var(--good)">▲</span><span style="color:var(--hot)">▼</span><span style="color:var(--muted)">타점(속한 주에 표시 · 정확한 날짜는 아래 상세)</span> <span style="color:var(--muted)">━ 왼쪽 음영 = <b>타점 미산출 구간</b>(신호 없음 아님 — 타점은 최근 1년만 산출)</span> <span style="color:var(--cold)">━20주</span> <span style="color:var(--watch)">━60주</span> <span style="color:var(--muted)">▮주간 거래량</span>';
-    else if(ml)ml.innerHTML='<span style="color:var(--good)">●저점</span><span style="color:var(--hot)">●고점</span><span style="color:var(--muted)">스윙</span> <span style="color:var(--good)">▲매수</span><span style="color:var(--hot)">▼매도</span> <span style="color:var(--muted)">빈 도형=잠정(미확정·이동가능)</span> <span style="color:var(--cold)">━MA20</span> <span style="color:var(--watch)">━MA60</span> <span style="color:var(--muted)">▮거래량</span>';
-    drawChart(slice, sdates, mk, ma20, ma60, vsl, zz, wkly?(covStartW()-off):-1);
-    var cv=el('pxc');if(cv)cv.setAttribute('aria-label', s.t+' 가격 차트, 최근 '+n+(wkly?'주':'거래일')+' ('+(sdates[0]||'')+'~'+(DATA.as_of||'')+'), 변동 '+(chg==null?'—':(chg>=0?'+':'')+chg.toFixed(1)+'%')+', 매수 '+nb+'·매도 '+ns+' 타점');
+    if(ml)ml.innerHTML='<span style="color:var(--good)">●저점</span><span style="color:var(--hot)">●고점</span><span style="color:var(--muted)">스윙</span> <span style="color:var(--good)">▲매수</span><span style="color:var(--hot)">▼매도</span> <span style="color:var(--muted)">빈 도형=잠정(미확정·이동가능)</span> <span style="color:var(--cold)">━MA20</span> <span style="color:var(--watch)">━MA60</span> <span style="color:var(--muted)">▮거래량</span>';
+    drawChart(slice, sdates, mk, ma20, ma60, vsl, zz);
+    var cv=el('pxc');if(cv)cv.setAttribute('aria-label', s.t+' 가격 차트, 최근 '+n+'거래일 ('+(sdates[0]||'')+'~'+(DATA.as_of||'')+'), 변동 '+(chg==null?'—':(chg>=0?'+':'')+chg.toFixed(1)+'%')+', 매수 '+nb+'·매도 '+ns+' 타점');
   }
-  function drawChart(arr, dates, mk, ma20, ma60, vd, zz, cov){
+  function drawChart(arr, dates, mk, ma20, ma60, vd, zz){
     var cv=el('pxc');if(!cv)return;var ctx=cv.getContext('2d');
     var pts=[];for(var i=0;i<arr.length;i++)if(arr[i]!=null)pts.push([i,arr[i]]);
     var dpr=window.devicePixelRatio||1,W=cv.clientWidth||560,H=150;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
@@ -1010,16 +991,6 @@
       ctx.closePath();
       if(hollow){ctx.fillStyle=css('--panel');ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();}
       else{ctx.fillStyle=color;ctx.fill();}}
-    // 타점 미산출 구간 — 비워두면 '신호가 없었다'로 읽히므로 경계를 긋고 이름을 붙인다
-    if(cov!=null&&cov>0&&cov<n){
-      var cx=X(cov);
-      ctx.save();ctx.fillStyle=css('--muted');ctx.globalAlpha=0.06;
-      ctx.fillRect(padL,padT,Math.max(0,cx-padL),priceBot-padT);ctx.restore();
-      ctx.save();ctx.strokeStyle=css('--muted');ctx.globalAlpha=0.5;ctx.setLineDash([3,3]);ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(cx,padT);ctx.lineTo(cx,priceBot);ctx.stroke();ctx.restore();
-      ctx.save();ctx.fillStyle=css('--muted');ctx.font='9px '+css('--mono');ctx.textAlign='right';
-      ctx.fillText('타점 미산출',cx-4,padT+10);ctx.restore();
-    }
     if(mk){var g=css('--good'),h=css('--hot');
       mk.bms.forEach(function(i){tri(i,true,g);});
       mk.sms.forEach(function(i){tri(i,false,h);});

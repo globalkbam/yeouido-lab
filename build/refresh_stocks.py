@@ -663,19 +663,14 @@ def main():
     #   vs 구식(저과열 가중+과열≤45) +1.62%p — 상승추세 평균(+1.84)보다도 낮았음.
     buy_score = tr_c + mo_c
     sell_score = oh_rel + 0.6*(100 - tr_c) + 0.6*(100 - mo_c) + 0.3*vo_c
-    # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
-    daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
+    # 일별 종가 패널 (최근 756거래일 ≈ 3년) — 기간선택(1일~3년) 슬라이스 + **타점 산출 구간**.
+    #   252였을 때 타점이 최근 1년치만 나와 3년 차트 앞 2년이 '신호 없음'처럼 보였다.
+    #   컨텍스트 계열(200MA·RSI·과열도)은 전체 이력으로 계산한 뒤 이 index로 reindex하므로
+    #   구간을 늘려도 워밍업 결손이 없다.
+    daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(756)
     pxd_dates = [d.strftime("%Y-%m-%d") for d in daily.index]
     # 장기(3년) 패널은 **주봉**으로 — 일봉 3년은 상세 파일이 3배가 되고 매일 512개가 통째로 재커밋된다.
     # 3년 구간을 일 단위로 볼 이유도 없다(화면에서 구분 불가).
-    _full = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index()
-    wk = _full.resample("W-FRI").last().tail(156)
-    # ⚠ W-FRI는 각 주를 '그 주 금요일'로 라벨한다 — 마지막 주가 진행 중이면 아직 오지 않은 날짜가 찍힌다
-    #    (실측: as_of 2026-07-21인데 마지막 주봉 라벨이 2026-07-24). 사이트 전체가 기준일 표기로
-    #    돌아가므로, 라벨을 **그 주의 실제 마지막 거래일**로 바꾼다.
-    _last = pd.Series(_full.index, index=_full.index).resample("W-FRI").max().reindex(wk.index)
-    wxd_dates = [(_last.iloc[i] if pd.notna(_last.iloc[i]) else wk.index[i]).strftime("%Y-%m-%d")
-                 for i in range(len(wk.index))]
     def comp(spec, rp):
         vs = [rp[s[1:]] if s[0] == "+" else 100 - rp[s[1:]] for s in spec if s[1:] in rp and pd.notna(rp[s[1:]])]
         # 입력의 70% 미만만 살아 있으면 산출하지 않는다 — 부분 편입 종목에서 '추세'가 200일선 없이
@@ -691,17 +686,20 @@ def main():
         pxd = [None if dser is None or pd.isna(x) else round(float(x), 2) for x in (dser if dser is not None else [None]*len(pxd_dates))]
         vser = px[t]["Volume"].reindex(daily.index) if t in px else None
         vd = [None if vser is None or pd.isna(x) else int(round(float(x)/1e6)) for x in (vser if vser is not None else [None]*len(pxd_dates))]  # 백만주 단위
-        wser = wk[t] if t in wk.columns else None
-        wx = [None if wser is None or pd.isna(x) else round(float(x), 2) for x in (wser if wser is not None else [None]*len(wxd_dates))]
-        wvser = px[t]["Volume"].resample("W-FRI").sum().reindex(wk.index) if t in px else None   # 주간 거래량 합
-        wv = [None if wvser is None or pd.isna(x) else int(round(float(x)/1e6)) for x in (wvser if wvser is not None else [None]*len(wxd_dates))]
         # 스윙 전환점(지그재그) — 확정 고점/저점 구조 + 다이버전스
         tp = None
-        if dser is not None and not dser.isna().any() and len(dser) >= 40:
-            wr = rsi(raw[t]["close"]).reindex(daily.index).values
+        # ⚠ 패널을 3년으로 늘리자 상장 3년 미만 종목은 IPO 이전이 결측이 된다. 예전 조건
+        #   `not dser.isna().any()`를 그대로 두면 그 종목들의 지그재그가 통째로 건너뛰어진다
+        #   (실측 13종: ALAB·ARM·GEV·SNDK·SPCX 등). 상장 이후 구간만 잘라 계산하고 위치를 되돌린다.
+        _fv = dser.first_valid_index() if dser is not None else None
+        _sub = dser.loc[_fv:] if _fv is not None else None
+        if _sub is not None and not _sub.isna().any() and len(_sub) >= 40:
+            _off = int(daily.index.get_loc(_fv))
+            wr = rsi(raw[t]["close"]).reindex(daily.index).values[_off:]
             theta = min(0.16, max(0.05, 3.0 * (sg.get("atrp") or 5) / 100))   # 감도 상향(2026-07): 전환점 6~10개
             # 과거엔 12~30%라 추세 위 눌림목에서 타점이 아예 안 잡혔다. 품질은 아래 필터(칼·과열)로 유지.
-            piv, dvg = zigzag(dser.values, wr, theta)
+            piv, dvg = zigzag(_sub.values, wr, theta)
+            piv = [[int(q) + _off, ty] for q, ty in piv]      # 잘라낸 만큼 되돌린다(전체 패널 좌표계로)
             if len(piv) >= 2: tp = {"zz": piv, "dvg": dvg}
         # 매수/매도 타점(마커) — 스윙 저점≈매수·고점≈매도(지그재그 전환점), 과열도·추세·모멘텀·변동성으로 필터 + 국면 조정.
         #   저점 매수: 깊은 붕괴(200MA −KNIFE 아래 & 6M<−15%)·아직 과매수(oh>65)면 제외 → 떨어지는 칼 회피.
@@ -901,7 +899,7 @@ def main():
                        "bscore": round(float(buy_score.get(t, 0.0)), 3), "sscore": round(float(sell_score.get(t, 0.0)), 3),
                        "trig": trig, "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
                        **({"why": whyb} if whyb else {}),
-                       "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd, "wx": wx, "wv": wv,
+                       "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd,
                        **({"part": partial[t]} if t in partial else {}),
                        # 상세(sd/) 전용 — 20지표 값+전체/섹터 퍼센타일 [v,p,sp], 배지, 결측 사유
                        **({"fundx": _fundx} if _fundx else {}),
@@ -910,7 +908,7 @@ def main():
                        **({"tp": tp} if tp else {})})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     def _rnd(x, nd): return round(float(x), nd) if nd else int(round(float(x)))
-    out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates, "wxd_dates": wxd_dates,
+    out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
            # 지수 구성종목인데 커버에서 빠진 것 — 숨기지 않고 사유와 함께 싣는다
            "excluded": [{"t": t, "name": (mem.get(t) or {}).get("name"), "idx": (mem.get(t) or {}).get("idx"),
                          "why": w, "n": n} for t, (w, n) in sorted(dropped.items())],
@@ -985,7 +983,7 @@ def main():
     _keep = set()
     for s in stocks:
         det = {"as_of": as_of, "t": s["t"]}
-        for k in ("sig", "pxd", "vd", "wx", "wv", "tp", "why", "fundx", "fundx_flags", "fundx_na"):
+        for k in ("sig", "pxd", "vd", "tp", "why", "fundx", "fundx_flags", "fundx_na"):
             v = s.pop(k, None)
             if v is not None: det[k] = v
         fn = s["t"] + ".json"; _keep.add(fn)
