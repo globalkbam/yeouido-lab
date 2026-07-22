@@ -75,6 +75,9 @@
   .board{display:grid;grid-template-columns:minmax(0,0.95fr) minmax(0,1.15fr);gap:18px;margin-top:20px;align-items:start}
   .listwrap{display:flex;flex-direction:column;gap:7px;max-height:76vh;overflow-y:auto;padding-right:4px}
   .listwrap::-webkit-scrollbar{width:8px}.listwrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  /* 백테스트 컨벤션은 숫자를 보는 자리에 — 홈에 적어두면 정작 성과를 볼 때 안 보인다 */
+  .basisnote{font-size:11px;color:var(--muted);line-height:1.6;margin:0 2px 8px;padding:7px 10px;background:var(--panel-2,var(--panel));border:1px solid var(--line-soft,var(--line));border-radius:8px}
+  .basisnote b{color:var(--ink-2)}
   .rowcount{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0 2px 3px;text-transform:uppercase;letter-spacing:.08em}
   .item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--vc,var(--muted));border-radius:11px;padding:11px 14px;cursor:pointer;text-align:left;width:100%;font-family:inherit;transition:border-color .12s,background .12s;box-shadow:var(--shadow)}
   .item:hover{border-color:var(--accent)}
@@ -222,6 +225,7 @@
 
   <div class="board">
     <div>
+      <div class="basisnote">백테스트 수치는 <b>무비용·월말(gross)</b> 기준 — 거래비용·세금 미반영, 월말 리밸런싱. 구간은 전략별로 달라 각 패널에 적었습니다.</div>
       <div class="rowcount" id="rowcount"></div>
       <div class="listwrap" id="list" role="listbox" aria-label="전략 목록"></div>
     </div>

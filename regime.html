@@ -117,6 +117,13 @@
   .ic.pnl{background:var(--panel-2)}
   .snote{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--watch);border-radius:12px;box-shadow:var(--shadow);padding:15px 18px;font-size:13.5px;color:var(--ink-2);line-height:1.75}
   .snote b{color:var(--ink)} .snote ul{margin:9px 0 0;padding-left:18px} .snote li{margin:3px 0}
+  details.more{margin-top:9px}
+  details.more>summary{cursor:pointer;color:var(--ink-2);font-size:12px;list-style:none;display:inline-flex;align-items:center;gap:5px}
+  details.more>summary::-webkit-details-marker{display:none}
+  details.more>summary::before{content:'\25B8';font-size:9px}
+  details.more[open]>summary::before{content:'\25BE'}
+  details.more>summary:hover{color:var(--accent)}
+  details.more .mbody{margin-top:8px}
   .snote .fine{display:block;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted)}
   #sentspark{width:100%;height:150px}
   tr.cur th,tr.cur td{background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
@@ -370,22 +377,19 @@
 
     // ⑤ 정직 고지
     var vv=bt.vs_vix_only||{};
-    var note='<div class="lbl">이 지표를 어떻게 읽어야 하나</div><div class="snote">'+
-      '<b>수익 예측 신호가 아닙니다.</b> 오늘 시장이 얼마나 겁먹었는지를 0~100으로 요약한 <b>상태 지표</b>입니다.'+
-      '<ul>'+
-      (vv.ic60_composite!=null?'<li>자체 검증에서 이 합성 지수는 <b>VIX 하나만 보는 것보다 낫지 않았습니다</b> — 60일 IC '+
-        vv.ic60_composite+' vs VIX 단독 '+vv.ic60_vix_only+'. 개선을 주장하지 않습니다.</li>':'')+
+    // 같은 말을 불릿·note·disclaimer로 세 번 하고 있었다 → 결론 한 줄만 노출, 근거는 접기.
+    // 출처 목록도 sources.html에 이미 있으므로 링크로 대체한다(중복 나열 금지).
+    var note='<div class="snote"><b>상태 지표입니다 — 수익 예측 신호가 아닙니다.</b> 오늘 시장이 얼마나 겁먹었는지를 0~100으로 요약할 뿐이고, '+
+      '자체 검증에서 <b>VIX 하나만 보는 것보다 낫지 않았습니다</b>'+
+      (vv.ic60_composite!=null?'(60일 IC '+vv.ic60_composite+' vs '+vv.ic60_vix_only+')':'')+'.'+
+      '<details class="more"><summary>검증에서 무엇이 남고 무엇이 죽었나</summary><div class="mbody"><ul>'+
       '<li>레벨 버킷 수익은 단조가 아니라 <b>U자</b>입니다. 가장 나쁜 구간은 극단탐욕이 아니라 <b>20–40 "공포"</b>였고, 에피소드 단위로 묶으면 레벨 버킷의 우위는 대부분 사라집니다.</li>'+
-      '<li>살아남은 것은 분위 하위 구간 하나뿐입니다(에피소드 t≈2.9, 3지표가 모두 가용한 2006-07 이후로 좁혀도 t≈2.4·p≈0.03로 유지). 그마저 <b>위험(변동성·낙폭)도 함께 커집니다</b>.</li>'+
-      '<li><b>"극단탐욕=매도"는 주장하지 않습니다</b> — 전 구간에서는 유의해 보이지만(t≈−2.3), 3개 지표가 모두 존재하는 구간으로 좁히면 <b>초과수익이 0.0%p·p≈0.38로 소멸</b>합니다. 표의 마지막 열에 그대로 표시해 두었습니다.</li>'+
-      '<li>백테스트 초기 약 21%(1998~2003)는 VIX3M·MOVE가 없어 <b>지수가 사실상 VIX 단독</b>이었습니다. 분위 구간 이름은 명목 10%가 아니라 임계값 서술이며, 실제 표본 비중을 각 행에 함께 적었습니다(확장 백분위라 빈도가 균등하지 않음).</li>'+
-      '<li>서브기간별로 부호가 뒤집힌 구간(2004–09)이 있습니다. 안정적인 알파가 아닙니다.</li>'+
-      '</ul>'+
-      (d.note?'<span class="fine">'+esc(d.note)+'</span>':'')+
-      '<span class="fine">'+esc(d.disclaimer||'참고용 리서치입니다. 투자 권유·매매 신호가 아닙니다.')+'</span>'+
-      ((d.sources||[]).length?'<span class="fine">출처 · '+d.sources.map(function(x){
-        return esc(x.name)+'('+esc(x.provider)+', '+esc(x.since)+'~)';}).join(' · ')+'</span>':'')+
-      '</div>';
+      '<li>살아남은 것은 분위 하위 구간 하나뿐입니다(에피소드 t≈2.9, 3지표가 모두 가용한 2006-07 이후로 좁혀도 t≈2.4·p≈0.03). 그마저 <b>위험(변동성·낙폭)도 함께 커집니다</b>.</li>'+
+      '<li><b>"극단탐욕=매도"는 주장하지 않습니다</b> — 전 구간에선 유의해 보이지만(t≈−2.3), 3개 지표가 모두 존재하는 구간으로 좁히면 <b>초과수익 0.0%p·p≈0.38로 소멸</b>합니다.</li>'+
+      '<li>백테스트 초기 약 21%(1998~2003)는 VIX3M·MOVE가 없어 <b>지수가 사실상 VIX 단독</b>이었습니다. 분위 구간 이름은 명목 10%가 아니라 임계값 서술입니다.</li>'+
+      '<li>서브기간별로 부호가 뒤집힌 구간(2004–09)이 있습니다. <b>안정적인 알파가 아닙니다.</b></li>'+
+      '</ul><span class="fine">'+esc(d.disclaimer||'참고용 리서치입니다. 투자 권유·매매 신호가 아닙니다.')+
+      ' 출처는 <a href="sources.html">데이터 출처</a>에.</span></div></details></div>';
 
     host.innerHTML=head()+g+comp+hist+tb+note;
     drawSpark();

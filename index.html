@@ -131,13 +131,13 @@
   <header class="mast">
     <div class="eyebrow">Yeodoo Quant Strategy Lab</div>
     <h1 class="title">여두 <span class="gx">전략 랩</span></h1>
-    <p class="lede"><b>실전 배포 가능한 진성 알파</b>를 찾는 퀀트 전략 리서치. 수백 개 아이디어를 비용·PIT·적대검증으로 거른 결과와, 매일 웹 리서치로 강화되는 전략 풀을 공개합니다.</p>
+    <p class="lede"><b>실전 배포 가능한 진성 알파</b>를 찾는 퀀트 전략 리서치.</p>
     <div class="asofbar" id="asofbar">
       <span class="asoftag">데이터 기준일</span><b id="mainasof">불러오는 중…</b>
       <span class="asofnote">가격·테크니컬·EPS·시장국면 통일 · 공매도잔량만 격주(FINRA)</span>
       <span class="stalewarn" id="stalewarn" hidden></span>
-      <span class="rgchip" id="rgchip" hidden></span>
-      <a class="rgchip" id="sentchip" href="regime.html" hidden></a>
+      <a class="rgchip" id="rgchip" href="regime.html" hidden></a>
+      <a class="rgchip" id="sentchip" href="regime.html#sent" hidden></a>
     </div>
   </header>
 
@@ -187,8 +187,7 @@
   <div class="updwrap" id="updwrap"><div class="updempty">불러오는 중…</div></div>
 
   <footer>
-    <a href="explorer.html">전략 리스트</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="rotation.html">오늘의 전략 탐색</a> · <a href="archive.html">기각 아카이브</a> · <a href="sources.html">데이터 출처·기준일</a><br>
-    리서치 백테스트는 무비용·월말(gross) 기준.
+    <a href="explorer.html">전략 리스트</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="rotation.html">오늘의 전략 탐색</a> · <a href="archive.html">기각 아카이브</a> · <a href="sources.html">데이터 출처·기준일</a>
   </footer>
 </div>
 <script>
@@ -227,6 +226,7 @@
       if(ch&&rg&&rg.regime&&rg.regime.label){
         ch.style.setProperty('--rgc',RGC[rg.regime.label]||'var(--muted)');
         ch.textContent='현재 국면 '+(rg.regime.emoji||'')+' '+(RGKO[rg.regime.label]||rg.regime.label);
+        ch.title='시장 국면 '+(RGKO[rg.regime.label]||rg.regime.label)+' · 기준일 '+(rg.as_of||'—')+' — 클릭하면 판별 근거(FRED 39지표)를 봅니다';
         ch.hidden=false;
       }
     }).catch(function(){});
