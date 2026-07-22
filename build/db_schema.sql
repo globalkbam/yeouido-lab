@@ -174,3 +174,109 @@ drop view if exists yeodoo.v_stock_latest;
 create view yeodoo.v_stock_latest as
 select * from yeodoo.stock_daily
 where asof = (select max(asof) from yeodoo.stock_daily);
+
+-- ---------------------------------------------------------------------
+-- 10) 로테이션 전략 풀 일별 스냅샷 (2026-07-22 추가)
+--     매일 헤드리스 잡이 recent/recent_at을 갱신하고 신규 전략을 추가한다.
+--     "언제 어떤 전략이 풀에 있었나 · 최근동향이 언제 갱신됐나"를 되짚기 위한 이력.
+-- ---------------------------------------------------------------------
+create table if not exists yeodoo.rotation_strategy (
+  asof        date        not null,          -- rotation_pool.generated
+  sid         text        not null,          -- A1 · E23 …
+  cat         text,
+  cat_label   text,
+  name        text,
+  recent_at   date,                          -- 최근동향 갱신일(없으면 미갱신)
+  n_sources   int,
+  lab_verdict text,                          -- 랩 자체 검증 판정(배포/제한적 유효/기각)
+  raw         jsonb       not null,
+  loaded_at   timestamptz not null default now(),
+  primary key (asof, sid)
+);
+create index if not exists ix_rot_sid on yeodoo.rotation_strategy (sid, asof desc);
+create index if not exists ix_rot_cat on yeodoo.rotation_strategy (cat, asof desc);
+
+-- ---------------------------------------------------------------------
+-- 11) 사이트 갱신 피드 (updates.json)
+-- ---------------------------------------------------------------------
+create table if not exists yeodoo.site_update (
+  dt        date not null,
+  target    text not null,                   -- rotation/explorer/archive/stocks/regime/sentiment/holdings
+  title     text not null,
+  loaded_at timestamptz not null default now(),
+  primary key (dt, target, title)
+);
+
+-- ---------------------------------------------------------------------
+-- 12) 전략 백테스트 지표 스냅샷 (strategy_backtests.json)
+--     ⚠ 사내 DB(FactSet) 파생 집계 성과. 원천 수치·종목선정은 담지 않는다.
+-- ---------------------------------------------------------------------
+create table if not exists yeodoo.strategy_perf (
+  asof         date not null,                -- generated
+  strategy     text not null,
+  bench_label  text,
+  bench2_label text,
+  start_dt     date,
+  end_dt       date,
+  cagr         double precision,
+  vol          double precision,
+  sharpe       double precision,
+  mdd          double precision,
+  mdd_bench    double precision,
+  mdd_bench2   double precision,
+  calmar       double precision,
+  hit          double precision,
+  raw          jsonb not null,               -- yearly·metrics 등 전체(시계열 제외)
+  loaded_at    timestamptz not null default now(),
+  primary key (asof, strategy)
+);
+
+-- ---------------------------------------------------------------------
+-- 13) 전략 포트폴리오 구성 (strategy_holdings*.json)
+-- ---------------------------------------------------------------------
+create table if not exists yeodoo.strategy_holding (
+  asof      date not null,                   -- 리밸 기준일
+  strategy  text not null,
+  ticker    text not null,
+  name      text,
+  weight    double precision,
+  src       text,                            -- free(yfinance) / db(사내 DB 파생)
+  loaded_at timestamptz not null default now(),
+  primary key (asof, strategy, ticker)
+);
+create index if not exists ix_hold_strategy on yeodoo.strategy_holding (strategy, asof desc);
+
+-- ---------------------------------------------------------------------
+-- 14) 유니버스 구성 스냅샷 (members.json) — 지수 편입/제외 추적
+-- ---------------------------------------------------------------------
+create table if not exists yeodoo.universe_member (
+  asof      date not null,
+  ticker    text not null,
+  name      text,
+  sector    text,
+  idx       text[],
+  loaded_at timestamptz not null default now(),
+  primary key (asof, ticker)
+);
+
+-- ---------------------------------------------------------------------
+-- 15) 펀더멘털 스크리닝 통과 이력 (정의: data/screens.json)
+--     화면은 클라이언트에서 계산하지만, 여기 이력이 쌓이면 나중에 실제 예측력을
+--     검증할 수 있다(현재 랩은 펀더멘털 팩터를 검증한 적이 없음).
+-- ---------------------------------------------------------------------
+create table if not exists yeodoo.screen_daily (
+  asof      date             not null,
+  screen    text             not null,       -- qval · growth · income · cash · garp · lowvol
+  ticker    text             not null,
+  score     double precision,                -- 자격 통과분 내 점수(좋은 쪽 백분위 평균)
+  rnk       int,                             -- 그날 스크린 내 순위(1=최상위)
+  loaded_at timestamptz      not null default now(),
+  primary key (asof, screen, ticker)
+);
+create index if not exists ix_screen_tkr on yeodoo.screen_daily (ticker, asof desc);
+create index if not exists ix_screen_rnk on yeodoo.screen_daily (screen, asof desc, rnk);
+
+-- 스크린별 종목 수 추이 — 시장 국면에 따라 어떤 범주가 늘고 주는지
+create or replace view yeodoo.v_screen_count as
+select asof, screen, count(*) n
+from yeodoo.screen_daily group by 1,2 order by 1 desc, 2;

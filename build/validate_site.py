@@ -195,6 +195,33 @@ try:
 except Exception as e:
     errors.append(f"strategy_holdings 검증 실패: {e}")
 
+# ── 스크리닝 정의(screens.json): 화면과 DB 로더가 **같은 파일**을 읽어야 한다 ──
+#    정의를 코드에 복제하면 조용히 어긋난다(로테이션 9선 FNV 사고와 같은 유형).
+try:
+    _sp = os.path.join(ROOT, "data", "screens.json")
+    if os.path.exists(_sp):
+        _sj = json.load(io.open(_sp, encoding="utf-8"))
+        _dir, _scr = _sj.get("dir") or {}, _sj.get("screens") or {}
+        if not _scr:
+            errors.append("screens.json: screens 비어 있음")
+        for _k, _v in _scr.items():
+            for _f in ("name", "keys", "qualify", "note"):
+                if not _v.get(_f): errors.append(f"screens.json[{_k}]: {_f} 누락")
+            for _m in list(_v.get("keys") or []) + list((_v.get("qualify") or {}).keys()):
+                if _m not in _dir:
+                    errors.append(f"screens.json[{_k}]: 지표 '{_m}'의 방향(dir) 정의 없음")
+            for _m, _th in (_v.get("qualify") or {}).items():
+                if not isinstance(_th, (int, float)) or not (0 <= _th <= 100):
+                    errors.append(f"screens.json[{_k}]: 임계 {_m}={_th} 는 0~100 백분위여야 함")
+        _sh = rd("stocks.html")
+        # 주석에 파일명을 적어둔 것만으로 통과하지 않도록, 실제 fetch 호출을 확인한다
+        if not re.search(r"""fetch\(\s*['"]data/screens\.json""", _sh):
+            errors.append("stocks.html이 screens.json을 읽지 않음 — 정의가 코드에 복제되면 로더와 어긋난다")
+        if "var SCREENS={qval" in _sh or "qualify:function(s){return good(s,'fpe')" in _sh:
+            errors.append("stocks.html에 스크린 정의가 인라인으로 남아 있음 — screens.json 단일 소스 위반")
+except Exception as e:
+    errors.append(f"screens.json 검증 실패: {e}")
+
 # ── 갱신 피드(updates.json): 홈 '최근 업데이트'·각 페이지 배지의 소스 ──
 try:
     _up = os.path.join(ROOT, "data", "updates.json")

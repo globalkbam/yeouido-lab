@@ -339,11 +339,176 @@ def purge_retracted(cur):
             cur.execute(f"delete from yeodoo.{tbl} where asof > %s", (h,))
 
 
+
+# ── 신규 적재(2026-07-22): 사이트 산출물 전체를 yeodoo에 정리 ──────────
+def load_rotation(cur, doc, sha, force=False):
+    """로테이션 전략 풀 일별 스냅샷 — '언제 어떤 전략이 있었나·최근동향 갱신 시점'."""
+    from psycopg2.extras import Json, execute_values
+    asof = (doc or {}).get("generated")
+    if not asof or not doc.get("strategies"):
+        return 0
+    if not force:
+        cur.execute("select 1 from yeodoo.rotation_strategy where asof=%s limit 1", (asof,))
+        if cur.fetchone():
+            return 0
+    rows = []
+    for st in doc["strategies"]:
+        lab = (st.get("lab") or {}).get("v")
+        rows.append((asof, st.get("id"), st.get("cat"), st.get("cat_label"), st.get("name"),
+                     st.get("recent_at") or None, len(st.get("sources") or []), lab, Json(st)))
+    execute_values(cur, "insert into yeodoo.rotation_strategy"
+                        "(asof,sid,cat,cat_label,name,recent_at,n_sources,lab_verdict,raw) values %s"
+                        " on conflict(asof,sid) do update set name=excluded.name,"
+                        " recent_at=excluded.recent_at,n_sources=excluded.n_sources,"
+                        " lab_verdict=excluded.lab_verdict,raw=excluded.raw,loaded_at=now()", rows)
+    _log(cur, "rotation", asof, sha, len(rows), "ok")
+    return len(rows)
+
+
+def load_updates(cur, doc, sha):
+    """갱신 피드 — 중복은 PK(dt,target,title)로 자연 흡수."""
+    from psycopg2.extras import execute_values
+    evs = (doc or {}).get("events") or []
+    rows = [(e.get("dt"), e.get("target"), e.get("title")) for e in evs
+            if e.get("dt") and e.get("target") and e.get("title")]
+    if not rows:
+        return 0
+    execute_values(cur, "insert into yeodoo.site_update(dt,target,title) values %s"
+                        " on conflict do nothing", rows)
+    _log(cur, "updates", (doc or {}).get("updated"), sha, len(rows), "ok")
+    return len(rows)
+
+
+def load_strategy_perf(cur, doc, sha, force=False):
+    """전략 백테스트 지표(집계 성과만 — 시계열은 용량이 커 raw에서 제외)."""
+    from psycopg2.extras import Json, execute_values
+    asof = (doc or {}).get("generated")
+    S = (doc or {}).get("strategies") or {}
+    if not asof or not S:
+        return 0
+    if not force:
+        cur.execute("select 1 from yeodoo.strategy_perf where asof=%s limit 1", (asof,))
+        if cur.fetchone():
+            return 0
+    rows = []
+    for nm, b in S.items():
+        m = b.get("metrics") or {}
+        lean = {k: v for k, v in b.items() if k not in ("dates", "nav", "bench", "bench2", "dd", "dd_b", "dd_b2")}
+        rows.append((asof, nm, b.get("bench_label"), b.get("bench2_label"),
+                     b.get("start"), b.get("end"), num(m.get("cagr")), num(m.get("vol")),
+                     num(m.get("sharpe")), num(m.get("mdd")), num(b.get("mdd_b")), num(b.get("mdd_b2")),
+                     num(m.get("calmar")), num(m.get("hit")), Json(lean)))
+    execute_values(cur, "insert into yeodoo.strategy_perf(asof,strategy,bench_label,bench2_label,"
+                        "start_dt,end_dt,cagr,vol,sharpe,mdd,mdd_bench,mdd_bench2,calmar,hit,raw) values %s"
+                        " on conflict(asof,strategy) do update set cagr=excluded.cagr,vol=excluded.vol,"
+                        " sharpe=excluded.sharpe,mdd=excluded.mdd,mdd_bench=excluded.mdd_bench,"
+                        " mdd_bench2=excluded.mdd_bench2,calmar=excluded.calmar,hit=excluded.hit,"
+                        " raw=excluded.raw,loaded_at=now()", rows)
+    _log(cur, "strategy_perf", asof, sha, len(rows), "ok")
+    return len(rows)
+
+
+def load_holdings(cur, doc, sha, src):
+    """전략 구성 — 파일별 as_of가 전략마다 다르므로 전략 단위로 넣는다."""
+    from psycopg2.extras import execute_values
+    S = (doc or {}).get("strategies") or {}
+    rows = []
+    for nm, st in S.items():
+        asof = st.get("as_of")
+        if not asof:
+            continue
+        for pos in st.get("positions") or []:
+            if pos.get("t") is None:
+                continue
+            rows.append((asof, nm, pos["t"], pos.get("name"), num(pos.get("w")), src))
+    if not rows:
+        return 0
+    execute_values(cur, "insert into yeodoo.strategy_holding(asof,strategy,ticker,name,weight,src) values %s"
+                        " on conflict(asof,strategy,ticker) do update set weight=excluded.weight,"
+                        " name=excluded.name,src=excluded.src,loaded_at=now()", rows)
+    _log(cur, f"holdings_{src}", (doc or {}).get("generated"), sha, len(rows), "ok")
+    return len(rows)
+
+
+def load_members(cur, doc, sha, force=False):
+    """유니버스 스냅샷 — 지수 편입/제외를 나중에 되짚기 위한 이력."""
+    from psycopg2.extras import execute_values
+    asof = (doc or {}).get("as_of_members")
+    M = (doc or {}).get("members") or {}
+    if not asof or not M:
+        return 0
+    if not force:
+        cur.execute("select 1 from yeodoo.universe_member where asof=%s limit 1", (asof,))
+        if cur.fetchone():
+            return 0
+    rows = [(asof, t, v.get("name"), v.get("sector"), v.get("idx") or []) for t, v in M.items()]
+    execute_values(cur, "insert into yeodoo.universe_member(asof,ticker,name,sector,idx) values %s"
+                        " on conflict(asof,ticker) do update set name=excluded.name,"
+                        " sector=excluded.sector,idx=excluded.idx,loaded_at=now()", rows)
+    _log(cur, "members", asof, sha, len(rows), "ok")
+    return len(rows)
+
+
+def load_screens(cur, stocks_doc, screens_doc, sha, force=False):
+    """펀더멘털 스크리닝 통과 종목 — **정의는 data/screens.json 단일 소스**(화면과 동일 파일).
+    화면은 JS로, 여기서는 파이썬으로 같은 규칙을 적용한다. 정의를 코드에 복제하지 않는 게 핵심."""
+    from psycopg2.extras import execute_values
+    asof = (stocks_doc or {}).get("as_of")
+    ST = (stocks_doc or {}).get("stocks") or []
+    SC = (screens_doc or {}).get("screens") or {}
+    DIR = (screens_doc or {}).get("dir") or {}
+    if not asof or not ST or not SC:
+        return 0
+    if not force:
+        cur.execute("select 1 from yeodoo.screen_daily where asof=%s limit 1", (asof,))
+        if cur.fetchone():
+            return 0
+    # 지표별 백분위(0=최저 … 100=최고)
+    pct = {}
+    for k in DIR:
+        vals = sorted(((num((s.get("fund") or {}).get(k)), s["t"]) for s in ST
+                       if num((s.get("fund") or {}).get(k)) is not None))
+        n = len(vals)
+        pct[k] = {t: (i / (n - 1) * 100 if n > 1 else 50.0) for i, (_, t) in enumerate(vals)}
+
+    def good(t, k):
+        v = pct.get(k, {}).get(t)
+        if v is None:
+            return None
+        return 100 - v if DIR.get(k) == "low" else v
+
+    rows = []
+    for key, sc in SC.items():
+        cand = []
+        for s in ST:
+            t = s["t"]
+            if any((good(t, k) is None or good(t, k) < th) for k, th in (sc.get("qualify") or {}).items()):
+                continue
+            gs = [good(t, k) for k in (sc.get("keys") or []) if good(t, k) is not None]
+            cand.append((sum(gs) / len(gs) if gs else 0.0, t))
+        cand.sort(reverse=True)
+        rows += [(asof, key, t, sc_, i + 1) for i, (sc_, t) in enumerate(cand)]
+    if not rows:
+        return 0
+    execute_values(cur, "insert into yeodoo.screen_daily(asof,screen,ticker,score,rnk) values %s"
+                        " on conflict(asof,screen,ticker) do update set score=excluded.score,"
+                        " rnk=excluded.rnk,loaded_at=now()", rows)
+    _log(cur, "screens", asof, sha, len(rows), "ok")
+    return len(rows)
+
+
 def load_snapshot(cur, sha, force=False):
     """한 커밋(또는 워킹트리)의 모든 산출물을 적재. 반환: 종목 행 수."""
     n = load_stocks(cur, read_at(sha, "data/stocks.json") or {}, sha, force)
     load_simple(cur, read_at(sha, "data/regime.json"), sha, "regime_daily", REGIME_COLS, force)
     load_simple(cur, read_at(sha, "data/sentiment.json"), sha, "sentiment_daily", SENT_COLS, force)
+    load_rotation(cur, read_at(sha, "data/rotation_pool.json"), sha, force)
+    load_updates(cur, read_at(sha, "data/updates.json"), sha)
+    load_strategy_perf(cur, read_at(sha, "data/strategy_backtests.json"), sha, force)
+    load_holdings(cur, read_at(sha, "data/strategy_holdings.json"), sha, "free")
+    load_holdings(cur, read_at(sha, "data/strategy_holdings_db.json"), sha, "db")
+    load_members(cur, read_at(sha, "data/members.json"), sha, force)
+    load_screens(cur, read_at(sha, "data/stocks.json") or {}, read_at(sha, "data/screens.json"), sha, force)
     return n
 
 

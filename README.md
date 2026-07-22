@@ -41,3 +41,27 @@ GitHub Pages(branch source: `main` / root). `main`에 푸시하면 자동 재빌
 ```bash
 python3 -m http.server 8080   # → http://localhost:8080
 ```
+
+## 누적 스토어 (Postgres `yeodoo` 스키마)
+
+원본은 git의 `data/*.json`이고, DB는 **조회용 누적 미러**다(GitHub Actions 러너는 tailnet 밖이라 DB에
+접근하지 않는다 — 사이트 생성은 DB에 의존하지 않는다). 적재는 tailnet 안 머신에서 `build/db_load.py`가
+git 이력을 되짚어 수행하므로, 적재 머신이 며칠 꺼져 있어도 `--backfill` 한 번으로 복구된다.
+
+| 테이블 | 내용 | 소스 |
+|---|---|---|
+| `stock_daily` | 종목 일별 스냅샷(판정·컴포짓·플래그) | stocks.json |
+| `fundamental_daily` | 펀더멘털 20지표 | stocks.json |
+| `target_daily` | 애널리스트 목표주가 | stocks.json · target_history.json |
+| `swing_marker` | 스윙 타점(최초 관측·확정 시점 추적) | stocks.json |
+| `regime_daily` · `sentiment_daily` | 시장 국면 · 심리 지수 | regime/sentiment.json |
+| `rotation_strategy` | 전략 풀 일별 스냅샷(최근동향 갱신일·랩 판정) | rotation_pool.json |
+| `strategy_perf` | 전략 백테스트 지표(집계 성과만) | strategy_backtests.json |
+| `strategy_holding` | 전략 구성(종목·비중, free/db 구분) | strategy_holdings*.json |
+| `universe_member` | 지수 구성 스냅샷(편입·제외 추적) | members.json |
+| `screen_daily` | 펀더멘털 스크리닝 통과 종목·순위 | stocks.json + screens.json |
+| `site_update` | 사이트 갱신 피드 | updates.json |
+| `load_log` | 적재 이력(소스·기준일·행수·상태) | — |
+
+`data/screens.json`은 **화면과 로더가 함께 읽는 단일 소스**다. 정의를 코드에 복제하면 조용히 어긋나므로
+(로테이션 9선 FNV 사고와 같은 유형) CI가 인라인 복제를 차단한다.

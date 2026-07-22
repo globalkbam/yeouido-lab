@@ -435,9 +435,18 @@
   //   종목을 찾아주는 필터'이며 예측력이 확인된 신호가 아니다(스윙 타점과 성격이 다름).
   //   임계는 절대값이 아니라 **커버 종목 내 백분위** — 시장 전체 밸류에이션이 변해도 뜻이 유지된다.
   //   dir: low=낮을수록 좋음(백분위를 뒤집어 점수화), high=높을수록 좋음.
-  var FDIR={fpe:'low',tpe:'low',ps:'low',pb:'low',de:'low',beta:'low',
-            roe:'high',pm:'high',rg:'high',gr:'high',dy:'high',fcfy:'high'};
-  var FPCT=null;   // {키:{티커:백분위}} — 1회 계산 후 캐시
+  // 스크리닝 정의는 **data/screens.json 단일 소스** — 로더(build/db_load.py)도 같은 파일을 읽는다.
+  // 정의를 코드 양쪽에 복제하면 조용히 어긋난다(로테이션 9선 FNV 사고와 같은 유형).
+  var FDIR={}, SCREENS={}, FPCT=null;
+  function applyScreens(doc){
+    FDIR=doc.dir||{}; SCREENS={}; FPCT=null;
+    Object.keys(doc.screens||{}).forEach(function(k){
+      var d=doc.screens[k];
+      SCREENS[k]={name:d.name,keys:d.keys||[],note:d.note||'',
+        qualify:(function(q){return function(s){
+          for(var kk in q){var g=good(s,kk); if(g==null||g<q[kk])return false;} return true;};})(d.qualify||{})};
+    });
+  }
   function fpct(){
     if(FPCT)return FPCT;
     FPCT={};
@@ -455,33 +464,7 @@
   function good(s,k){   // '좋은 쪽' 백분위(낮을수록 좋은 지표는 뒤집음). 값 없으면 null
     var v=pc(s,k); if(v==null)return null; return FDIR[k]==='low'?100-v:v;
   }
-  function allGood(s,ks,th){   // 전 지표가 th 이상 '좋은 쪽'이어야 자격(결측은 실격 — 모르면 넣지 않는다)
-    for(var i=0;i<ks.length;i++){var g=good(s,ks[i]); if(g==null||g<th)return false;}
-    return true;
-  }
   function scoreOf(s,ks){var t=0,n=0;ks.forEach(function(k){var g=good(s,k);if(g!=null){t+=g;n++;}});return n?t/n:0;}
-
-  // 스크린: qualify=자격조건, keys=점수 산출 지표, note=화면 설명
-  var SCREENS={
-    qval:{name:'저평가 우량주', keys:['fpe','roe','de'],
-      qualify:function(s){return good(s,'fpe')>=65&&good(s,'roe')>=60&&good(s,'de')>=45;},
-      note:'이익 대비 주가가 싼 편(선행 PER 하위권)이면서 자기자본이익률이 높고 빚이 과하지 않은 종목. 싸지만 부실한 기업(밸류 트랩)을 걸러내려고 수익성·재무건전성을 함께 본다.'},
-    growth:{name:'꾸준한 성장주', keys:['rg','gr','pm'],
-      qualify:function(s){return good(s,'rg')>=65&&good(s,'gr')>=60&&good(s,'pm')>=50;},
-      note:'매출이 빠르게 늘고 내년 이익 전망도 좋아지는데, 남기는 이익률까지 평균 이상인 종목. 성장은 하는데 돈은 못 버는 기업을 제외한다.'},
-    income:{name:'배당 인컴', keys:['dy','de','pm'],
-      qualify:function(s){return good(s,'dy')>=70&&good(s,'de')>=40&&good(s,'pm')>=45;},
-      note:'배당수익률이 높은 편이면서 부채와 이익률이 배당을 감당할 만한 종목. 이익이 나빠 주가만 빠져 배당률이 높아 보이는 경우를 걸러낸다.'},
-    cash:{name:'현금창출력', keys:['fcfy','pm','de'],
-      qualify:function(s){return good(s,'fcfy')>=70&&good(s,'pm')>=50&&good(s,'de')>=40;},
-      note:'시가총액 대비 잉여현금흐름이 많은 종목. 회계 이익보다 실제로 손에 남는 현금을 보는 관점이라, 이익의 질을 따질 때 쓴다.'},
-    garp:{name:'합리적 가격의 성장주', keys:['gr','fpe','roe'],
-      qualify:function(s){return good(s,'gr')>=60&&good(s,'fpe')>=45&&good(s,'roe')>=50;},
-      note:'성장은 하는데 값이 지나치게 비싸지 않은 종목(GARP). 성장주의 고평가 위험과 가치주의 저성장 위험 사이를 노린다.'},
-    lowvol:{name:'저변동 방어주', keys:['beta','dy','pm'],
-      qualify:function(s){return good(s,'beta')>=70&&good(s,'pm')>=50;},
-      note:'시장이 흔들릴 때 상대적으로 덜 움직이는(베타 낮은) 종목 중 이익률이 받쳐주는 곳. 하락장 방어 성격이라 강세장에선 뒤처지기 쉽다.'}
-  };
   function screenRows(key){
     var sc=SCREENS[key]; if(!sc)return [];
     return DATA.stocks.filter(sc.qualify).map(function(s){return {s:s,v:scoreOf(s,sc.keys)};})
@@ -921,7 +904,14 @@
     while(d.getTime()<end&&n<40){d.setUTCDate(d.getUTCDate()+1);var w=d.getUTCDay();if(w!==0&&w!==6)n++;}
     return n>=3?'<span class="stat" style="color:var(--hot);font-weight:700">⚠ '+n+'영업일 지연 — 자동갱신 확인 필요</span>':'';
   }
-  fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+  // 스크린 정의는 별도 파일(로더와 공유) — 없으면 펀더멘털 칩만 빠지고 나머지는 정상 동작
+  Promise.all([
+    fetch('data/stocks.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}),
+    fetch('data/screens.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+  ]).then(function(res){
+    var d=res[0]; if(res[1])applyScreens(res[1]);
+    return d;
+  }).then(function(d){
     if(!d){detailEl.innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
     DATA=d;F=d.factor_defs;
     // 종합점수(bscore/sscore) → 0~100 백분위(_bp/_sp) — 매수/매도 신호 탭 표시·정렬용
