@@ -303,6 +303,15 @@ except Exception as e:
     errors.append(f"폭 토큰 검증 실패: {e}")
 
 # ── 갱신 피드(updates.json): 홈 '최근 업데이트'·각 페이지 배지의 소스 ──
+#    시각(hm)은 선택 필드지만, 있으면 HH:MM이어야 한다 — 형식이 깨지면 화면에 그대로 노출된다.
+try:
+    _up = json.load(io.open(os.path.join(ROOT, "data", "updates.json"), encoding="utf-8"))
+    for _e in _up.get("events") or []:
+        _hm = _e.get("hm")
+        if _hm is not None and not re.fullmatch(r"[0-2]\d:[0-5]\d", str(_hm)):
+            errors.append(f"updates.json: 시각 형식 이상 {_e.get('dt')} {_hm}")
+except Exception as _e2:
+    errors.append(f"updates.json 시각 검증 실패: {_e2}")
 try:
     _up = os.path.join(ROOT, "data", "updates.json")
     if os.path.exists(_up):

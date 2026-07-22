@@ -369,12 +369,12 @@ def load_updates(cur, doc, sha):
     """갱신 피드 — 중복은 PK(dt,target,title)로 자연 흡수."""
     from psycopg2.extras import execute_values
     evs = (doc or {}).get("events") or []
-    rows = [(e.get("dt"), e.get("target"), e.get("title")) for e in evs
+    rows = [(e.get("dt"), e.get("target"), e.get("title"), e.get("hm")) for e in evs
             if e.get("dt") and e.get("target") and e.get("title")]
     if not rows:
         return 0
-    execute_values(cur, "insert into yeodoo.site_update(dt,target,title) values %s"
-                        " on conflict do nothing", rows)
+    execute_values(cur, "insert into yeodoo.site_update(dt,target,title,hm) values %s"
+                        " on conflict (dt,target,title) do update set hm=coalesce(excluded.hm,yeodoo.site_update.hm)", rows)
     _log(cur, "updates", (doc or {}).get("updated"), sha, len(rows), "ok")
     return len(rows)
 

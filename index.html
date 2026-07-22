@@ -113,7 +113,7 @@
 
   /* ── 최근 업데이트(레일) ──────────────────────────────────── */
   .updwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:4px 20px}
-  .upd{display:grid;grid-template-columns:130px 104px 1fr;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;text-decoration:none}
+  .upd{display:grid;grid-template-columns:158px 104px 1fr;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;text-decoration:none}
   .upd:last-child{border-bottom:none}
   .upd .ud{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
   .upd .ut{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:5px;padding:2px 0;white-space:nowrap;
@@ -368,7 +368,8 @@
     if(!ev.length){w.innerHTML='<div class="updempty">표시할 갱신 내역이 없습니다.</div>';return;}
     w.innerHTML=ev.map(function(e){
       var m=UPD[e.target]||['기타','index.html','var(--muted)'], ag=agoTxt(e.dt), nw=(ag==='오늘'||ag==='어제');
-      return '<a class="upd" href="'+m[1]+'"><span class="ud">'+esc(e.dt)+' · '+(nw?'<span class="nw">'+ag+'</span>':ag)+'</span>'+
+      // 시각은 있는 이벤트만 — 커밋 이력으로 복원할 수 없는 옛 항목은 날짜만 둔다(없는 걸 지어내지 않는다)
+      return '<a class="upd" href="'+m[1]+'"><span class="ud">'+esc(e.dt)+(e.hm?' '+esc(e.hm):'')+' · '+(nw?'<span class="nw">'+ag+'</span>':ag)+'</span>'+
         '<span class="ut" style="--utc:'+m[2]+'">'+m[0]+'</span><span class="uv">'+esc(e.title)+'</span></a>';
     }).join('');
   }).catch(function(){var w=el('updwrap');if(w)w.innerHTML='<div class="updempty">갱신 내역을 불러오지 못했습니다.</div>';});
