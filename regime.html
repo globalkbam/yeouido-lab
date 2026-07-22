@@ -291,7 +291,10 @@
           //   라벨 없이 붙여두면 '오르는 중'으로 읽히므로 각각 무엇 대비인지 밝힌다.
           // 델타를 따로 적으면 반올림 자릿수가 달라 v−prev와 어긋난다(실측 39개 중 16개).
           //   직전값을 그대로 보여주면 독자가 눈으로 빼고, 숫자끼리 모순될 여지가 없다.
-          sph='<div class="spline"><span style="color:'+col+'">'+ar+' 추세대비 '+(sp.z>=0?'+':'')+sp.z+'σ</span>'+
+          // ⚠ σ 값 자체는 싣지 않는다 — 분모(직전 6관측의 차분 표준편차)가 지표마다 다르고 발표 주기도
+          //   달라 지표 간 비교가 성립하지 않는다. 같은 이유로 서프라이즈 차트도 내렸다(2026-07-22).
+          //   방향(상회/하회)은 지표 자기 자신의 추세 대비라 비교 없이도 읽힌다 — 그것만 남긴다.
+          sph='<div class="spline"><span style="color:'+col+'">'+ar+' '+lb+'</span>'+
               '<span class="spd">직전 '+(sp.prev!=null?sp.prev+(x.u||''):'—')+' →</span></div>';}
         return '<div class="ic"><div class="ictop"><span class="icl">'+x.label+'</span><span class="icv">'+(x.v!=null?x.v:'—')+'<span class="icu">'+(x.u||'')+'</span></span></div>'+
           (st[0]?'<span class="stbadge '+st[1]+'">'+st[0]+'</span>':'')+sph+'<div class="icd">'+x.d+'</div></div>';
