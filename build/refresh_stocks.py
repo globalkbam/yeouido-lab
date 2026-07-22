@@ -528,15 +528,28 @@ def main():
     M = json.load(open(MEMBERS)); mem = M["members"]; tickers = sorted(mem.keys())
     print(f"멤버 {len(tickers)}종목 · yfinance…")
     px = {}
+    dropped = {}          # {티커: (사유, 관측일수)} — 조용히 빠지면 아무도 모른다(실측: 6종목 실종)
     allt = tickers + ["SPY"]
+    # yfinance는 클래스 구분에 하이픈을 쓴다(BRK.B → BRK-B). 점 표기를 그대로 넘기면 조용히 0행이 와서
+    # 버크셔·브라운포먼처럼 큰 종목이 통째로 빠진다 — 실제로 빠져 있었다.
+    def _yf(t): return t.replace(".", "-")
     for i in range(0, len(allt), 120):
         ch = allt[i:i+120]
-        df = yf.download(ch, period="3y", auto_adjust=True, progress=False, group_by="ticker", threads=True)
+        chy = [_yf(t) for t in ch]
+        df = yf.download(chy, period="3y", auto_adjust=True, progress=False, group_by="ticker", threads=True)
         for t in ch:
             try:
-                sub = (df[t] if len(ch) > 1 else df).dropna(how="all")
-                if len(sub) > 200: px[t] = sub
-            except Exception: pass
+                sub = (df[_yf(t)] if len(chy) > 1 else df).dropna(how="all")
+            except Exception:
+                sub = None
+            if sub is None or not len(sub):
+                if t != "SPY": dropped[t] = ("yfinance 데이터 없음", 0)
+            elif len(sub) > 200:
+                px[t] = sub
+            elif t != "SPY":
+                # 200일 미만이면 200일선·52주고점·1년수익률이 아예 산출 안 된다 — 빈 칸투성이로 넣지 않고
+                # '왜 빠졌는지'를 화면에 밝힌다(신규 상장·스핀오프가 여기 걸린다).
+                dropped[t] = ("상장 이력 부족", int(len(sub)))
     # ★ 미확정 당일 봉 제거 — 랩 최우선 규칙 '기준일 통일'. 장중 실행 시 yfinance 마지막 봉이 실시간이라
     #   종가·지표·목표주가 상승여력이 확정 전 값으로 계산되고, 사이트 다른 데이터(regime·sentiment)와 기준일이 갈린다.
     #   미 동부 16:15 이전이면 당일 봉은 미확정으로 보고 전 종목에서 버린다(크론은 마감 후라 영향 없음).
@@ -566,7 +579,9 @@ def main():
     for t in tickers:
         if t not in px: continue
         r = indicators(px[t])
-        if r is None: continue
+        if r is None:
+            dropped.setdefault(t, ("지표 산출 불가", int(len(px[t]))))
+            continue
         sig, c = r; sig["rs3m"] = (sig["roc3m"]/100 - spy3)*100 if sig.get("roc3m") == sig.get("roc3m") else np.nan
         buy, sell, b_day, s_day = signals_fired(px[t])   # 이벤트 태그(상세패널)·유지
         BUYs, SELLs, tstate, tb = trend_signals(px[t])    # 추세정렬 신호(마커·timing·스코어 불리언)
@@ -878,6 +893,9 @@ def main():
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     def _rnd(x, nd): return round(float(x), nd) if nd else int(round(float(x)))
     out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates, "wxd_dates": wxd_dates,
+           # 지수 구성종목인데 커버에서 빠진 것 — 숨기지 않고 사유와 함께 싣는다
+           "excluded": [{"t": t, "name": (mem.get(t) or {}).get("name"), "idx": (mem.get(t) or {}).get("idx"),
+                         "why": w, "n": n} for t, (w, n) in sorted(dropped.items())],
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": (si_asof if k in ("dtc", "sipct") else as_of)} for k in FACTORS},
            "fund_defs": {"teps": "주당순이익 TTM (최근 12개월 실적)", "feps": "선행 EPS (향후 12개월 애널리스트 추정)",
                          "gr": "선행 EPS 성장률 (forward/trailing−1, %)", "tpe": "P/E (TTM)", "fpe": "선행 P/E (forward)",
@@ -966,6 +984,9 @@ def main():
     except Exception as e:
         raise SystemExit(f"스크린 판정 실패 — 갱신 중단(빈 결과를 배포하면 칩이 조용히 사라진다): {e}")
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    if dropped:
+        print("커버 제외 " + str(len(dropped)) + "종목: " +
+              " · ".join(f"{t}({w}{'' if not n else f' {n}일'})" for t, (w, n) in sorted(dropped.items())))
     print(f"→ {OUT} ({len(stocks)}종목 · 슬림 {os.path.getsize(OUT)//1024}KB · 상세 {len(_keep)}파일 · 기준일 {as_of})")
     # ── 목표주가 스냅샷 누적(실패해도 빌드는 계속 — 부가 자산이지 배포물이 아니다) ──
     try:
