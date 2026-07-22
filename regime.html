@@ -71,6 +71,15 @@
   .hstrat{padding:14px 26px;border-top:1px solid var(--line-soft);background:var(--panel-2);font-size:13.5px;color:var(--ink-2)}
   .hstrat b{color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:8px}
 
+  /* 종합 요약 박스 — 새 색을 만들지 않고 검증된 조합 재사용(panel-2 배경 + cold 좌측바) */
+  .rsum{background:var(--panel-2);border:1px solid var(--line-soft);border-left:3px solid var(--cold);border-radius:12px;padding:15px 18px}
+  .rsumt{font-size:15px;line-height:1.7;color:var(--ink-2);word-break:keep-all;overflow-wrap:break-word}
+  .rsumt b{color:var(--ink)}
+  .rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .rchip{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--muted)}
+  .rchip b{color:var(--ink-2);font-weight:700;margin-right:4px}
+  .rsumn{margin-top:11px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+
   .grp h3{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--muted);margin:24px 0 11px;display:flex;align-items:center;gap:10px}
   .grp h3::after{content:"";height:1px;flex:1;background:var(--line-soft)}
   .icards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
@@ -176,8 +185,6 @@
   <header class="mast">
     <div class="eyebrow">여두 전략 랩 · 시장 국면</div>
     <h1 class="title">시장 국면 — 매크로 지표</h1>
-    <p class="lede"><b>FRED 무료 매크로</b>로 현재 시장이 어떤 국면인지 판별합니다 — <b>성장 × 물가 × 금융</b> 3축 분류.
-      수익률곡선·신용스프레드·실질금리·금융여건·고용·Sahm 침체룰을 종합해 <b>7개 명명 레짐</b>(Goldilocks·Recovery·Overheating·SoftLanding·LateCycle·Stagflation·Recession)으로 라벨링하고, <b>레짐별 자산·섹터·팩터 조건부 성과(로테이션 보드)</b>로 지금 국면에서 무엇이 유리했는지 보여줍니다.</p>
     <div style="margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--muted)">기준일 <b id="asof" style="color:var(--ink)">—</b> · 출처 FRED + yfinance</div>
   </header>
 
@@ -185,9 +192,14 @@
     <div id="regimehero"><div class="empty">불러오는 중…</div></div>
     <div id="senthero"><div class="empty">불러오는 중…</div></div>
   </div>
-  <div id="main"></div>
+  <!-- 순서: 종합 요약 → 분석(레짐 히스토리·현재국면성과·조건부 표) → 심리(버킷 표) → 경기지표 값(매크로 카드).
+       #summary·#regimeperf·#macro는 국면 IIFE가, #sent는 심리 IIFE가 각자 채운다. -->
+  <div id="summary"><div class="empty">불러오는 중…</div></div>
+  <div id="regimeperf"><div class="empty">불러오는 중…</div></div>
 
   <section id="sent" aria-labelledby="sent-h"><h2 class="lbl" id="sent-h" style="font-size:11px;margin-top:40px">시장 심리 (0~100)</h2><div class="empty">불러오는 중…</div></section>
+
+  <div id="macro"><div class="empty">불러오는 중…</div></div>
 
 </div>
 <script>
@@ -202,8 +214,13 @@
   // 서프라이즈 화살표의 색 의미 — 오르는 게 좋은 지표 / 나쁜 지표만 색을 준다(나머지는 중립).
   var DATA=null;
 
+  // #main을 세 슬롯으로 쪼갠 뒤로는 실패 경로가 슬롯을 모두 채워야 한다 — 하나만 채우면
+  //   나머지는 '불러오는 중…'이 영구히 남아 조용한 빈칸이 된다(플레이스홀더가 있어 더 안 띈다).
+  function fail(msg){['summary','regimeperf','macro'].forEach(function(s){
+    var n=el(s); if(n)n.innerHTML='<div class="empty">'+msg+'</div>';});}
+
   fetch('data/regime.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
-    if(!d){el('main').innerHTML='<div class="empty">데이터를 불러오지 못했습니다.</div>';return;}
+    if(!d){fail('데이터를 불러오지 못했습니다.');return;}
     DATA=d; el('asof').textContent=d.as_of||'—';
     (function(){   // 자동갱신 조용한 실패 대비 — 기준일이 3영업일 이상 밀리면 경고(과거 FRED 시크릿 미설정으로 전 시리즈 실패 사례)
       var p=String(d.as_of||'').split('-'); if(p.length!==3)return;
@@ -215,7 +232,7 @@
     render();
     var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(drawHist,150);});
     new MutationObserver(drawHist).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-  }).catch(function(){el('main').innerHTML='<div class="empty">데이터 로드 오류</div>';});
+  }).catch(function(){fail('데이터 로드 오류');});
 
   // ⚠ 이 파일은 IIFE가 둘이다(국면 / 심리). 심리 쪽 esc는 여기서 안 보이므로 따로 둔다.
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -319,8 +336,10 @@
       perfTable('레짐별 섹터 로테이션','11개 섹터 SPDR 월평균 % · 현재 레짐서 유리한 순','섹터',d.sector_perf)+
       perfTable('레짐별 팩터','모멘텀·퀄리티·저변동·가치·중소형 월평균 %','팩터',d.factor_perf);
     el('regimehero').innerHTML=hero;
-    el('main').innerHTML=
-      '<div class="lbl">매크로 지표 현황</div>'+ig+
+    el('summary').innerHTML=summaryBlock(d);
+    // 분석 슬롯: 레짐 히스토리(캔버스+범례) → 현재 국면 성과 → 조건부 3표.
+    //   #histc·#leg가 이 슬롯 안에 있어야 아래 el('leg')·drawHist()가 동작한다(순서 의존).
+    el('regimeperf').innerHTML=
       '<div class="lbl">레짐 히스토리 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 2009~ 월별 · 현재 '+(RKO[rg.label]||rg.label)+' '+runLen(d)+'개월째</span></div>'+
       '<div class="histwrap"><canvas id="histc" height="54" role="img" aria-label="시장 국면(레짐) 히스토리 — 2009년 이후 월별 성장×물가 분류 타임라인"></canvas><div class="leg" id="leg"></div></div>'+
       curPerfChart(d)+tbl;
@@ -328,7 +347,23 @@
     var ct=el('ctabs');
     if(ct)ct.querySelectorAll('.ctab').forEach(function(b){
       b.addEventListener('click',function(){CPERF.i=+b.getAttribute('data-i');render();});});
+    // 경기지표 값(매크로 카드)은 최하단 — 분석 블록을 위로 올리고 원자료는 아래로.
+    el('macro').innerHTML='<div class="lbl">매크로 지표 현황</div>'+ig;
     drawHist();
+  }
+
+  // 종합 요약 — 문장은 regime.json.summary.text를 그대로 출력만 한다(재조립 금지, 단일 소스는 빌더).
+  //   칩은 summary.chips로 7축 상태를 병기(문장에서 빠진 축도 안 잃게). 히어로 라벨은 다시 말하지 않는다.
+  function summaryBlock(d){
+    var s=d.summary;
+    if(!s||!s.text) return '<div class="lbl">지표 종합</div>'+
+      '<div class="rsum"><div class="rsumt" style="color:var(--muted)">실물 지표 표본이 부족해 이번 회차는 종합을 내지 않습니다.</div></div>';
+    var chips=(s.chips||[]).filter(function(c){return c.word;}).map(function(c){
+      return '<span class="rchip"><b>'+esc(c.name)+'</b> '+esc(c.word)+'</span>';}).join('');
+    return '<div class="lbl">지표 종합 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 매크로 39개 지표 상태 집계 ('+esc(d.as_of||'')+')</span></div>'+
+      '<div class="rsum"><div class="rsumt">'+esc(s.text)+'</div>'+
+      (chips?'<div class="rchips">'+chips+'</div>':'')+
+      '<div class="rsumn">지표 상태 집계입니다 — 방향 예측이 아닙니다.</div></div>';
   }
 
   function drawHist(){

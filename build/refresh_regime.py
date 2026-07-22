@@ -216,9 +216,23 @@ def main():
     # ── 히스토리(월별 레짐 라벨, ~15년) + 자산·섹터·팩터 조건부 성과 ──
     hist, perf = build_history(S, cpi_yoy, asof)
 
+    # 종합 요약(지표 39개 → 한 문장) — 단일 소스는 regime_summary.build 하나뿐.
+    # 히스테리시스: 직전 regime.json의 summary.axes를 넘겨 밴드 전환에 관성을 준다(문구 휩소 억제).
+    import regime_summary
+    _prev_axes = None
+    try:
+        _prev = json.load(open(OUT, encoding="utf-8"))
+        _prev_axes = (_prev.get("summary") or {}).get("axes")
+    except Exception:
+        pass
+    summary = regime_summary.build(indicators, {"label": lab, "growth": growth,
+                                                "inflation": inflation, "financial": financial},
+                                   prev_axes=_prev_axes)
+
     out = {"as_of": asof, "source": "FRED (무료) + yfinance",
            "regime": {"label": lab, "emoji": emoji, "growth": growth, "inflation": inflation,
                       "financial": financial, "desc": desc, "strategy": strat},
+           "summary": summary,
            "indicators": indicators, "history": hist,
            "asset_perf": perf["macro"], "sector_perf": perf["sector"], "factor_perf": perf["factor"]}
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
