@@ -76,7 +76,7 @@
   .rowcount{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0 2px 6px;text-transform:uppercase;letter-spacing:.08em}
   .listwrap{display:flex;flex-direction:column;gap:6px;max-height:78vh;overflow-y:auto;padding-right:4px}
   .listwrap::-webkit-scrollbar{width:8px}.listwrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-  .item{display:grid;grid-template-columns:minmax(0,1fr) 82px;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;width:100%;text-align:left;font-family:inherit;box-shadow:var(--shadow);transition:border-color .12s,background .12s}
+  .item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;width:100%;text-align:left;font-family:inherit;box-shadow:var(--shadow);transition:border-color .12s,background .12s}
   .item:hover{border-color:var(--accent)}
   .item[aria-selected="true"]{background:var(--sel);border-color:var(--accent)}
   .item .tkline{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -95,7 +95,10 @@
   .flag.volsurge,.flag.rsstrong{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
   .flag.squeeze2{color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft)}
   .flag.gmilshort{color:var(--cold);background:var(--cold-bg)}
-  .item .metric{text-align:right}
+  /* 지표 칸을 82px로 고정했더니 "1일 전 · 이동가능"이 말줄임으로 잘렸다 —
+     내용에 맞춰 늘리고(auto) 줄바꿈을 막는다. 종목명 쪽은 1fr이라 알아서 줄어든다. */
+  .item .metric{text-align:right;white-space:nowrap}
+  .item .metric .nm{overflow:visible}
   /* 목표주가 탭은 "목표가 / +XX% · 애널 NN"이라 82px에서 잘린다 — 이 탭에서만 우측 칼럼을 넓힌다 */
   .item.wide{grid-template-columns:minmax(0,1fr) 108px}
   .item.wide .nm{overflow:visible}
