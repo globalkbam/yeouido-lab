@@ -187,6 +187,15 @@
   .fxnote{margin-top:13px;padding-top:10px;border-top:1px dashed var(--line-soft);font-size:10.5px;color:var(--muted);line-height:1.7}
   .fxnote b{color:var(--ink-2)}
   .fxnote p{margin:0 0 6px} .fxnote p:last-child{margin-bottom:0}
+  /* 장문 고지는 한 줄 요약 + 접이식 상세로 — 사실을 지우지 않고 자리만 줄인다. */
+  details.more{margin-top:7px}
+  details.more>summary{cursor:pointer;color:var(--ink-2);list-style:none;display:inline-flex;align-items:center;gap:5px}
+  details.more>summary::-webkit-details-marker{display:none}
+  details.more>summary::before{content:'\25B8';font-size:9px}
+  details.more[open]>summary::before{content:'\25BE'}
+  details.more>summary:hover{color:var(--accent)}
+  details.more .mbody{margin-top:7px}
+  details.more .mbody p{margin:0 0 6px} details.more .mbody p:last-child{margin-bottom:0}
   .note{margin-top:16px;font-size:11px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line-soft);padding-top:11px}
   .timing{margin:0 0 4px;padding-bottom:13px;border-bottom:1px solid var(--line-soft)}
   .timhd{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
@@ -758,17 +767,16 @@
         return '<span class="stbadge watch" title="커버 '+basis+'종목 상대 위치·회계 특이사항 배지 — 매매 신호 아님">'+esc(x)+'</span>';}).join('')+'</div>';
     }
     // 고지 문구는 데이터(stocks.json)에서 온다 — 문구가 바뀌면 사이트가 자동으로 따라간다. 없을 때만 내장 폴백.
-    var sepTx=DATA.fundx_note_eps||'⚠ 위 EPS 블록과 아래 재무 상태 표시는 다른 것입니다. EPS 리비전 드리프트(선행 EPS 추정치의 상향/하향을 추종하는 전략)는 '+
-      '랩이 백테스트로 검증해 배포한 코어 전략입니다. 반면 PER·PBR·ROE·부채비율 등은 검증 이력이 없는 참고 표시입니다. '+
-      '같은 ‘펀더멘털’이라는 말을 쓴다고 해서 같은 지위가 아닙니다 — 하나는 검증된 전략이고, 나머지는 상태 표시입니다.';
-    var noteTx=DATA.fundx_note||('이 재무 지표들은 ‘표시’이지 검증된 신호가 아닙니다. 여두 전략 랩은 펀더멘털 팩터(밸류에이션·수익성·성장·재무건전성·배당)의 '+
-      '초과수익을 한 번도 검증한 적이 없고, 여기 있는 지표 중 백테스트로 매매 엣지가 확인된 것은 하나도 없습니다. 이 값들은 종목을 이해하기 위한 재무 상태 '+
-      '표시이며, 매수/매도 점수(bscore·sscore)·플래그·타이밍·홈 추천·기본 정렬 어디에도 일절 반영되지 않습니다. 배지는 커버 종목 안에서의 상대 위치'+
-      '(33/67 백분위)를 뜻할 뿐 ‘싸다=사라’·‘비싸다=팔아라’가 아닙니다. 참고용이며 매매 권유가 아닙니다.');
-    var note='<div class="fxnote"><p>'+esc(noteTx)+'</p>'+
-      '<p>이 화면의 <b>퍼센타일은 섹터 상대가 기본</b>이고 전체 순위는 보조로 함께 적습니다 — 전체 기준만 쓰면 유틸리티가 늘 저평가, IT가 늘 고평가로 찍히는 업종 착시가 생깁니다. '+
-      '<b>색은 보조 표시일 뿐이며 판단 정보는 수치와 상태 텍스트에 있습니다.</b> 결측은 사유가 확인될 때만(적자·무배당·업종 특성상 미산출) 표기하고, 그 외에는 행 자체를 생략합니다. '+
-      '재무 수치는 <b>각 사의 최근 분기 보고서 기준</b>이라 종목마다 결산일이 달라 가격 기준일('+esc(DATA.as_of||'—')+')과 일치하지 않습니다.</p></div>';
+    var sepTx=DATA.fundx_note_eps||'⚠ 위 EPS 블록은 랩이 백테스트로 검증해 배포한 코어 전략(EPS 리비전 드리프트)이고, '+
+      '아래 재무 표시는 검증 이력이 없는 참고 수치입니다 — 같은 ‘펀더멘털’이라도 지위가 다릅니다.';
+    var noteTx=DATA.fundx_note||('랩은 펀더멘털 팩터의 초과수익을 검증한 적이 없습니다. 저PER이 고PER보다 나았는지, 고ROE가 저ROE를 '+
+      '이겼는지 우리는 모릅니다. 이 값들은 종목을 이해하기 위한 재무 상태 표시이며, 매수/매도 점수·플래그·타이밍·홈 추천·기본 정렬 '+
+      '어디에도 반영되지 않습니다. 배지는 커버 종목 안에서의 상대 위치(33/67 백분위)일 뿐 ‘싸다=사라’가 아닙니다. 출처 yfinance.');
+    var note='<div class="fxnote"><p><b>검증된 신호가 아닙니다</b> — 매수/매도 점수·플래그·타이밍·정렬 어디에도 반영되지 않는 참고 표시이며, 퍼센타일은 <b>섹터 상대</b>가 기본입니다.</p>'+
+      '<details class="more"><summary>왜 신호가 아닌가 · 읽는 법</summary><div class="mbody"><p>'+esc(noteTx)+'</p>'+
+      '<p>전체 기준만 쓰면 유틸리티가 늘 저평가, IT가 늘 고평가로 찍히는 업종 착시가 생겨 <b>섹터 상대</b>를 기본으로 씁니다(전체 순위는 보조). '+
+      '색은 보조 표시일 뿐 판단 정보는 수치와 상태 텍스트에 있습니다. 결측은 사유가 확인될 때만(적자·무배당·업종 특성상 미산출) 표기하고 그 외에는 행을 생략합니다. '+
+      '재무 수치는 <b>각 사의 최근 분기 보고서 기준</b>이라 결산일이 종목마다 달라 가격 기준일('+esc(DATA.as_of||'—')+')과 일치하지 않습니다.</p></div></details></div>';
     return '<div class="fxblk"><div class="fxsep">'+esc(sepTx)+'</div>'+
       '<div class="fxhd"><span>재무 상태 <em>참고 표시 · 신호 아님</em></span><span class="fxsrc">yfinance · 섹터 상대 퍼센타일</span></div>'+
       flHtml+groups+note+'</div>';
@@ -810,7 +818,7 @@
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+fundHtml+tpBlock(s,fu)+
-      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+fundX(s)+'<div class="note">차트 <b style="color:var(--good)">▲</b>매수 = <b>스윙 저점 근처</b>, <b style="color:var(--hot)">▼</b>매도 = <b>스윙 고점 근처</b>(지그재그 전환점 <b style="color:var(--good)">●</b>/<b style="color:var(--hot)">●</b>). 타점은 ①스윙 전환점(지그재그) ②추세 내 눌림목/반등(K=5) 두 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 표시됩니다. <b>채운 도형(▲▼●)=확정 — 한번 찍히면 날짜 불변. 빈 도형(△▽○)=잠정 — 미확정이라 이동 가능하며, 과거 실측 확정 확률이 이동 확률을 유의하게 웃돌 때만(실측 약 52~91%) 표시합니다(지그재그 저점=진행률 50%+·고점=60%+, 눌림목=저점 1일+·고점 2일+). 확정 타점은 잠정 단계를 거쳐 등장합니다(하루 급변으로 건너뛰는 예외만 존재).</b> 여기에 <b>과열도·추세·모멘텀·변동성</b>을 결합해 걸러냅니다 — 저점이라도 <b>깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외</b>(떨어지는 칼 회피), 고점이라도 <b>추세·모멘텀 강한 상승 지속이면 매도 제외</b>(강세종목 조기매도 회피). 임계는 <b>시장국면</b>(SPY 200MA 위=관대한 눌림매수)에 따라 조정. 스윙 탭은 <b>최신 확정 타점순</b> 정렬. <b>참고용 — 확정 저점의 약 50%는 이후 20일간 저점 유지(5y 실측), 확정일 매수 수익은 시장 수준(+1.6% vs +1.4%) — 수익 예측 도구가 아니라 진입 규율·구조 도구입니다. 고점 표식은 하락 예측력이 없어 이익실현 레벨 참고이며, \'확실한 하락\' 신호가 아닙니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위. <b>기준일 '+DATA.as_of+'</b>(가격·테크니컬·EPS) · 공매도잔량(공매도일수·SI%)만 <b>기준일 '+(SI_ASOF||'—')+'</b>(FINRA 격주, 가격 기준일보다 오래됨) · 출처 yfinance·FINRA.</div></div>';
+      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+fundX(s)+'<div class="note"><b style="color:var(--good)">▲</b> 매수 = 스윙 <b>저점</b> 근처 · <b style="color:var(--hot)">▼</b> 매도 = 스윙 <b>고점</b> 근처. <b>채운 도형(▲▼●)=확정</b> — 날짜 불변 · <b>빈 도형(△▽○)=잠정</b> — 이동 가능. 기준일 '+DATA.as_of+' · 공매도잔량만 '+(SI_ASOF||'—')+'(FINRA 격주) · 출처 yfinance·FINRA.<details class="more"><summary>타점을 어떻게 찍고, 무엇을 못 하는가</summary><div class="mbody"><p>타점은 ①스윙 전환점(지그재그) ②추세 내 눌림목/반등(K=5) 두 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 나옵니다. 잠정 타점은 과거 실측 확정 확률이 이동 확률을 유의하게 웃돌 때만(실측 약 52~91%) 표시하고, 확정은 잠정 단계를 거쳐 등장합니다. 여기에 과열도·추세·모멘텀·변동성을 결합해 걸러냅니다 — 저점이라도 깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외(떨어지는 칼 회피), 고점이라도 추세·모멘텀 강한 상승 지속이면 매도 제외(강세종목 조기매도 회피). 임계는 시장국면(SPY 200MA 위=관대한 눌림매수)에 따라 조정됩니다.</p><p><b>한계 — 확정 저점의 약 50%만 이후 20일간 저점을 유지하고(5y 실측), 확정일 매수 수익은 시장 수준(+1.6% vs +1.4%)입니다. 수익 예측 도구가 아니라 진입 규율·구조 도구이며, 고점 표식은 하락 예측력이 없어 이익실현 레벨 참고일 뿐입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위.</p></div></details></div></div>';
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}
