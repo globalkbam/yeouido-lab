@@ -280,3 +280,11 @@ create index if not exists ix_screen_rnk on yeodoo.screen_daily (screen, asof de
 create or replace view yeodoo.v_screen_count as
 select asof, screen, count(*) n
 from yeodoo.screen_daily group by 1,2 order by 1 desc, 2;
+
+-- ---------------------------------------------------------------------
+-- 증분 마이그레이션
+--   create table if not exists 는 **기존 테이블에 컬럼을 붙이지 않는다.**
+--   컬럼을 추가할 때는 반드시 여기에 add column if not exists 를 함께 적을 것
+--   (--init이 스키마 진화까지 책임지도록. 안 그러면 로더가 UndefinedColumn으로 죽는다).
+-- ---------------------------------------------------------------------
+alter table yeodoo.site_update add column if not exists hm text;   -- 기록 시각 HH:MM(KST)
