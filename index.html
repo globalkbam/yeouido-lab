@@ -64,23 +64,11 @@
   .stalewarn{color:var(--hot);font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--hot) 45%,transparent);border-radius:5px;padding:2px 7px}
   @media(max-width:560px){.asofbar .asofnote{border-left:0;padding-left:0;flex-basis:100%}}
 
-  /* ── 12칼럼 그리드 ───────────────────────────────────────────
-     섹션은 전부 그리드 직계 자식이다(래퍼·order 해킹 금지) — DOM 순서 = 모바일 읽기 순서.  */
-  .home{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;row-gap:26px;align-items:start;margin-top:28px}
-  .home>*{grid-column:1/-1;min-width:0}
-  @media(min-width:1120px){
-    #s-today{grid-column:1/span 8;grid-row:span 2}
-    #s-market{grid-column:9/span 4}
-    #s-updates{grid-column:9/span 4}
-  }
-  @media(min-width:900px) and (max-width:1119px){
-    #s-market{grid-column:span 6}
-    #s-updates{grid-column:span 6}
-  }
-  @media(min-width:640px) and (max-width:899px){
-    #s-market{grid-column:span 6}
-    #s-updates{grid-column:span 6}
-  }
+  /* ── 본문 흐름 ─────────────────────────────────────────────
+     사이드 레일 대신 위→아래 한 줄기: 시장 → 신호 → 전략 → 도구 → 업데이트.
+     전폭이므로 안쪽을 2열 이상으로 쪼개 밀도를 유지한다(카드 하나가 늘어나 비지 않도록). */
+  .home{margin-top:28px;display:flex;flex-direction:column;gap:30px}
+  .mkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
   .lbl{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .lbl .sub{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)}
 
@@ -116,7 +104,7 @@
   @media(max-width:400px){.rstk .rn2{display:none}}
 
   /* ── 레일 카드(지금 시장) ─────────────────────────────────── */
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px;display:block;text-decoration:none;color:inherit;border-top:3px solid var(--edge,var(--line));margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px;display:block;text-decoration:none;color:inherit;border-top:3px solid var(--edge,var(--line))}
   a.card:hover{border-color:var(--accent)}
   .card .ch{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
   .card .cv{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--edge,var(--ink));margin-top:5px;line-height:1.2}
@@ -126,13 +114,14 @@
   .cbadge{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:8px;display:inline-block}
 
   /* ── 최근 업데이트(레일) ──────────────────────────────────── */
-  .updwrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:2px 15px}
-  .upd{display:grid;grid-template-columns:1fr auto;gap:3px 8px;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;text-decoration:none}
+  .updwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:4px 20px}
+  .upd{display:grid;grid-template-columns:130px 104px 1fr;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;text-decoration:none}
   .upd:last-child{border-bottom:none}
   .upd .ud{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
-  .upd .ut{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.03em;border-radius:5px;padding:1px 6px;white-space:nowrap;justify-self:end;
+  .upd .ut{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:5px;padding:2px 0;white-space:nowrap;
            color:var(--utc,var(--muted));background:color-mix(in srgb,var(--utc,var(--muted)) 13%,transparent);border:1px solid color-mix(in srgb,var(--utc,var(--muted)) 38%,transparent)}
-  .upd .uv{grid-column:1/-1;color:var(--ink-2);font-size:12.5px;line-height:1.5}
+  .upd .uv{color:var(--ink-2);font-size:13.5px;line-height:1.5}
+  @media(max-width:640px){.upd{grid-template-columns:1fr auto;gap:3px 8px;font-size:12.5px}.upd .ut{justify-self:end}.upd .uv{grid-column:1/-1;font-size:12.5px}}
   .upd .nw{color:var(--hot);font-weight:700}
   a.upd,a.upd:link,a.upd:visited{color:inherit;text-decoration:none}
   a.upd *{text-decoration:none}
@@ -175,7 +164,6 @@
 
   footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.9}
   footer a{color:var(--accent);text-decoration:none} footer a:hover{text-decoration:underline}
-  .disc{margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7;font-family:var(--sans)}
   a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media(pointer:coarse){a.rstk,a.upd,a.tile{min-height:40px}}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
@@ -203,38 +191,31 @@
   </header>
 
   <div class="home">
-    <!-- ① 판정 원장 — 이 랩의 유일한 차별점은 성과가 아니라 기각의 부피다 -->
-    <section id="s-ledger" aria-labelledby="ld-h">
-      <p class="lbl" id="ld-h">판정 원장 <span class="sub">· 구현 → 적대검증 → 판정</span></p>
-      <div class="ledger" id="ledger"><div class="ldskel">불러오는 중…</div></div>
+    <!-- ① 시장 -->
+    <section id="s-market" aria-labelledby="mk-h">
+      <p class="lbl" id="mk-h">지금 시장</p>
+      <div class="mkgrid" id="marketcards"><div class="card"><div class="ch"><span>불러오는 중…</span></div></div></div>
     </section>
 
-    <!-- ② 오늘의 신호 -->
+    <!-- ② 신호 -->
     <section id="s-today" aria-labelledby="td-h">
       <p class="lbl" id="td-h">오늘의 신호 <span class="sub">· 스윙 타점 <span id="stkasof"></span></span></p>
       <div class="signote" id="signote">불러오는 중…</div>
       <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
     </section>
 
-    <!-- ③ 지금 시장 — 이미 받고 있던 파일에서 값까지 꺼내 쓴다(추가 fetch 0) -->
-    <section id="s-market" aria-labelledby="mk-h">
-      <p class="lbl" id="mk-h">지금 시장</p>
-      <div id="marketcards"><div class="card"><div class="ch"><span>불러오는 중…</span></div></div></div>
+    <!-- ③ 전략 — 판정 원장 → 배포 판정 → 검증하지 않은 것.
+         '검증하지 않은 것'을 배포 바로 아래 두는 배치는 유지한다(자랑 다음 칸이 자기부정). -->
+    <section id="s-ledger" aria-labelledby="ld-h">
+      <p class="lbl" id="ld-h">전략 <span class="sub">· 구현 → 적대검증 → 판정</span></p>
+      <div class="ledger" id="ledger"><div class="ldskel">불러오는 중…</div></div>
     </section>
 
-    <!-- ④ 최근 업데이트 -->
-    <section id="s-updates" aria-labelledby="up-h">
-      <p class="lbl" id="up-h">최근 업데이트</p>
-      <div class="updwrap" id="updwrap"><div class="updempty">불러오는 중…</div></div>
-    </section>
-
-    <!-- ⑤ 배포 판정 3종 -->
     <section id="s-deploy" aria-labelledby="dp-h">
       <p class="lbl" id="dp-h">배포 판정 <span class="sub">· 단독 운용 가능한 수준으로 검증된 전략</span></p>
       <div class="deploys" id="deploys"></div>
     </section>
 
-    <!-- ⑥ 검증하지 않은 것 — 자랑 바로 다음 칸 -->
     <section id="s-unver" aria-labelledby="uv-h">
       <p class="lbl" id="uv-h">검증하지 않은 것 <span class="sub">· 사이트에 있지만 예측력이 확인되지 않은 것들</span></p>
       <div class="unver">
@@ -248,7 +229,7 @@
       </div>
     </section>
 
-    <!-- ⑦ 도구 -->
+    <!-- ④ 도구 -->
     <section id="s-tools" aria-labelledby="tl-h">
       <p class="lbl" id="tl-h">도구</p>
       <div class="tiles">
@@ -260,14 +241,16 @@
         <a class="tile" href="sources.html" style="--edge:var(--muted)"><span class="tn">데이터 출처</span><span class="td">어디서 오고 언제 기준인가</span><span class="tb">yfinance·FRED·FINRA</span></a>
       </div>
     </section>
+
+    <!-- ⑤ 기타 — 최하단 -->
+    <section id="s-updates" aria-labelledby="up-h">
+      <p class="lbl" id="up-h">최근 업데이트</p>
+      <div class="updwrap" id="updwrap"><div class="updempty">불러오는 중…</div></div>
+    </section>
   </div>
 
   <footer>
     <a href="explorer.html">전략 리스트</a> · <a href="stocks.html">종목 시그널</a> · <a href="regime.html">시장 국면</a> · <a href="rotation.html">오늘의 전략 탐색</a> · <a href="archive.html">기각 아카이브</a> · <a href="sources.html">데이터 출처·기준일</a>
-    <div class="disc">
-      참고용 리서치이며 <b>투자자문·매매권유가 아닙니다.</b> 과거 통계가 미래 수익을 보장하지 않습니다.<br>
-      운영자 <b>개인의 리서치 공개</b>이며 소속사의 견해·운용과 무관합니다.
-    </div>
   </footer>
 </div>
 <script>
