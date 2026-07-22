@@ -342,6 +342,7 @@
       </button>
     </div>
     <div class="chipwrap" id="chipwrap">
+      <div class="chiprow" id="bfilters" role="group" aria-label="벤치마크 유형 필터"><span class="fltlab">벤치마크</span></div>
       <div class="chiprow" id="kfilters" role="group" aria-label="전략 성격 필터"><span class="fltlab">성격</span></div>
       <div class="chiprow" id="afilters" role="group" aria-label="활용 아키타입 필터"><span class="fltlab">용도</span></div>
       <div class="chiprow" id="vfilters" role="group" aria-label="운용 등급 필터"><span class="fltlab">등급</span></div>
@@ -411,6 +412,10 @@
   // ── 성격(kind) 축 — data/strategy_kinds.json 이 단일 출처. 도착 전에는 '미분류'로 렌더된다. ──
   var KINDS=null;
   var KIND_ORDER=['수익엔진','배분기','위험감축','방어보험','타이밍오버레이','미분류'];
+  // 벤치마크 2분할 — 판정 기준이 시장 지수(SPX/NDX)인 전략과, 지수 없이 모전략·기초자산·
+  //   자기 유니버스(1/N)로 판정하는 독립형. bench_role=='index'가 곧 '지수 대비'다(단일 출처는 bt).
+  var BENCH_ORDER=['지수 대비','독립형'];
+  function benchGroup(d){return (d.bt&&d.bt.bench_role==='index')?'지수 대비':'독립형';}
   var KIND_COLOR={'수익엔진':'#0E8A54','배분기':'#2C6E8F','위험감축':'#8256B8','방어보험':'#C0392B','타이밍오버레이':'#B9770E','미분류':'#9A9A9A'};
   function kindOf(d){return (d.det&&d.det.kind)||'미분류';}
   function kmeta(k){return (KINDS&&KINDS.kinds&&KINDS.kinds[k])||null;}
@@ -438,7 +443,7 @@
   function mlabel(k){return (KINDS&&KINDS.metric_labels&&KINDS.metric_labels[k])||k;}
   function roleLab(r){return (KINDS&&KINDS.bench_roles&&KINDS.bench_roles[r])||null;}
 
-  var state={q:"",vf:new Set(),af:new Set(),kf:new Set(),sort:"kind",sel:0};
+  var state={q:"",vf:new Set(),af:new Set(),kf:new Set(),bf:new Set(),sort:"kind",sel:0};
   var ARCHE_ORDER=['배포코어','저상관분산','위기방어','인플레·실물헤지','레짐·리스크오버레이','저비용틸트','실행타이밍','모니터링시그널','학술적참고','중복·무용'];
   var ARCH_COLOR={'배포코어':'#0E8A54','저상관분산':'#2C6E8F','위기방어':'#C0392B','인플레·실물헤지':'#B9770E','레짐·리스크오버레이':'#8256B8','저비용틸트':'#1E8A80','실행타이밍':'#3E7CB1','모니터링시그널':'#4E8A6B','학술적참고':'#8A7A5C','중복·무용':'#9A9A9A'};
   // 9px 글씨에 하드코딩 hex를 쓰면 다크에서 대비 2.9:1 → 색은 테두리·배경 힌트로만 쓰고 글씨는 테마 잉크색
@@ -484,6 +489,8 @@
   function syncPressed(){
     document.querySelectorAll('#vfilters .fchip').forEach(function(b){
       var v=b.className.match(/v-(\w+)/)[1]; b.setAttribute('aria-pressed',state.vf.has(v));});
+    document.querySelectorAll('#bfilters .fchip').forEach(function(b){
+      var g=b.textContent.replace(/\s+\d+$/,'').trim(); b.setAttribute('aria-pressed',state.bf.has(g));});
     document.querySelectorAll('#afilters .fchip').forEach(function(b){
       var a=b.textContent.replace(/\s+\d+$/,'').trim();
       b.setAttribute('aria-pressed',state.af.has(a));});
@@ -499,6 +506,18 @@
     ARCHE_ORDER.concat(['미분류']).forEach(function(a){
       if(!counts[a])return;
       af.appendChild(chip('a',a,counts[a],false,function(){toggle(state.af,a);render();syncPressed();fltLabel();}));
+    });
+  }
+  function buildBenchFilter(){
+    var bf=el('bfilters'); if(!bf)return;
+    bf.innerHTML='<span class="fltlab">벤치마크</span>';
+    var counts={}; D.forEach(function(d){var g=benchGroup(d); counts[g]=(counts[g]||0)+1;});
+    var TIP={'지수 대비':'판정 기준이 시장 지수(SPX·NDX)인 전략 — 지수를 이겼는지로 봅니다',
+             '독립형':'지수가 아니라 모전략·기초자산·같은 풀 1/N으로 판정하는 전략(배분·오버레이 등)'};
+    BENCH_ORDER.forEach(function(g){
+      if(!counts[g])return;
+      var b=chip('b',g,counts[g],false,function(){toggle(state.bf,g);render();syncPressed();fltLabel();});
+      b.title=TIP[g]||''; bf.appendChild(b);
     });
   }
   function buildKindFilter(){
@@ -535,6 +554,7 @@
   function filtered(){
     var rows=D.filter(function(d){
       if(state.vf.size && !state.vf.has(d.v))return false;
+      if(state.bf.size && !state.bf.has(benchGroup(d)))return false;
       if(state.af.size && !state.af.has((d.det&&d.det.archetype)||'미분류'))return false;
       if(state.kf.size && !state.kf.has(kindOf(d)))return false;
       if(state.q){var extra=d.det?(" "+(d.det.pros||[]).join(" ")+" "+(d.det.cons||[]).join(" ")+" "+(d.det.applications||[]).join(" ")+" "+(d.det.archetype||"")+" "+(d.det.kind||"")+" "+(d.det.identity||"")):"";
@@ -1134,6 +1154,7 @@
       if(bt.strategies[d.n]){ d.bt=bt.strategies[d.n]; return; }
       for(var kk in bt.strategies){ if(bt.strategies[kk].sid&&bt.strategies[kk].sid===d.sid){ d.bt=bt.strategies[kk]; return; } }
     }); }
+    buildBenchFilter();   // bench_role은 bt에 있으므로 bt 조인 뒤에 세운다(그 전엔 전부 '독립형'으로 셈)
     // 무료 데이터 상세(우선) + 사내 DB 파생 공개요약(종목 비공개) 병합
     [hd,hdb].forEach(function(src){ if(src&&src.strategies)D.forEach(function(d){ if(!d.hold&&src.strategies[d.n]) d.hold=src.strategies[d.n]; }); });
     render();
