@@ -89,22 +89,35 @@ def overheat_series(h, l, c, v):
     return pd.concat([r, k, m, w, pbc], axis=1).mean(axis=1)
 
 
-def indicators(o):
+PART_MIN = 20      # 부분 편입 하한 — RSI(14)·CCI(20)·볼린저(20)가 성립하는 최소치.
+                   #   이보다 짧으면 단기 지표조차 창이 안 차서 넣을 수 없다.
+
+def indicators(o, allow_partial=False):
+    """이력이 200거래일 미만이면 원래 통째로 버렸다(신규 상장·스핀오프가 여기 걸린다).
+    allow_partial=True면 **창(window)이 확보된 지표만** 내고 나머지는 NaN으로 둔다.
+    빈 값을 0이나 근사치로 채우지 않는 게 핵심 — 52주 고점 위치를 26일 고점으로 계산하면
+    같은 이름의 다른 숫자가 되어 백분위·컴포짓을 오염시킨다."""
     h, l, c, v = o["High"], o["Low"], o["Close"], o["Volume"]
     c = c.dropna(); h = h.reindex(c.index); l = l.reindex(c.index); v = v.reindex(c.index)
-    if len(c) < 200: return None
+    n_hist = len(c)
+    if n_hist < (PART_MIN if allow_partial else 200): return None
     s50, s200 = sma(c, 50), sma(c, 200); ml, ms, mh = macd(c); _, bu, bl, pb, bw = boll(c)
     au, ad = aroon(h, l); ax, _, _ = adx(h, l, c); ret = c.pct_change()
     def rr(n): return _f(c.iloc[-1]/c.iloc[-1-n]-1) if len(c) > n else np.nan
     return {
         "rsi": _f(rsi(c)), "stoch": _f(stoch_k(h, l, c)), "mfi": _f(mfi(h, l, c, v)),
         "willr": _f(willr(h, l, c))+100, "cci": _f(cci(h, l, c)), "pctb": _f(pb),
-        "pos52": _f(c.iloc[-1]/c.tail(252).max()*100), "adx": _f(ax),
-        "d50": _f((c.iloc[-1]/s50.iloc[-1]-1)*100), "d200": _f((c.iloc[-1]/s200.iloc[-1]-1)*100),
-        "macdh": _f(mh), "aroon": _f(au)-_f(ad),
+        "pos52": (_f(c.iloc[-1]/c.tail(252).max()*100) if n_hist >= 252 else np.nan),
+        "adx": (_f(ax) if n_hist >= 40 else np.nan),
+        "d50": (_f((c.iloc[-1]/s50.iloc[-1]-1)*100) if n_hist >= 50 else np.nan),
+        "d200": (_f((c.iloc[-1]/s200.iloc[-1]-1)*100) if n_hist >= 200 else np.nan),
+        "macdh": (_f(mh) if n_hist >= 40 else np.nan), "aroon": (_f(au)-_f(ad) if n_hist >= 30 else np.nan),
         "roc1m": rr(21)*100, "roc3m": rr(63)*100, "roc6m": rr(126)*100,
-        "atrp": _f(atr(h, l, c)/c.iloc[-1]*100), "vol": _f(ret.tail(252).std()*np.sqrt(252)*100), "bbw": _f(bw),
-        "rvol": (_f(v.tail(5).mean()/v.tail(60).mean()) if float(v.tail(60).mean() or 0) > 0 else np.nan),
+        "atrp": _f(atr(h, l, c)/c.iloc[-1]*100),
+        "vol": (_f(ret.tail(252).std()*np.sqrt(252)*100) if n_hist >= 60 else np.nan),
+        "bbw": _f(bw),
+        "rvol": (_f(v.tail(5).mean()/v.tail(60).mean()) if n_hist >= 60 and float(v.tail(60).mean() or 0) > 0 else np.nan),
+        "_n": n_hist,
     }, c
 
 
@@ -528,6 +541,7 @@ def main():
     M = json.load(open(MEMBERS)); mem = M["members"]; tickers = sorted(mem.keys())
     print(f"멤버 {len(tickers)}종목 · yfinance…")
     px = {}
+    partial = {}          # {티커: 관측일수} — 부분 편입(단기 지표만)
     dropped = {}          # {티커: (사유, 관측일수)} — 조용히 빠지면 아무도 모른다(실측: 6종목 실종)
     allt = tickers + ["SPY"]
     # yfinance는 클래스 구분에 하이픈을 쓴다(BRK.B → BRK-B). 점 표기를 그대로 넘기면 조용히 0행이 와서
@@ -546,9 +560,10 @@ def main():
                 if t != "SPY": dropped[t] = ("yfinance 데이터 없음", 0)
             elif len(sub) > 200:
                 px[t] = sub
+            elif len(sub) >= PART_MIN and t != "SPY":
+                px[t] = sub          # 부분 편입 — 창이 확보된 단기 지표만 산출(아래 indicators가 판단)
+                partial[t] = int(len(sub))
             elif t != "SPY":
-                # 200일 미만이면 200일선·52주고점·1년수익률이 아예 산출 안 된다 — 빈 칸투성이로 넣지 않고
-                # '왜 빠졌는지'를 화면에 밝힌다(신규 상장·스핀오프가 여기 걸린다).
                 dropped[t] = ("상장 이력 부족", int(len(sub)))
     # ★ 미확정 당일 봉 제거 — 랩 최우선 규칙 '기준일 통일'. 장중 실행 시 yfinance 마지막 봉이 실시간이라
     #   종가·지표·목표주가 상승여력이 확정 전 값으로 계산되고, 사이트 다른 데이터(regime·sentiment)와 기준일이 갈린다.
@@ -578,7 +593,7 @@ def main():
     raw = {}; as_of = None
     for t in tickers:
         if t not in px: continue
-        r = indicators(px[t])
+        r = indicators(px[t], allow_partial=(t in partial))
         if r is None:
             dropped.setdefault(t, ("지표 산출 불가", int(len(px[t]))))
             continue
@@ -663,7 +678,9 @@ def main():
                  for i in range(len(wk.index))]
     def comp(spec, rp):
         vs = [rp[s[1:]] if s[0] == "+" else 100 - rp[s[1:]] for s in spec if s[1:] in rp and pd.notna(rp[s[1:]])]
-        return round(float(np.mean(vs)), 0) if vs else None
+        # 입력의 70% 미만만 살아 있으면 산출하지 않는다 — 부분 편입 종목에서 '추세'가 200일선 없이
+        #   계산되면 같은 이름의 다른 지표가 되어 백분위 비교가 성립하지 않는다.
+        return round(float(np.mean(vs)), 0) if vs and len(vs) >= max(1, int(len(spec) * 0.7)) else None
     stocks = []
     tp_hist = {}      # {티커: 목표평균} — data/target_history.json 누적용(오늘부터 쌓아야 미래 검증 가능)
     for t in raw:
@@ -885,6 +902,7 @@ def main():
                        "trig": trig, "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
                        **({"why": whyb} if whyb else {}),
                        "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd, "wx": wx, "wv": wv,
+                       **({"part": partial[t]} if t in partial else {}),
                        # 상세(sd/) 전용 — 20지표 값+전체/섹터 퍼센타일 [v,p,sp], 배지, 결측 사유
                        **({"fundx": _fundx} if _fundx else {}),
                        **({"fundx_flags": fx_b[t]} if fx_b.get(t) else {}),

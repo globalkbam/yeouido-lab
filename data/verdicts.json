@@ -17,11 +17,11 @@
    "alias": "크로스에셋 리스크패리티 + vol타겟"
   }
  ],
- "marginal_n": 17,
+ "marginal_n": 9,
  "deploy_n": 3,
  "reject_compare_n": 2,
- "explorer_n": 22,
- "archive_n": 41,
+ "explorer_n": 14,
+ "archive_n": 49,
  "archive_cats": 10,
- "reject_total": 43
+ "reject_total": 51
 }

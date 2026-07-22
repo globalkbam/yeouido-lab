@@ -80,6 +80,13 @@
   .scverd{display:block;margin-top:7px;font-size:11.5px;color:var(--ink-2);line-height:1.6}
   .scverd b{color:var(--hot);font-family:var(--mono);font-size:10.5px;background:color-mix(in srgb,var(--hot) 12%,transparent);
             border:1px solid color-mix(in srgb,var(--hot) 38%,transparent);border-radius:5px;padding:1px 7px;margin-right:6px}
+  /* 부분 편입 — 상장 이력이 짧아 일부 지표만 산출된 종목. 빈 칸을 0으로 채우지 않고 사실을 표시한다 */
+  .partchip{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--watch);
+            background:color-mix(in srgb,var(--watch) 12%,transparent);border:1px solid color-mix(in srgb,var(--watch) 38%,transparent);
+            border-radius:4px;padding:1px 5px;margin-left:5px;white-space:nowrap}
+  .partnote{background:var(--panel-2);border:1px solid var(--line-soft);border-left:3px solid var(--watch);
+            border-radius:9px;padding:9px 13px;margin-bottom:12px;font-size:11.5px;color:var(--ink-2);line-height:1.65}
+  .partnote b{color:var(--ink)}
   .rk{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft);
       border-radius:5px;padding:1px 5px;margin-right:5px;min-width:20px;text-align:center;display:inline-block}
   .rowcount{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0 2px 6px;text-transform:uppercase;letter-spacing:.08em}
@@ -637,7 +644,8 @@
       }else{metric='<span class="metric"><div class="mv">'+Math.round(v)+'</div><div class="mbar"><i style="width:'+v+'%;background:'+cc(comp)+'"></i></div></span>';}
       return '<button class="item'+(state.preset==='tgt'?' wide':'')+'" role="option" data-t="'+s.t+'" aria-selected="'+(s===state.sel)+'">'+
         '<span><span class="tkline">'+(scr?'<span class="rk">'+(++rk)+'</span>':'')+'<span class="tk">'+s.t+'</span>'+(s.idx||[]).map(function(x){return '<span class="ib">'+x+'</span>';}).join('')+fl+'</span>'+
-        '<div class="nm">'+esc(s.name||'')+(s.sector?'<span class="secchip">'+esc(secKo(s.sector))+'</span>':'')+'</div></span>'+metric+'</button>';
+        '<div class="nm">'+esc(s.name||'')+(s.sector?'<span class="secchip">'+esc(secKo(s.sector))+'</span>':'')+
+        (s.part?'<span class="partchip" title="상장 '+s.part+'거래일 — 창이 확보된 단기 지표만 산출됩니다(200일선·52주·중장기 모멘텀 없음)">부분 '+s.part+'일</span>':'')+'</div></span>'+metric+'</button>';
     }).join('');
     if(!listEl._deleg){listEl._deleg=1;listEl.addEventListener('click',function(e){var it=e.target.closest('.item');if(!it)return;
       var t=it.getAttribute('data-t');for(var i=0;i<DATA.stocks.length;i++)if(DATA.stocks[i].t===t){select(DATA.stocks[i]);break;}});}
@@ -892,7 +900,11 @@
         '<div class="marklegend" id="marklg" style="justify-content:flex-end;margin:-2px 0 1px"></div>'+
         '<canvas id="pxc" width="600" height="150" role="img" aria-label="주가 차트"></canvas></div>'+
       '<div class="comps">'+comps+'</div>'+fundHtml+tpBlock(s,fu)+
-      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+whyBlock(s)+timing(s)+body+fundX(s)+'<div class="note"><b style="color:var(--good)">▲</b> 매수 = 스윙 <b>저점</b> 근처 · <b style="color:var(--hot)">▼</b> 매도 = 스윙 <b>고점</b> 근처. <b>채운 도형(▲▼●)=확정</b> — 날짜 불변 · <b>빈 도형(△▽○)=잠정</b> — 이동 가능. 기준일 '+DATA.as_of+' · 공매도잔량만 '+(SI_ASOF||'—')+'(FINRA 격주) · 출처 yfinance·FINRA.<details class="more"><summary>타점을 어떻게 찍고, 무엇을 못 하는가</summary><div class="mbody"><p>타점은 ①스윙 전환점(지그재그) ②추세 내 눌림목/반등(K=5) 두 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 나옵니다. 잠정 타점은 과거 실측 확정 확률이 이동 확률을 유의하게 웃돌 때만(실측 약 52~91%) 표시하고, 확정은 잠정 단계를 거쳐 등장합니다. 여기에 과열도·추세·모멘텀·변동성을 결합해 걸러냅니다 — 저점이라도 깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외(떨어지는 칼 회피), 고점이라도 추세·모멘텀 강한 상승 지속이면 매도 제외(강세종목 조기매도 회피). 임계는 시장국면(SPY 200MA 위=관대한 눌림매수)에 따라 조정됩니다.</p><p><b>한계 — 확정 저점의 약 50%만 이후 20일간 저점을 유지하고(5y 실측), 확정일 매수 수익은 시장 수준(+1.6% vs +1.4%)입니다. 수익 예측 도구가 아니라 진입 규율·구조 도구이며, 고점 표식은 하락 예측력이 없어 이익실현 레벨 참고일 뿐입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위.</p></div></details></div></div>';
+      '<div class="dbody" tabindex="0" aria-label="지표 상세">'+
+      (s.part?'<div class="partnote">이 종목은 <b>상장 '+s.part+'거래일</b>이라 창이 확보된 단기 지표만 산출됩니다 — '+
+        '200일선 이격도·52주 고점 위치·3/6개월 모멘텀·실현변동성은 <b>계산 자체가 불가능</b>합니다(빈 값을 채우지 않았습니다). '+
+        '스윙 타점도 표시되지 않습니다. 상장 200거래일이 지나면 자동으로 전체 지표가 붙습니다.</div>':'')+
+      whyBlock(s)+timing(s)+body+fundX(s)+'<div class="note"><b style="color:var(--good)">▲</b> 매수 = 스윙 <b>저점</b> 근처 · <b style="color:var(--hot)">▼</b> 매도 = 스윙 <b>고점</b> 근처. <b>채운 도형(▲▼●)=확정</b> — 날짜 불변 · <b>빈 도형(△▽○)=잠정</b> — 이동 가능. 기준일 '+DATA.as_of+' · 공매도잔량만 '+(SI_ASOF||'—')+'(FINRA 격주) · 출처 yfinance·FINRA.<details class="more"><summary>타점을 어떻게 찍고, 무엇을 못 하는가</summary><div class="mbody"><p>타점은 ①스윙 전환점(지그재그) ②추세 내 눌림목/반등(K=5) 두 종류이며, 각 타점의 근거는 위 <b>왜 이 신호인가</b>에 나옵니다. 잠정 타점은 과거 실측 확정 확률이 이동 확률을 유의하게 웃돌 때만(실측 약 52~91%) 표시하고, 확정은 잠정 단계를 거쳐 등장합니다. 여기에 과열도·추세·모멘텀·변동성을 결합해 걸러냅니다 — 저점이라도 깊은 하락추세 붕괴(200MA 대폭 이탈+6개월 급락)면 매수 제외(떨어지는 칼 회피), 고점이라도 추세·모멘텀 강한 상승 지속이면 매도 제외(강세종목 조기매도 회피). 임계는 시장국면(SPY 200MA 위=관대한 눌림매수)에 따라 조정됩니다.</p><p><b>한계 — 확정 저점의 약 50%만 이후 20일간 저점을 유지하고(5y 실측), 확정일 매수 수익은 시장 수준(+1.6% vs +1.4%)입니다. 수익 예측 도구가 아니라 진입 규율·구조 도구이며, 고점 표식은 하락 예측력이 없어 이익실현 레벨 참고일 뿐입니다.</b> 퍼센타일 = 커버 '+DATA.n_stocks+'종목 내 상대순위.</p></div></details></div></div>';
     renderChart(s);
   }
   function sma(arr,nn){return arr.map(function(_,i){if(i<nn-1)return null;var w=arr.slice(i-nn+1,i+1);for(var j=0;j<w.length;j++)if(w[j]==null)return null;var s=0;for(var j=0;j<w.length;j++)s+=w[j];return s/nn;});}

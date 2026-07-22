@@ -262,6 +262,11 @@ try:
         _ih = rd("index.html")
         # 홈 본문(스크립트 제외)에 판정 수치가 하드코딩돼 있으면 드리프트한다
         _body = re.sub(r"(?s)<script.*?</script>", "", _ih)
+        # 아카이브 statline도 전에 '제한적 유효 20개'를 손으로 적어두고 이관 때 틀렸다 — 스크립트까지 검사
+        _ah = rd("archive.html")
+        for _n, _lab in ((_fresh["deploy_n"] + _fresh["marginal_n"], "배포+제한적 유효 합계"),):
+            if re.search(r"제한적 유효 \d+개", _ah) and not re.search(r"제한적 유효 <b>", _ah):
+                errors.append("archive.html이 배포·제한적 유효 개수를 하드코딩함 — verdicts.json에서 읽을 것")
         for _n, _lab in ((_fresh["archive_n"], "기각 아카이브 건수"), (_fresh["explorer_n"], "전략 총수"),
                          (_fresh["marginal_n"], "제한적 유효 건수")):
             if re.search(r"(?<![0-9])%d\s*(개|종|건)" % _n, _body):

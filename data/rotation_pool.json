@@ -692,10 +692,10 @@
     "The Impact of Volatility Targeting, Harvey et al., Journal of Portfolio Management (2018)"
    ],
    "lab": {
-    "v": "marginal",
+    "v": "기각",
     "t": "변동성 타깃 — 흔들리면 주식 축소",
     "why": "단일 팩터로 검증 통과했으나 증분은 제한적(marginal).",
-    "href": "explorer.html#s-변동성-타깃-흔들리면-주식-축소"
+    "href": "archive.html#a-변동성-타깃-흔들리면-주식-축소"
    }
   },
   {
