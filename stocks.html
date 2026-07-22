@@ -272,6 +272,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         <input id="q" type="search" placeholder="티커·회사명·섹터 검색 (예: NVDA, Apple, Energy)" aria-label="검색">
       </label>
+      <span id="presetall" style="display:contents"></span>
       <button class="fltbtn" id="fltbtn" aria-expanded="true" aria-controls="chipwrap">
         <span class="fcar" aria-hidden="true">▾</span><span id="fltnow">필터</span>
       </button>
@@ -344,6 +345,7 @@
   // [key,label,comp,asc,flag,timingSet,group('r'=스윙 타점 / 's'=스크리닝)] — 전략 재편(2026-07): 추세 전환 '완전 확정' 후 진입.
   // 추천·신호 탭 제거 — 확정 스윙 타점(저점매수/고점매도)에 집중, 스크리닝은 보조.
   var PRESETS=[
+    ["all","전체",null,false,null,null,"a"],
     ["swingbuy",'<span style="color:var(--good)">▲</span> 스윙 저점매수',"momentum",false,null,null,"r"],
     ["swingsell",'<span style="color:var(--hot)">▼</span> 스윙 고점매도',"trend",true,null,null,"r"],
     ["oh","과매수","overheat",false,"과매수",null,"s"],["os","과매도","overheat",true,"과매도",null,"s"],
@@ -444,7 +446,7 @@
     var side=t.indexOf('매수')>=0?'상승추세 정렬':t.indexOf('매도')>=0?'하락추세 이탈':'추세 불명확';
     return '<div class="timing"><div class="timhd"><span class="timstate" style="color:var('+col+')">타이밍 · '+t+'</span><span class="timsub">'+side+'</span></div>'+summary+trigHtml+tpHtml+block+'</div>';
   }
-  function chip(txt,cnt,onclick,tip){var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');b.innerHTML=txt+(cnt!=null?' <span style="opacity:.65">'+cnt+'</span>':'');if(tip)b.title=tip;b.addEventListener('click',onclick);return b;}
+  function chip(txt,cnt,onclick,tip,key){var b=document.createElement('button');b.className='fchip';b.setAttribute('aria-pressed','false');if(key)b.setAttribute('data-p',key);b.innerHTML=txt+(cnt!=null?' <span style="opacity:.65">'+cnt+'</span>':'');if(tip)b.title=tip;b.addEventListener('click',onclick);return b;}
   function curP(){for(var i=0;i<PRESETS.length;i++)if(PRESETS[i][0]===state.preset)return PRESETS[i];return SHOWN[0];}
 
   // 최근 스윙 마커 인덱스(bms/bmw=매수, sms/smw=매도). 없으면 -1.
@@ -501,15 +503,28 @@
     vsg:['거래량 급증','평소보다 거래가 크게 늘어난 종목. 관심·수급이 들어왔다는 신호지만 방향은 알려주지 않는다.','최근 5일 평균 거래량이 60일 평균의 1.5배 이상'],
     sqz:['변동성 수축','가격 움직임 폭이 좁아진 상태. 방향이 정해지기 전 응축 구간으로 보지만 어느 쪽으로 터질지는 알 수 없다.','볼린저 밴드 폭 8% 이하'],
     rss:['시장 대비 강세','최근 3개월 수익률이 시장(S&P500)을 크게 앞선 종목.','3개월 초과수익 +20%p 이상'],
+    all:['전체','필터를 걸지 않은 커버 종목 전부. 신호로 좁히기 전에 무엇이 있는지 훑어볼 때 쓴다.','시가총액 내림차순 · NDX∪SPX 커버 종목'],
     tgt:['목표주가','애널리스트 목표주가와 현재가의 차이(상승여력) 순 나열. 랩의 신호가 아닌 참고 표기이며 자체 검증에서 예측력이 확인되지 않았다.','yfinance 컨센서스 · 상승여력 내림차순']
   };
+  function mcOf(s){var v=(s.fund||{}).mc;return (v==null||isNaN(v))?null:v;}
+  function mcFmt(v){   // mc 단위는 억 달러 — 1조 달러 = 10000
+    if(v==null)return '—';
+    return v>=10000?('$'+(v/10000).toFixed(2)+'T'):('$'+Math.round(v/10)+'B');
+  }
+  function keepQI(s){   // 검색어·지수 필터(모든 분기 공통)
+    if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
+    if(state.q){var h=(s.t+' '+(s.name||'')+' '+(s.sector||'')+' '+secKo(s.sector)).toLowerCase();if(h.indexOf(state.q)<0)return false;}
+    return true;
+  }
   function filtered(){
     var p=curP(),comp=p[2],asc=p[3],flag=p[4],tim=p[5];
+    if(p[6]==='a'){                     // 전체 — 아무 신호도 걸지 않고 시가총액 순으로 나열
+      var ar=DATA.stocks.filter(keepQI).slice().sort(function(a,b){
+        var d=(mcOf(b)||-1)-(mcOf(a)||-1); return d||a.t.localeCompare(b.t);});
+      return {rows:ar,comp:'all',total:ar.length,all:true};
+    }
     if(p[6]==='f'){                     // 펀더멘털 스크리닝 — 자격조건 통과분을 점수순으로
-      var fr=screenRows(p[0]).filter(function(s){
-        if(state.idx.size){var ok=false;(s.idx||[]).forEach(function(x){if(state.idx.has(x))ok=true;});if(!ok)return false;}
-        if(state.q){var h=(s.t+' '+(s.name||'')+' '+(s.sector||'')+' '+secKo(s.sector)).toLowerCase();if(h.indexOf(state.q)<0)return false;}
-        return true;});
+      var fr=screenRows(p[0]).filter(keepQI);
       return {rows:fr,comp:'screen',total:fr.length,screen:p[0]};
     }
     var sk=swKeys(p[0]),sc=p[0]==='swingbuy'?'bscore':'sscore';
@@ -560,7 +575,8 @@
           esc((_sc.keys||[]).map(fkLabel).join(' · '))+
           ')의 <b>좋은 쪽 백분위 평균</b>(0~100, 커버 종목 전체 기준)입니다. 자격 조건을 모두 통과한 종목만 담습니다.</span>'+
         '<span class="scwarn">단면 스크리닝 · 예측력 미검증 — 랩은 펀더멘털 팩터의 초과수익을 검증한 적이 없습니다. 조건 충족 종목을 찾아줄 뿐 매수 신호가 아닙니다.</span>';
-      else if(_pd)_h='<b>'+esc(_pd[0])+'</b> '+esc(_pd[1])+'<span class="sccrit"><b>판정 기준</b> '+esc(_pd[2])+'</span>';
+      // '전체'는 걸러내는 조건이 없다 — 판정이 아니라 나열 순서를 적는다
+      else if(_pd)_h='<b>'+esc(_pd[0])+'</b> '+esc(_pd[1])+'<span class="sccrit"><b>'+(_k==='all'?'정렬':'판정 기준')+'</b> '+esc(_pd[2])+'</span>';
       _sn.innerHTML=_h; _sn.hidden=!_h;
     }
     el('rowcount').innerHTML=esc(rows.length+"종목")+(f.screen?esc(" · 적합도순"):"")+(f.total>rows.length?esc(" / 전체 "+f.total+" · 종합점수 상위"):"")+esc(" · ")+curP()[1]+
@@ -571,7 +587,7 @@
     listEl.innerHTML="";
     if(!rows.length){listEl.innerHTML='<div class="empty">해당 종목 없음</div>';drawDetail(null);return;}
     if(!state.sel||rows.indexOf(state.sel)<0)state.sel=rows[0];
-    var sk=swKeys(state.preset), dts=DATA.pxd_dates||[], NN=dts.length, scr=f.screen, rk=0;
+    var sk=swKeys(state.preset), dts=DATA.pxd_dates||[], NN=dts.length, scr=f.screen, rk=0, isAll=f.all;
     // 문자열 1회 빌드(리플로우 1회) + 이벤트 위임(리스너 1개) — 512행 성능
     listEl.innerHTML=rows.map(function(s){
       var v=s.comp[comp]||0, fl=(s.flags||[]).slice(0,2).map(flagHtml).join(''), metric;
@@ -585,6 +601,8 @@
           '<div class="nm" style="text-align:right;margin-top:2px">'+
           (upv!=null?'<b style="color:var(--muted)">'+(upv>=0?'+':'')+Math.round(upv)+'%</b>':'—')+
           (fu.nan?' · 애널 '+fu.nan:'')+'</div></span>';
+      }else if(isAll){
+        metric='<span class="metric"><div class="mv" style="font-size:13px">'+mcFmt(mcOf(s))+'</div><div class="nm" style="text-align:right;margin-top:2px">시가총액</div></span>';
       }else if(scr){
         // 적합도 = 이 스크린이 보는 지표들의 '좋은 쪽' 백분위 평균(0~100). 목록 정렬 키와 동일한 값.
         var fv=s._fs||0;
@@ -960,15 +978,16 @@
     el('statline').innerHTML='<span class="stat"><b>'+d.n_stocks+'</b> 종목</span><span class="stat">NDX+SPX</span><span class="stat">테크니컬 <b>'+Object.keys(F).length+'</b>개</span><span class="stat">기준일 <b>'+(d.as_of||'—')+'</b></span>'+staleStat(d.as_of);
     el('asof').textContent='기준일 '+(d.as_of||'—')+' (전 지표 동일, yfinance 최신 거래일)';
     var sia=el('siasof');if(sia&&SI_ASOF)sia.textContent='기준일 '+SI_ASOF;
-    var pf=el('presets'),pf2=el('presets2'),pf3=el('presets3');SHOWN=[];PRESETS.forEach(function(p){
+    var pf=el('presets'),pf2=el('presets2'),pf3=el('presets3'),pfa=el('presetall');SHOWN=[];PRESETS.forEach(function(p){
       var cnt=null,sk=swKeys(p[0]);
+      if(p[6]==='a')cnt=d.stocks.length;   // 전체 — 필터를 걸지 않은 커버 종목 전부
       if(p[6]==='f')cnt=screenRows(p[0]).length;   // 펀더멘털 스크리닝 — 자격 통과 종목 수
       else if(sk)cnt=d.stocks.filter(function(s){return swFresh(s,sk);}).length;
       else if(p[4])cnt=d.stocks.filter(function(s){return (s.flags||[]).indexOf(p[4])>=0;}).length;
       else if(p[5])cnt=d.stocks.filter(function(s){return p[5].indexOf(s.timing)>=0;}).length;
       if(cnt===0)return;  // 데이터 없는 프리셋 제거
       SHOWN.push(p);
-      (p[6]==='f'?pf3:p[6]==='s'?pf2:pf).appendChild(chip(p[1],cnt,function(){state.preset=p[0];state.sel=null;syncP();render();if(matchMedia(NARROW).matches)setFlt(false);},TIPS[p[0]]));
+      (p[6]==='a'?pfa:p[6]==='f'?pf3:p[6]==='s'?pf2:pf).appendChild(chip(p[1],cnt,function(){state.preset=p[0];state.sel=null;syncP();render();if(matchMedia(NARROW).matches)setFlt(false);},TIPS[p[0]],p[0]));
     });
     if(SHOWN.length && !SHOWN.some(function(p){return p[0]===state.preset;}))state.preset=SHOWN[0][0];
     // 딥링크: 홈 추천 종목 클릭 → #t=티커&p=탭 으로 진입, 해당 탭·종목 자동 선택
@@ -984,7 +1003,10 @@
     var _rz;window.addEventListener('resize',function(){clearTimeout(_rz);_rz=setTimeout(function(){if(state.sel)renderChart(state.sel);},150);});
     new MutationObserver(function(){_cssC={};if(state.sel)renderChart(state.sel);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   }).catch(function(){detailEl.innerHTML='<div class="empty">데이터 로드 오류</div>';});
-  function syncP(){var pb=[].slice.call(el('presets').querySelectorAll('.fchip')).concat([].slice.call(el('presets2').querySelectorAll('.fchip')));SHOWN.forEach(function(p,i){if(pb[i])pb[i].setAttribute('aria-pressed',state.preset===p[0]);});
+  function syncP(){
+    // 키로 대조한다 — 컨테이너별 칩을 이어붙여 인덱스로 맞추면 프리셋 그룹이 늘 때마다 밀린다
+    [].slice.call(document.querySelectorAll('.controls .fchip[data-p]')).forEach(function(b){
+      b.setAttribute('aria-pressed',state.preset===b.getAttribute('data-p'));});
     var ib=el('idxf').querySelectorAll('.fchip');['NDX','SPX'].forEach(function(x,j){if(ib[j])ib[j].setAttribute('aria-pressed',state.idx.has(x));});}
   var _qt;el('q').addEventListener('input',function(e){var val=e.target.value.toLowerCase().trim();clearTimeout(_qt);_qt=setTimeout(function(){if(val===state.q)return;state.q=val;state.sel=null;render();},160);});
   el('q').addEventListener('keydown',function(e){   // ↑↓로 종목 선택 이동(키보드 접근성)
