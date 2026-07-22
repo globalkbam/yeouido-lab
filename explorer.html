@@ -67,6 +67,15 @@
   .sortbtn{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-2);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow)}
   .sortbtn:hover{border-color:var(--accent)}
   .chiprow{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+  /* 필터 접기 — sticky 컨트롤이 모바일 화면을 덮어 목록이 안 보이는 문제(stocks.html과 동일 패턴).
+     접힌 상태에서도 몇 개가 걸려 있는지는 버튼에 남긴다(접기≠정보 삭제). */
+  .fltbtn{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:600;
+          color:var(--ink-2);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+          padding:8px 14px;cursor:pointer;white-space:nowrap;flex:none}
+  .fltbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .fltbtn .fcar{font-size:9px;transition:transform .15s}
+  .fltbtn[aria-expanded="false"] .fcar{transform:rotate(-90deg)}
+  .chipwrap[hidden]{display:none}
   .fchip{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;user-select:none;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
   .fchip:hover{border-color:var(--accent);color:var(--ink-2)}
   .fchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -223,9 +232,14 @@
         <input id="q" type="search" placeholder="전략 이름·설명 검색 (예: 상품, RP, 채권, 오버나이트)" aria-label="전략 검색">
       </label>
       <button class="sortbtn" id="sort">정렬 ↓ 판정</button>
+      <button class="fltbtn" id="fltbtn" aria-expanded="true" aria-controls="chipwrap">
+        <span class="fcar" aria-hidden="true">▾</span><span id="fltnow">필터</span>
+      </button>
     </div>
-    <div class="chiprow" id="vfilters" role="group" aria-label="판정 필터"></div>
-    <div class="chiprow" id="afilters" role="group" aria-label="활용 아키타입 필터"></div>
+    <div class="chipwrap" id="chipwrap">
+      <div class="chiprow" id="vfilters" role="group" aria-label="판정 필터"></div>
+      <div class="chiprow" id="afilters" role="group" aria-label="활용 아키타입 필터"></div>
+    </div>
   </div>
 
   <div class="board">
@@ -307,7 +321,7 @@
     ['deploy','marginal','reject'].forEach(function(v){
       var cnt=D.filter(function(d){return d.v===v;}).length;
       if(!cnt)return; // 개수 0인 판정(기각 등)은 칩 생성 안 함 — 죽은 필터 방지
-      vf.appendChild(chip('v-'+v,VMETA[v].lab,cnt,false,function(){toggle(state.vf,v);render();syncPressed();}));
+      vf.appendChild(chip('v-'+v,VMETA[v].lab,cnt,false,function(){toggle(state.vf,v);render();syncPressed();fltLabel();}));
     });
   })();
   function toggle(set,k){set.has(k)?set.delete(k):set.add(k);}
@@ -324,7 +338,7 @@
     var counts={}; D.forEach(function(d){var a=(d.det&&d.det.archetype)||'미분류'; counts[a]=(counts[a]||0)+1;});
     ARCHE_ORDER.concat(['미분류']).forEach(function(a){
       if(!counts[a])return;
-      af.appendChild(chip('a',a,counts[a],false,function(){toggle(state.af,a);render();syncPressed();}));
+      af.appendChild(chip('a',a,counts[a],false,function(){toggle(state.af,a);render();syncPressed();fltLabel();}));
     });
   }
 
@@ -373,6 +387,21 @@
     }
     return '<div class="mv sm">'+(d.m||'')+'</div><small>'+(d.ml||'')+'</small>';
   }
+  var NARROW='(max-width:760px)';
+  function fltLabel(){
+    var b=el('fltnow'); if(!b)return;
+    var n=state.vf.size+state.af.size, w=el('chipwrap');
+    b.textContent=(w&&w.hidden)?('필터'+(n?' · '+n+'개 적용':'')):'필터 접기';
+  }
+  function setFlt(open){
+    var w=el('chipwrap'), b=el('fltbtn'); if(!w||!b)return;
+    w.hidden=!open; b.setAttribute('aria-expanded',open?'true':'false'); fltLabel();
+  }
+  (function(){
+    var b=el('fltbtn'); if(!b)return;
+    b.addEventListener('click',function(){setFlt(el('chipwrap').hidden);});
+    setFlt(!matchMedia(NARROW).matches);   // 좁은 화면은 접힌 채 시작
+  })();
   function render(){
     var rows=filtered();
     el('rowcount').textContent=rows.length+"개 표시"+(rows.length<D.length?" / 전체 "+D.length:"");

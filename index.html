@@ -167,7 +167,18 @@
       <div class="mkgrid" id="marketcards"><div class="card"><div class="ch"><span>불러오는 중…</span></div></div></div>
     </section>
 
-    <!-- ② 신호 -->
+    <!-- ② 도구 — 페이지 진입로를 신호보다 위에 -->
+    <section id="s-tools" aria-labelledby="tl-h">
+      <p class="lbl" id="tl-h">도구</p>
+      <div class="tiles">
+        <a class="tile" href="stocks.html" style="--edge:var(--deploy)"><span class="tn">종목 시그널</span><span class="td">NDX·SPX 테크니컬과 스윙 타점</span><span class="tb" id="tb-stk">매일 갱신</span></a>
+        <a class="tile" href="regime.html" style="--edge:var(--champ)"><span class="tn">시장 국면</span><span class="td">FRED 매크로로 레짐 판별</span><span class="tb" id="tb-reg">매일 갱신</span></a>
+        <a class="tile" href="explorer.html" style="--edge:var(--rp)"><span class="tn">전략 리스트</span><span class="td">백테스트·판정·활용방안</span><span class="tb" id="tb-exp">수시 갱신</span></a>
+        <a class="tile" href="rotation.html" style="--edge:var(--marg)"><span class="tn">전략 탐색</span><span class="td">웹 리서치 풀에서 날짜별 선정</span><span class="tb">매일 갱신 · 미검증</span></a>
+              </div>
+    </section>
+
+    <!-- ③ 신호 -->
     <section id="s-today" aria-labelledby="td-h">
       <p class="lbl" id="td-h">오늘의 신호 <span class="sub">· 스윙 타점 <span id="stkasof"></span></span></p>
       <div class="signote" id="signote">불러오는 중…</div>
@@ -179,17 +190,6 @@
     <section id="s-ledger" aria-labelledby="ld-h">
       <p class="lbl" id="ld-h">전략 <span class="sub">· 구현 → 적대검증 → 판정</span></p>
       <div class="ledger" id="ledger"><div class="ldskel">불러오는 중…</div></div>
-    </section>
-
-    <!-- ④ 도구 -->
-    <section id="s-tools" aria-labelledby="tl-h">
-      <p class="lbl" id="tl-h">도구</p>
-      <div class="tiles">
-        <a class="tile" href="stocks.html" style="--edge:var(--deploy)"><span class="tn">종목 시그널</span><span class="td">NDX·SPX 테크니컬과 스윙 타점</span><span class="tb" id="tb-stk">매일 갱신</span></a>
-        <a class="tile" href="regime.html" style="--edge:var(--champ)"><span class="tn">시장 국면</span><span class="td">FRED 매크로로 레짐 판별</span><span class="tb" id="tb-reg">매일 갱신</span></a>
-        <a class="tile" href="explorer.html" style="--edge:var(--rp)"><span class="tn">전략 리스트</span><span class="td">백테스트·판정·활용방안</span><span class="tb" id="tb-exp">수시 갱신</span></a>
-        <a class="tile" href="rotation.html" style="--edge:var(--marg)"><span class="tn">전략 탐색</span><span class="td">웹 리서치 풀에서 날짜별 선정</span><span class="tb">매일 갱신 · 미검증</span></a>
-              </div>
     </section>
 
     <!-- ⑤ 기타 — 최하단 -->
