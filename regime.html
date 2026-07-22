@@ -218,10 +218,13 @@
         '<rect x="'+x.toFixed(2)+'" y="2.5" width="'+w.toFixed(2)+'" height="8" rx="1.2" fill="'+color+'"/>'+
       '</svg><span class="bt">'+txt+'</span></div>';
   }
+  // 레짐별 표본 개월수 — 7개월 평균과 99개월 평균을 같은 굵기로 보여주면 안 된다.
+  //   render()와 curPerfChart()가 **다른 스코프**라 지역변수로 두면 한쪽에서 못 본다(실제로 깨졌다).
+  function regimeN(d){var m={};(d&&d.history||[]).forEach(function(x){if(x&&x.r)m[x.r]=(m[x.r]||0)+1;});return m;}
   // ② 현재 국면 성과 — 표의 '현재 레짐' 열만 뽑아 정렬. 표는 다른 국면 비교용으로 그대로 둔다.
   var CPERF={i:0};
   function curPerfChart(d){
-    var cur=d.regime.label;
+    var cur=d.regime.label, RN=regimeN(d);
     var SETS=[['자산',d.asset_perf],['섹터',d.sector_perf],['팩터',d.factor_perf]].filter(function(x){return x[1];});
     if(!SETS.length)return '';
     var set=SETS[Math.min(CPERF.i,SETS.length-1)], perf=set[1];
@@ -233,12 +236,12 @@
       return barRow(PNM[x[0]]||x[0], x[1], mx, x[1]>=0?'var(--good)':'var(--hot)', (x[1]>0?'+':'')+x[1]+'%');
     }).join('');
     return '<div class="lbl">현재 국면 성과 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· '+
-        esc(cur)+'('+(RKO[cur]||'')+') 국면의 월평균 수익률, 2009~</span></div>'+
+        esc(cur)+'('+(RKO[cur]||'')+') 국면의 월평균 수익률 · 표본 '+(RN[cur]||0)+'개월, 2009~</span></div>'+
       '<div class="chartbox"><div class="ctabs" id="ctabs">'+
         SETS.map(function(x,i){return '<button class="ctab" data-i="'+i+'" aria-pressed="'+(i===CPERF.i)+'">'+x[0]+'</button>';}).join('')+
       '</div>'+body+
-      '<div class="chartnote">같은 국면이었던 과거 달들의 <b>평균</b>일 뿐 이번에도 그러리라는 근거가 아닙니다 — '+
-      '국면 표본이 적은 구간은 몇 달 값에 좌우됩니다. 국면 간 비교는 아래 표에서 보세요.</div></div>';
+      '<div class="chartnote">같은 국면이었던 과거 <b>'+(RN[cur]||0)+'개월</b>의 평균일 뿐 이번에도 그러리라는 근거가 아닙니다. '+
+      '표 헤더의 n이 표본 개월수입니다 — 후기 사이클(n='+(RN['LateCycle']||0)+')처럼 표본이 적은 국면은 몇 달 값에 좌우됩니다.</div></div>';
   }
   var PNM={SPY:"S&P500",QQQ:"나스닥100",TLT:"장기국채",GLD:"금",DBC:"원자재",
     XLK:"기술",XLF:"금융",XLE:"에너지",XLV:"헬스케어",XLI:"산업재",XLY:"경기소비",XLP:"필수소비",
@@ -273,14 +276,16 @@
           // ⚠ 화살표는 '추세(직전 관측 평균) 대비 z', 옆 숫자는 '직전 관측 대비 변화'로 서로 다른 것을 잰다.
           //   둘의 부호는 실제로 39개 중 8개에서 어긋난다(예: 고용증감 z +1.2인데 직전대비 −52천명).
           //   라벨 없이 붙여두면 '오르는 중'으로 읽히므로 각각 무엇 대비인지 밝힌다.
+          // 델타를 따로 적으면 반올림 자릿수가 달라 v−prev와 어긋난다(실측 39개 중 16개).
+          //   직전값을 그대로 보여주면 독자가 눈으로 빼고, 숫자끼리 모순될 여지가 없다.
           sph='<div class="spline"><span style="color:'+col+'">'+ar+' 추세대비 '+(sp.z>=0?'+':'')+sp.z+'σ</span>'+
-              '<span class="spd">직전관측대비 '+(sp.chg>=0?'+':'')+sp.chg+(x.u||'')+'</span></div>';}
+              '<span class="spd">직전 '+(sp.prev!=null?sp.prev+(x.u||''):'—')+' →</span></div>';}
         return '<div class="ic"><div class="ictop"><span class="icl">'+x.label+'</span><span class="icv">'+(x.v!=null?x.v:'—')+'<span class="icu">'+(x.u||'')+'</span></span></div>'+
           (st[0]?'<span class="stbadge '+st[1]+'">'+st[0]+'</span>':'')+sph+'<div class="icd">'+x.d+'</div></div>';
       }).join('')+'</div></div>';
     });
     // 조건부 성과 테이블 (자산·섹터·팩터 공통)
-    var cur=rg.label;
+    var cur=rg.label, RN=regimeN(d);
     var NM={SPY:"S&P500",QQQ:"나스닥100",TLT:"장기국채",GLD:"금",DBC:"원자재",
       XLK:"기술",XLF:"금융",XLE:"에너지",XLV:"헬스케어",XLI:"산업재",XLY:"경기소비",XLP:"필수소비",XLU:"유틸리티",XLB:"소재",XLRE:"부동산",XLC:"커뮤니케이션",
       MTUM:"모멘텀",QUAL:"퀄리티",USMV:"저변동",VLUE:"가치",SIZE:"중소형"};
@@ -289,7 +294,8 @@
       var cols=RORDER.filter(function(r){return assets.some(function(a){return perf[a][r]!=null;});});
       assets.sort(function(a,b){return (perf[b][cur]==null?-99:perf[b][cur])-(perf[a][cur]==null?-99:perf[a][cur]);}); // 현재 레짐 성과순
       return '<div class="lbl">'+title+' <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· '+hint+'</span></div>'+
-        '<div class="tblwrap"><table><thead><tr><th scope="col">'+col0+'</th>'+cols.map(function(r){return '<th scope="col" class="'+(r===cur?'cur':'')+'" title="'+(RKO[r]||r)+'">'+r+'</th>';}).join('')+'</tr></thead><tbody>'+
+        '<div class="tblwrap"><table><thead><tr><th scope="col">'+col0+'</th>'+cols.map(function(r){return '<th scope="col" class="'+(r===cur?'cur':'')+'" title="'+(RKO[r]||r)+' · 표본 '+(RN[r]||0)+'개월">'+r+
+          '<span style="display:block;font-weight:400;color:var(--muted);font-size:9px">n='+(RN[r]||0)+'</span></th>';}).join('')+'</tr></thead><tbody>'+
         assets.map(function(a){return '<tr><th scope="row">'+(NM[a]||a)+'</th>'+cols.map(function(r){
           var v=perf[a][r]; if(v==null)return '<td class="'+(r===cur?'cur':'')+'">—</td>';
           var mag=Math.min(1,Math.abs(v)/2.5), c=v>=0?'14,138,84':'166,75,59';
