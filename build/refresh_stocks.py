@@ -636,6 +636,16 @@ def main():
     # 일별 종가 패널 (최근 252거래일 ≈ 1년) — 기간선택(1주~1년) 슬라이스용
     daily = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index().tail(252)
     pxd_dates = [d.strftime("%Y-%m-%d") for d in daily.index]
+    # 장기(3년) 패널은 **주봉**으로 — 일봉 3년은 상세 파일이 3배가 되고 매일 512개가 통째로 재커밋된다.
+    # 3년 구간을 일 단위로 볼 이유도 없다(화면에서 구분 불가).
+    _full = pd.DataFrame({t: raw[t]["close"] for t in raw}).sort_index()
+    wk = _full.resample("W-FRI").last().tail(156)
+    # ⚠ W-FRI는 각 주를 '그 주 금요일'로 라벨한다 — 마지막 주가 진행 중이면 아직 오지 않은 날짜가 찍힌다
+    #    (실측: as_of 2026-07-21인데 마지막 주봉 라벨이 2026-07-24). 사이트 전체가 기준일 표기로
+    #    돌아가므로, 라벨을 **그 주의 실제 마지막 거래일**로 바꾼다.
+    _last = pd.Series(_full.index, index=_full.index).resample("W-FRI").max().reindex(wk.index)
+    wxd_dates = [(_last.iloc[i] if pd.notna(_last.iloc[i]) else wk.index[i]).strftime("%Y-%m-%d")
+                 for i in range(len(wk.index))]
     def comp(spec, rp):
         vs = [rp[s[1:]] if s[0] == "+" else 100 - rp[s[1:]] for s in spec if s[1:] in rp and pd.notna(rp[s[1:]])]
         return round(float(np.mean(vs)), 0) if vs else None
@@ -649,6 +659,10 @@ def main():
         pxd = [None if dser is None or pd.isna(x) else round(float(x), 2) for x in (dser if dser is not None else [None]*len(pxd_dates))]
         vser = px[t]["Volume"].reindex(daily.index) if t in px else None
         vd = [None if vser is None or pd.isna(x) else int(round(float(x)/1e6)) for x in (vser if vser is not None else [None]*len(pxd_dates))]  # 백만주 단위
+        wser = wk[t] if t in wk.columns else None
+        wx = [None if wser is None or pd.isna(x) else round(float(x), 2) for x in (wser if wser is not None else [None]*len(wxd_dates))]
+        wvser = px[t]["Volume"].resample("W-FRI").sum().reindex(wk.index) if t in px else None   # 주간 거래량 합
+        wv = [None if wvser is None or pd.isna(x) else int(round(float(x)/1e6)) for x in (wvser if wvser is not None else [None]*len(wxd_dates))]
         # 스윙 전환점(지그재그) — 확정 고점/저점 구조 + 다이버전스
         tp = None
         if dser is not None and not dser.isna().any() and len(dser) >= 40:
@@ -855,7 +869,7 @@ def main():
                        "bscore": round(float(buy_score.get(t, 0.0)), 3), "sscore": round(float(sell_score.get(t, 0.0)), 3),
                        "trig": trig, "bms": bms, "bmw": bmw, "sms": sms, "smw": smw, "sig": sig,
                        **({"why": whyb} if whyb else {}),
-                       "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd,
+                       "fund": {k: v for k, v in fnd.items() if v is not None}, "pxd": pxd, "vd": vd, "wx": wx, "wv": wv,
                        # 상세(sd/) 전용 — 20지표 값+전체/섹터 퍼센타일 [v,p,sp], 배지, 결측 사유
                        **({"fundx": _fundx} if _fundx else {}),
                        **({"fundx_flags": fx_b[t]} if fx_b.get(t) else {}),
@@ -863,7 +877,7 @@ def main():
                        **({"tp": tp} if tp else {})})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     def _rnd(x, nd): return round(float(x), nd) if nd else int(round(float(x)))
-    out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
+    out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates, "wxd_dates": wxd_dates,
            "factor_defs": {k: {"label": FACTORS[k][0], "group": FACTORS[k][1], "hi": FACTORS[k][2], "as_of": (si_asof if k in ("dtc", "sipct") else as_of)} for k in FACTORS},
            "fund_defs": {"teps": "주당순이익 TTM (최근 12개월 실적)", "feps": "선행 EPS (향후 12개월 애널리스트 추정)",
                          "gr": "선행 EPS 성장률 (forward/trailing−1, %)", "tpe": "P/E (TTM)", "fpe": "선행 P/E (forward)",
@@ -935,7 +949,7 @@ def main():
     _keep = set()
     for s in stocks:
         det = {"as_of": as_of, "t": s["t"]}
-        for k in ("sig", "pxd", "vd", "tp", "why", "fundx", "fundx_flags", "fundx_na"):
+        for k in ("sig", "pxd", "vd", "wx", "wv", "tp", "why", "fundx", "fundx_flags", "fundx_na"):
             v = s.pop(k, None)
             if v is not None: det[k] = v
         fn = s["t"] + ".json"; _keep.add(fn)
