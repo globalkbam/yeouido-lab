@@ -181,6 +181,25 @@
   .btm{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 5px;text-align:center}
   .btm .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;font-family:var(--mono)}
   .btm .v{font-family:var(--mono);font-size:15.5px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--ink)}
+  /* 지표표 v2 — 전략과 벤치마크를 같은 기준으로 나란히. 색은 보조이고 수치·라벨을 항상 병기한다. */
+  .btbasis{font-size:10.5px;line-height:1.6;color:var(--muted);margin:0 0 9px;display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+  .btbasis b{color:var(--ink-2)}
+  .nbadge{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--panel);border:1px solid var(--line);color:var(--ink-2)}
+  .nbadge.warn{border-color:var(--marg);color:var(--marg)}
+  .mtblwrap{overflow-x:auto;margin:2px 0 10px;-webkit-overflow-scrolling:touch}
+  .mtbl{border-collapse:collapse;width:100%;font-size:12px;min-width:520px}
+  .mtbl caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:2px 0 5px}
+  .mtbl th,.mtbl td{padding:5px 9px;border-bottom:1px solid var(--line-soft);text-align:right;font-variant-numeric:tabular-nums}
+  .mtbl thead th{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap}
+  .mtbl tbody th[scope="row"]{text-align:left;font-size:11.5px;color:var(--ink-2);font-weight:600;white-space:nowrap}
+  .mtbl td.mv{font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap}
+  .mtbl td.mv.bm{font-weight:400;color:var(--ink-2)}
+  .mtbl td.md{font-family:var(--mono);font-weight:600;white-space:nowrap}
+  .mtbl .se{font-weight:400;color:var(--muted);font-size:10.5px}
+  .mtbl .mlab{display:block;font-family:var(--sans,inherit);font-size:9.5px;font-weight:600;letter-spacing:0;opacity:.95}
+  .mtbl .sub2{display:block;font-size:9px;color:var(--muted);font-weight:400}
+  .mtbl .why{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400;text-align:left;white-space:normal;line-height:1.45}
+  .mtbl tr.disp th[scope="row"],.mtbl tr.disp td{color:var(--muted)}
   .chartttl{font-size:10.5px;color:var(--muted);font-family:var(--mono);margin:13px 0 2px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .chartttl .lg{display:inline-flex;align-items:center;gap:4px}
   .chartttl .lg i{width:14px;height:0;border-top-width:2px;border-top-style:solid;display:inline-block}
@@ -223,7 +242,7 @@
     <div class="eyebrow">여두 전략 랩 · 리서치 아카이브</div>
     <h1 class="title">전략 리스트</h1>
     <p class="lede">10시간 자율 리서치가 적대적으로 검증해 <b>통과시킨 전략</b>을 클릭해서 둘러봅니다. 왼쪽에서 전략을 고르면 오른쪽에 성과·판정과 함께
-      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 여기 담긴 건 <b>배포·제한적 유효</b> 판정 20종과 대조용 <b>기각 2종</b> — 나머지 기각 41개는 <a href="archive.html" style="color:var(--accent)">아카이브</a>에.<br><b>판정 뜻</b> — <b style="color:var(--deploy)">배포</b>: 단독 운용 가능한 수준으로 검증된 전략 · <b style="color:var(--marg)">제한적 유효</b>: 효과는 확인됐지만 단독으론 약해 <b>보조·결합용</b> · <b style="color:var(--rej)">기각</b>: 비용·검증을 거치면 실익 없음.
+      <b>장점·단점·활용방안(언제 쓰나)</b>이 뜹니다. 여기 담긴 건 <b>배포·제한적 유효</b> 판정 <b><span id="okn">—</span>종</b>과 대조용 <b>기각 <span id="rcn">—</span>종</b> — 나머지 기각 <span id="arcn">—</span>개는 <a href="archive.html" style="color:var(--accent)">아카이브</a>에.<br><b>판정 뜻</b> — <b style="color:var(--deploy)">배포</b>: 단독 운용 가능한 수준으로 검증된 전략 · <b style="color:var(--marg)">제한적 유효</b>: 효과는 확인됐지만 단독으론 약해 <b>보조·결합용</b> · <b style="color:var(--rej)">기각</b>: 비용·검증을 거치면 실익 없음.
       아래 <b>활용 아키타입</b> 칩으로 목적별(배포코어·위기방어·레짐 오버레이·실행타이밍 등)로도 걸러 볼 수 있습니다.</p>
     <div class="statline" id="statline"></div>
   </header>
@@ -265,26 +284,26 @@
   // ── 데이터: 라운드·판정·성과 (v: deploy/marginal/reject) ──
  var D=[
   // 배포 코어
-  {n:"통합 포트폴리오 — 실적 상향주 + 자산배분",alias:"EPS 리비전 + 크로스에셋 RP",c:"배포 코어",v:"deploy",m:"1.42",ml:"gross Sharpe",corr:null,t:"검증을 통과한 두 전략(실적 상향주·자산배분)을 합치되, 덜 흔들리는 쪽에 더 많이 배분하고 전체 변동성이 연 13%를 넘지 않게 조절. 서로 다른 시점에 수익이 나서 각각보다 안정적이다.",vt:"<b>배포 확정.</b> 진성알파 CAPM t=3.31(신용·스타일 8팩터 통제 후에도 t=3.88 생존). 정직한 눈금: gross 1.42 → 조달후 net 1.26 → 현실적 forward ~0.95. 위험감축형."},
-  {n:"실적 전망 상향주 매수 (나스닥100)",alias:"EPS 리비전 드리프트 · PEAD",c:"배포 코어",v:"deploy",m:"1.12",ml:"Sharpe",corr:null,t:"애널리스트들이 앞으로의 이익 전망을 올려 잡은 나스닥100 종목을 매수. 좋아진 실적 기대가 한 번에 반영되지 않고 몇 달에 걸쳐 주가에 스며드는 현상을 노린다.",vt:"<b>배포 (슬리브 A·공격).</b> 이 랩이 수백 전략 중 유일하게 검증한 대형주 진성알파. 단독 CAPM α t=1.8(비유의)이나 결합서 RP와 분산효과로 유의."},
-  {n:"12개 자산 분산 배분 — 변동성 균등",alias:"크로스에셋 리스크패리티 + vol타겟",c:"배포 코어",v:"deploy",m:"1.15",ml:"Sharpe",corr:null,t:"12개 자산군을 변동성 역가중 + 추세 꺾인 위험자산 제외 + 목표변동성 10% 레버 조절. 올웨더.",vt:"<b>배포 (슬리브 B·방어·분산).</b> 저회전·비용robust. MDD −19%. 추세게이트의 '존재'가 좌측꼬리 방어에 결정적."},
-
-  // 신방향 검증 (2026-07)
-  {n:"흔들릴수록 투자비중 축소",alias:"동적 vol타겟",c:"결합 최적화",v:"marginal",m:"낙폭 축소",ml:"리스크 관리",corr:null,t:"실현변동성에 적응하는 목표변동성.",vt:"<b>제한적 유효.</b> MDD를 낮추나 수익증대는 없음 — 리스크 관리 목적."},
+  {"n": "이익추정 리비전 · 크로스에셋 RP 통합 (Multi-Sleeve Core)", "sid": "multi-sleeve-core", "aka": ["통합-포트폴리오-실적-상향주-자산배분"], "alias": "검증 통과 2개 슬리브의 위험균등 결합 + 목표변동성 13%", "c": "배포 코어", "v": "deploy", "m": "1.31", "ml": "초과수익 Sharpe", "corr": null, "t": "쉽게 말해 — 검증을 통과한 두 전략(실적 전망이 오르는 종목 매수 · 12자산 분산배분)을 합치되, 덜 흔들리는 쪽에 더 많이 배분하고 전체 변동성이 연 13%를 넘지 않게 조절한다. 서로 다른 시점에 수익이 나서 각각보다 안정적이다.", "vt": "<b>배포 확정.</b> 진성알파 CAPM t=3.31(신용·스타일 8팩터 통제 후에도 t=3.88 생존). 위험감축형 — 지수급 수익을 더 낮은 변동성·낙폭으로 낸다. ※ 종전 표기 'gross 1.42 → net 1.26 → forward ~0.95'의 1.42는 <b>무위험금리를 차감하지 않은</b> 값이다. 현행(2016-01~2026-06, N=125, 초과수익 기준): Sharpe <b>1.306</b>, 벤치 NDX(TR) 1.023. 조달·마찰 차감과 forward 할인의 상대적 크기는 그대로이나 출발점이 1.31이다. ΔSharpe +0.283은 p=0.2227(최소 판정치 ±0.884)로 <b>이 표본에서는 구별 불가</b>이며, 배포 근거는 Sharpe 우위가 아니라 CAPM 알파와 낙폭 감축(−18.53% vs −32.58%)이다."},
+  {"n": "이익추정 리비전 드리프트 (EPS Revision Drift · NDX100)", "sid": "eps-revision-drift-ndx", "aka": ["실적-전망-상향주-매수-나스닥100"], "alias": "PEAD 계열 · 12M 선행 EPS 컨센서스 1M·3M 변화율", "c": "배포 코어", "v": "deploy", "m": "1.09", "ml": "초과수익 Sharpe", "corr": null, "t": "쉽게 말해 — 애널리스트들이 앞으로의 이익 전망을 올려 잡은 나스닥100 종목을 매수한다. 좋아진 실적 기대가 한 번에 반영되지 않고 몇 달에 걸쳐 주가에 스며드는 현상(드리프트)을 노린다.", "vt": "<b>배포 (슬리브 A·공격).</b> 이 랩이 수백 전략 중 유일하게 검증한 대형주 진성알파. 단독 CAPM α t=1.8(비유의)이나 결합서 RP와 분산효과로 유의."},
+  {"n": "크로스에셋 리스크패리티 (Cross-Asset Risk Parity · 12자산)", "sid": "cross-asset-rp-12", "aka": ["12개-자산-분산-배분-변동성-균등"], "alias": "역변동성 가중 + 추세게이트 + 목표변동성 10%", "c": "배포 코어", "v": "deploy", "m": "1.06", "ml": "초과수익 Sharpe", "corr": null, "t": "쉽게 말해 — 12개 자산군을 '덜 흔들리는 쪽에 더 많이' 나눠 담고(역변동성 가중), 추세가 꺾인 위험자산은 빼며, 전체 변동성이 연 10%를 넘지 않도록 레버리지를 조절한다. 이른바 올웨더형.", "vt": "<b>배포 (슬리브 B·방어·분산).</b> 저회전·비용robust. 추세게이트의 '존재'가 좌측꼬리 방어에 결정적. ※ 종전 표기 'Sharpe 1.15·MDD −19%'는 무위험금리 미차감·일별 낙폭 기준이었다. 현행(2010-01~2026-06, N=197, 초과수익·월말 NAV 기준): Sharpe <b>1.060</b>, MDD −17.72%. 벤치(NDX TR) 대비 ΔSharpe +0.012(p=0.9596)로 <b>위험조정수익은 지수와 구별 불가</b>이며, 이 전략의 존재 이유는 초과수익이 아니라 <b>낙폭 절반(−17.7% vs −32.6%)</b>이다."},
+  // 결합 최적화
+  {"n": "동적 변동성 타깃팅 (Dynamic Volatility Targeting)", "sid": "dynamic-vol-target", "aka": ["흔들릴수록-투자비중-축소"], "alias": "실현변동성 적응형 목표변동성 오버레이", "c": "결합 최적화", "v": "marginal", "m": "낙폭 축소", "ml": "리스크 관리", "corr": null, "t": "쉽게 말해 — 시장이 흔들릴수록 투자 비중을 줄이고 잠잠하면 늘린다. 실현변동성에 적응하는 목표변동성 오버레이.", "vt": "<b>제한적 유효.</b> MDD를 낮추나 수익증대는 없음 — 리스크 관리 목적."},
   // EPS 리비전 강건성
-  {n:"실적 상향주 — 나스닥100+S&P500로 확대",alias:"NDX+SPX 결합",c:"EPS 리비전 강건성",v:"marginal",m:"쏠림 완화",ml:"유니버스 변형",corr:null,t:"NDX∪SPX 유니버스로 종목 breadth 확대.",vt:"<b>제한적 유효(유용).</b> 반도체 집중 91→55%·breadth 8→28종 탈집중, Sharpe는 parity. 집중 우려 시 옵션."},
-  {n:"실적 상향주 — 사고팔기 줄이기",alias:"buy10/hold40 밴드",c:"EPS 리비전 강건성",v:"marginal",m:"회전율 절반",ml:"운용 편의",corr:null,t:"진입 상위10·보유 상위40 밴드로 회전↓.",vt:"<b>제한적 유효(유용).</b> 회전 절반으로 캐패시티↑, Sharpe parity. 대규모 운용 시 옵션."},
+  {"n": "이익추정 리비전 — 유니버스 확장 (NDX ∪ SPX)", "sid": "eps-revision-universe-ext", "aka": ["실적-상향주-나스닥100-s-p500로-확대"], "alias": "NDX+SPX 합집합 유니버스 변형", "c": "EPS 리비전 강건성", "v": "marginal", "m": "쏠림 완화", "ml": "유니버스 변형", "corr": null, "t": "쉽게 말해 — 같은 실적 상향 신호를 나스닥100뿐 아니라 S&P500까지 넓혀 적용해, 종목 폭(breadth)을 늘리고 반도체 쏠림을 줄인 변형.", "vt": "<b>제한적 유효(유용).</b> 반도체 집중 91→55%·breadth 8→28종 탈집중, Sharpe는 parity. 집중 우려 시 옵션."},
+  {"n": "이익추정 리비전 — 회전율 밴드 (Buy 10 / Hold 40)", "sid": "eps-revision-turnover-band", "aka": ["실적-상향주-사고팔기-줄이기"], "alias": "히스테리시스 진입 상위10% · 보유 상위40%", "c": "EPS 리비전 강건성", "v": "marginal", "m": "회전율 절반", "ml": "운용 편의", "corr": null, "t": "쉽게 말해 — 사고파는 횟수를 줄인 변형. 새로 살 때는 상위 10%만, 이미 들고 있으면 상위 40%까지는 계속 보유하는 밴드(히스테리시스)를 둬 회전율을 절반으로 낮춘다.", "vt": "<b>제한적 유효(유용).</b> 회전 절반으로 캐패시티↑, Sharpe parity. 대규모 운용 시 옵션."},
   // RP 강건성
-  {n:"분산 배분 — 변동성 측정기간 조정",alias:"vol 추정창 90/60",c:"RP 강건성",v:"marginal",m:"회전율 감소",ml:"파라미터 변형",corr:null,t:"역변동성·vol타겟 추정창 확대.",vt:"<b>제한적 유효.</b> Sharpe 이득(+0.04)은 부트스트랩상 무의미(CI 0교차)이나, 회전↓·전 비용레벨 우위 = 저회전·캐패시티 실운영 개선."},
-  {n:"금리 민감도(듀레이션) 조절",alias:"듀레이션 스케일",c:"채권 게이팅",v:"marginal",m:"금리 급등기 방어",ml:"채권 슬리브",corr:null,t:"금리추세로 듀레이션 익스포저 연속 스케일(0~1x).",vt:"<b>제한적 유효.</b> no free lunch — 2022 방어와 정상기 희석최소를 동시 달성 불가. 선택적 리스크 오버레이."},
-  {n:"채권 국면 따라 비중 조절",alias:"AGG 채권레짐 오버레이",c:"채권 게이팅",v:"marginal",m:"금리 급등기 방어",ml:"채권 슬리브",corr:null,t:"채권 애그리게이트 12M 추세로 전채권 on/off 단일신호.",vt:"<b>제한적 유효(최선 채권방어).</b> 2022 −17→−11%·MDD −19→−16% 실질방어, 개별 4게이트보다 단순하고 대등. 단 정상기 희석 −0.118로 전기간 Sharpe −0.026 → 위험감축형 선택적 오버레이."},
+  {"n": "크로스에셋 RP — 변동성 추정창 변형 (90/60일)", "sid": "cross-asset-rp-vol-window", "aka": ["분산-배분-변동성-측정기간-조정"], "alias": "역변동성·목표변동성 추정창 90/60일", "c": "RP 강건성", "v": "marginal", "m": "회전율 감소", "ml": "파라미터 변형", "corr": null, "t": "쉽게 말해 — '얼마나 흔들렸나'를 재는 기간을 늘린 변형(90일/60일). 비중이 덜 자주 바뀌어 회전율이 내려간다.", "vt": "<b>제한적 유효.</b> Sharpe 이득(+0.04)은 부트스트랩상 무의미(CI 0교차)이나, 회전↓·전 비용레벨 우위 = 저회전·캐패시티 실운영 개선."},
+  // 채권 게이팅
+  {"n": "듀레이션 스케일링 (Duration Scaling)", "sid": "duration-scaling", "aka": ["금리-민감도-듀레이션-조절"], "alias": "금리추세 기반 듀레이션 연속 스케일 0~1x", "c": "채권 게이팅", "v": "marginal", "m": "금리 급등기 방어", "ml": "채권 슬리브", "corr": null, "t": "쉽게 말해 — 채권의 금리 민감도(듀레이션) 노출을 금리 추세에 따라 0~1배 사이에서 연속적으로 조절한다. 금리가 급등하는 국면의 손실을 줄이는 것이 목적.", "vt": "<b>제한적 유효.</b> no free lunch — 2022 방어와 정상기 희석최소를 동시 달성 불가. 선택적 리스크 오버레이."},
+  {"n": "채권 레짐 오버레이 (Bond Trend Regime · AGG)", "sid": "bond-regime-overlay-agg", "aka": ["채권-국면-따라-비중-조절"], "alias": "AGG 12M 추세 단일신호로 전 채권 on/off", "c": "채권 게이팅", "v": "marginal", "m": "금리 급등기 방어", "ml": "채권 슬리브", "corr": null, "t": "쉽게 말해 — 채권시장 전체(AGG)의 12개월 추세 하나만 보고 채권 비중을 켜고 끈다. 신호가 하나뿐이라 개별 채권마다 게이트를 다는 것보다 단순하다.", "vt": "<b>제한적 유효(최선 채권방어).</b> 2022 −17→−11%·MDD −19→−16% 실질방어, 개별 4게이트보다 단순하고 대등. 단 정상기 희석 −0.118로 전기간 Sharpe −0.026 → 위험감축형 선택적 오버레이."},
   // 이전 탐색
-  {n:"강세 업종 4개 보유",alias:"섹터 모멘텀 top4",c:"이전 탐색",v:"marginal",m:"비용 반영 시 미미",ml:"업종 로테이션",corr:null,t:"상위 모멘텀 섹터 4개 로테이션.",vt:"<b>제한적 유효.</b> 약하나 비용robust."},
-  {n:"지수가 200일선 위일 때만 투자",alias:"지수 200MA 타이밍",c:"이전 탐색",v:"marginal",m:"낙폭 축소",ml:"시장 타이밍",corr:null,t:"200일선 상/하로 지수 롱/플랫.",vt:"<b>제한적 유효.</b> 알파 아닌 리스크 관리 오버레이."},
-  // 단일팩터·검증(strategy_good) — 실제 백테스트 차트 있음
-  {n:"잉여현금 개선주 10종 (S&P500)",alias:"FCF 개선 top10",c:"단일팩터·검증",v:"marginal",m:"0.98",ml:"Sharpe",corr:null,t:"전년 대비 잉여현금흐름/가격 개선 상위 10종 롱온리(SPX·월말리밸). 현금흐름 질(質)의 단일팩터.",vt:"<b>제한적 유효(완만한 초과).</b> Sharpe 0.98 vs SPX B&H 0.96·CAGR 17.3% vs 15.3%로 소폭 우위. 단일팩터로는 드물게 벤치 대등이상이나 MDD −32%로 깊어 코어 아닌 틸트 후보."},
-  {n:"저평가주 10종 — 장부가 대비 (S&P500)",alias:"Book-to-Price 밸류 top10",c:"단일팩터·검증",v:"reject",m:"0.67",ml:"Sharpe",corr:null,t:"장부가/시가(HML 프록시) 상위 10종 롱온리(SPX·월말). Fama-French 밸류의 단변량.",vt:"<b>기각(위험조정 미달).</b> Sharpe 0.67 vs SPX 0.96·CAGR 10.9% vs 15.3%로 명목·위험조정 모두 B&H 열위. 2018+ 성장주도 국면서 밸류 단일팩터의 구조적 약세 확인 — 참고용."},
-  {n:"최근 잘나간 투자스타일 2개 추종",alias:"팩터 모멘텀 12M 상위2",c:"단일팩터·검증",v:"reject",m:"0.75",ml:"Sharpe",corr:null,t:"5개 팩터(모멘텀·밸류·퀄·저변동·사이즈) 슬리브의 12M 수익 상위 2개 균등(팩터 타이밍).",vt:"<b>기각(벤치 열위).</b> Sharpe 0.75 vs SPX 0.96. 팩터 로테이션 타이밍은 단순 지수 대비 초과 실패(랩 감사서도 팩터모멘텀 t−2.4 열위 확인) — 참고용."}
+  {"n": "섹터 모멘텀 로테이션 (Sector Momentum · Top 4)", "sid": "sector-momentum-top4", "aka": ["강세-업종-4개-보유"], "alias": "모멘텀 상위 4개 업종 균등 로테이션", "c": "이전 탐색", "v": "marginal", "m": "비용 반영 시 미미", "ml": "업종 로테이션", "corr": null, "t": "쉽게 말해 — 최근 수익률이 높은 업종 4개를 골라 균등하게 나눠 담고 매달 교체한다.", "vt": "<b>제한적 유효.</b> 약하나 비용robust."},
+  {"n": "200일 이동평균 시장 타이밍 (200-DMA Timing)", "sid": "dma200-timing", "aka": ["지수가-200일선-위일-때만-투자"], "alias": "지수 200일 이평 상/하 롱·플랫", "c": "이전 탐색", "v": "marginal", "m": "낙폭 축소", "ml": "시장 타이밍", "corr": null, "t": "쉽게 말해 — 지수가 200일 이동평균선 위에 있으면 투자하고 아래면 현금으로 빠진다.", "vt": "<b>제한적 유효.</b> 알파 아닌 리스크 관리 오버레이."},
+  // 단일팩터·검증
+  {"n": "잉여현금흐름 수익률 개선 (ΔFCF Yield · SPX Top 10)", "sid": "dfcf-yield-spx", "aka": ["잉여현금-개선주-10종-s-p500"], "alias": "전년 대비 FCF/가격 개선 상위 10종 롱온리", "c": "단일팩터·검증", "v": "marginal", "m": "1.20", "ml": "초과수익 Sharpe", "corr": null, "t": "쉽게 말해 — 벌어들인 현금(잉여현금흐름)이 주가 대비 가장 크게 좋아진 S&P500 종목 10개를 사서 매달 교체한다. 현금흐름의 질(質)을 보는 단일 팩터.", "vt": "<b>제한적 유효(초과는 있으나 통계적으로 구별 불가).</b> ※ 종전 판정문의 수치(Sharpe 0.98 vs 0.96·CAGR 17.3% vs 15.3%·MDD −32%)는 <b>무위험금리를 차감하지 않은 옛 눈금</b>이었고 구간도 달랐다. 아래 지표표·차트가 현행이다(2020-10~2026-06, N=68, 초과수익 기준, 벤치 SPX TR): Sharpe <b>1.204 vs 0.897</b>, CAGR 35.80% vs 17.33%, MDD −29.95% vs −23.92%. 점추정은 전부 우호적이나 ΔSharpe +0.307의 p=0.2759이고 이 표본이 판정할 수 있는 최소 차이가 ±1.192라 <b>'우위'가 아니라 구별 불가</b>다 — N=68은 이 크기의 차이를 판정하기에 표본이 너무 작다. 낙폭이 벤치보다 6%p 깊어 코어 아닌 틸트 후보."},
+  {"n": "장부가 대비 저평가 (Book-to-Price · SPX Top 10)", "sid": "book-to-price-spx", "aka": ["저평가주-10종-장부가-대비-s-p500"], "alias": "Fama-French HML 프록시 · 상위 10종 롱온리", "c": "단일팩터·검증", "v": "reject", "m": "0.76", "ml": "Sharpe", "corr": null, "t": "쉽게 말해 — 회사의 장부가(순자산)에 비해 주가가 가장 싼 S&P500 종목 10개를 사서 매달 교체한다. Fama-French 밸류(HML) 팩터의 단변량판.", "vt": "<b>기각(레버리지 귀속).</b> ※ 아래 지표표·차트는 사이트 게시 구간(2020-10~2026-06, N=68 · 벤치 SPX TR)이고, 이 판정문의 수치는 같은 전략을 <b>자기 유니버스 대조군</b>으로 다시 돌린 재검(2020-09~2026-06, N=69)의 결과다. 종목선택의 정확한 귀무가설인 <b>자기 유니버스 1/N</b>(SPX PIT 동일가중) 대비 ΔSharpe +0.108(p=0.639)으로, 이 표본의 최소 판정치 0.375에 한참 못 미쳐 <b>구별 불가</b>. 매월 같은 풀에서 무작위 10종을 뽑는 귀무분포에서도 83.5%tile(p=0.165)이다. 초과수익을 밸류 스프레드(IVE−SPY)에 회귀하면 로딩 1.93(t=8.5)에 알파는 t=0.52로 소멸 — 파는 노출이 이미 ETF로 존재한다. 성과의 정체는 종목선택이 아니라 베타 1.35이며, 같은 변동성으로 맞춰 디레버리지하면 CAGR 21.8%→15.5%로 SPX TR(16.7%)에 진다. 엣지는 2020Q4·2025 두 구간 의존(둘 제외 시 ΔSharpe −0.045). ⚠ <b>종전 기각문의 'CAGR 10.9% · Sharpe 0.67'은 측정 오류였다</b> — 달력일(365행/년) 계열을 252로 연환산해 노출기간이 5.75년인데 11.07년으로 계산됐다. 정정 후에도 기각은 유지된다.  〔기각 아카이브 재검(m=20, 2026-07)에서 스탠드얼론 렌즈로 재검증 — 통계 문턱 미통과〕"},
+  {"n": "팩터 모멘텀 로테이션 (Factor Momentum · 12M Top 2)", "sid": "factor-momentum-top2", "aka": ["최근-잘나간-투자스타일-2개-추종"], "alias": "팩터 ETF 5종의 12-1 상대모멘텀 상위 2개 균등", "c": "단일팩터·검증", "v": "reject", "m": "0.92", "ml": "Sharpe", "corr": null, "t": "쉽게 말해 — 모멘텀·밸류·퀄리티·저변동성·소형주 5개 투자스타일 중 최근 12개월 성적이 좋은 2개를 골라 균등하게 담고 매달 교체한다(팩터 타이밍).", "vt": "<b>기각(자기 유니버스 대조군과 구별 불가).</b> ※ 아래 지표표·차트는 사이트 게시본(SPX 종목단위 5팩터 슬리브판, 2020-10~2026-06, N=68 · 벤치 SPX TR)이고, 이 판정문의 수치는 팩터 ETF 5종(MTUM·VLUE·QUAL·USMV·SIZE) 구현을 <b>자기 유니버스 동일가중</b>과 겨룬 재검(2014-09~2026-06, N=142)의 결과다. 두 구현 모두 결론은 같다. 종전 사유는 '지수(SPX) 대비 초과 실패'라는 <b>벤치 부정합</b> 판정이었다. 로테이터의 정당한 귀무가설인 <b>팩터 5종 동일가중(고르지 않고 다 들고 있기)</b>으로 렌즈를 바꿔 재검하니 사유가 오히려 나빠진다 — ΔSharpe <b>−0.004</b>(p=0.964, 최소 판정치 ±0.186), CAPM 알파 +0.54%/yr(t=0.37). 낙폭·얼서·회복기간·Calmar·Martin·승률까지 EW와 SPY 양쪽에 전부 진다(이기는 칸이 없다). 무작위로 2/5를 고르는 귀무분포 3000회에서 67.8%tile(p=0.322)로 제비뽑기와 구별되지 않고, MTUM 단순보유(Sharpe 0.875)가 로테이터를 압도한다 — 로테이션이 최고 자산의 비중을 깎아 성과를 훼손했다. EW 대비 초과 전량이 2026 상반기 6개월에서 나오며 그 6개월을 빼면 부호가 반전한다. 단방향 연회전 361%.  〔기각 아카이브 재검(m=20, 2026-07)에서 스탠드얼론 렌즈로 재검증 — 통계 문턱 미통과〕"}
  ];
 
   var VMETA={deploy:{lab:"배포",col:"--deploy"},marginal:{lab:"제한적 유효",col:"--marg"},reject:{lab:"기각",col:"--rej"}};
@@ -310,6 +329,12 @@
       '<span class="stat marg"><b>'+c.marginal+'</b> 제한적 유효</span>'+
       // 기각 2종을 숨기면 배지 합(3+17)이 전체(22)와 안 맞고, '검증 통과만 담았다'는 리드문과도 모순된다
       (c.reject?'<span class="stat rej"><b>'+c.reject+'</b> 기각(비교용)</span>':'');
+    // 리드문 숫자도 배열에서 채운다 — 하드코딩하면 전략 이관 때 조용히 틀린다(실제로 20/41로 틀어져 있었다)
+    var _o=el('okn'); if(_o)_o.textContent=c.deploy+c.marginal;
+    var _r=el('rcn'); if(_r)_r.textContent=c.reject;
+    fetch('data/verdicts.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(v){
+      var _a=el('arcn'); if(_a&&v)_a.textContent=v.archive_n;
+    }).catch(function(){});
   })();
 
   // build filter chips
@@ -485,23 +510,131 @@
       return '<tr><th scope="row">'+df[0]+'</th>'+fmt(sv,true)+fmt(df[1](bt.bench))+(bt.bench2?fmt(df[1](bt.bench2)):'')+'</tr>';
     }).join('');
     if(!rows)return '';
-    return '<div class="chartttl">기간별 성과 <span class="lg" style="text-transform:none;letter-spacing:0">'+d[n-1]+' 월말 기준</span></div>'+
+    // 마지막 점이 미완결 월이면 '월말 기준'이라 적으면 안 된다(랩 1순위 원칙: 기준일 통일)
+    var _pl=bt.partial_month&&bt.partial_month===d[n-1]?(bt.end+' 기준 · '+d[n-1]+'은 진행 중인 달'):(d[n-1]+' 월말 기준');
+    return '<div class="chartttl">기간별 성과 <span class="lg" style="text-transform:none;letter-spacing:0">'+_pl+'</span></div>'+
       '<div class="pptblwrap"><table class="pptbl"><caption class="vh">최근 기간별 성과</caption>'+head+rows+'</table></div>';
   }
+
+  // ── 지표표 v2 (build/strategy_metrics.py 산출) ────────────────────────────────
+  // 사용자 요청 "sharpe도 mdd처럼 bm이랑 비교"의 구현. 전 지표를 월간 기준·초과수익(rf 차감)으로
+  // 통일하고 전략·벤치1·벤치2를 대칭으로 싣는다. 색은 보조 — 수치와 한국어 라벨을 항상 병기한다.
+  // [키, 표시명, 단위, 소수자리, 방향(1=클수록 좋음 / -1=작을수록 / 0=판정 안 함)]
+  var MROWS=[['n_months','관측 개월','개월',0,0],['cagr','연평균 수익 (CAGR)','%',2,1],
+    ['cum','누적수익 (표시용)','%',1,0],['vol','연변동성','%',2,-1],['downside_dev','하방편차','%',2,-1],
+    ['mdd','최대낙폭 (MDD)','%',2,1],['ulcer','얼서 지수','',2,-1],['recovery_m','MDD 회복','개월',0,-1],
+    ['sharpe','샤프 (초과수익)','',3,1],['sortino','소르티노','',3,1],['calmar','칼마','',3,1],
+    ['martin','마틴','',3,1],['worst12','최악 12개월','%',2,1],['best12','최고 12개월','%',2,1],
+    ['hit','월간 승률','%',1,1]];
+  // 정의상 값 자체가 '전략 vs BM'이라 두 칸으로 못 나누는 지표. [키, 표시명, 단위, 소수자리, 생략사유키]
+  var RROWS=[['beta','베타','배',3,'regression'],['alpha','CAPM 알파 (연율)','%',2,'regression'],
+    ['alpha_t','알파 t값','',2,'regression'],['te','추적오차 (TE)','%',2,null],['ir','정보비율 (IR)','',3,null],
+    ['up_capture','상승 포착률','%',1,'up_capture'],['down_capture','하락 포착률','%',1,'down_capture'],
+    ['corr','상관계수','',3,null],['d_sharpe','ΔSharpe (전략−BM)','',3,'d_sharpe']];
+  function fnum(v,nd,u){return Number(v).toFixed(nd)+(u==='%'?'%':(u==='개월'?'개월':(u==='배'?'배':'')));}
+  function mcell(b,k,nd,u,cls){
+    if(!b)return '<td class="mv '+cls+'">—</td>';
+    if(k==='recovery_m'&&b[k]==null)
+      return '<td class="mv '+cls+'">미회복'+(b.underwater_m!=null?'<span class="sub2">'+b.underwater_m+'개월 경과</span>':'')+'</td>';
+    if(b[k]==null)return '<td class="mv '+cls+'">—</td>';
+    var t=fnum(b[k],nd,u);
+    if(k==='sharpe'&&b.sharpe_se!=null)t+='<span class="se"> ±'+Number(b.sharpe_se).toFixed(2)+'</span>';
+    return '<td class="mv '+cls+'">'+t+'</td>';
+  }
+  // 차이 칸 — Sharpe만 통계 검정(JK-Memmel)을 거친다. 나머지는 점추정임을 라벨로 못박는다.
+  function mdiff(S,B,r,vs){
+    var k=r[0],u=r[2],nd=r[3],dir=r[4];
+    if(!S||!B||!dir||S[k]==null||B[k]==null)return '<td class="md" style="color:var(--muted)">—</td>';
+    var d=S[k]-B[k],flat=Math.abs(d)<5e-4,good=(dir>0?d>0:d<0),lab,sub='',col;
+    if(k==='sharpe'){
+      // 벤치가 현금성이면 Sharpe 비교가 발산한다 — 숫자 대신 사유를 적는다
+      if(vs&&vs.d_sharpe==null)return '<td class="why">— '+esc(omitWhy(vs,'d_sharpe')||'산출 불가')+'</td>';
+      var sig=!!(vs&&vs.d_sharpe_sig);
+      lab=sig?(good?'우위':'열위'):'구별 불가';
+      col=sig?(good?'var(--deploy)':'var(--rej)'):'var(--muted)';
+      if(vs&&vs.d_sharpe_p!=null)sub='<span class="sub2">p='+Number(vs.d_sharpe_p).toFixed(3)+
+        (vs.min_detectable_d_sharpe_95!=null?' · 최소판정 ±'+Number(vs.min_detectable_d_sharpe_95).toFixed(2):'')+'</span>';
+    }else{
+      lab=flat?'동일':(good?'전략 우위':'벤치 우위');
+      col=flat?'var(--muted)':(good?'var(--deploy)':'var(--rej)');
+    }
+    return '<td class="md" style="color:'+col+'">'+(d>=0?'+':'')+Number(d).toFixed(nd)+
+      (u==='%'?'%p':(u==='개월'?'개월':''))+'<span class="mlab">'+lab+'</span>'+sub+'</td>';
+  }
+  function omitWhy(vs,key){
+    if(!vs)return '벤치마크 계열 없음';
+    var o=vs.omitted||{};   // 세부 사유 → 회귀 일괄 사유 → 전체 사유 순으로 내려간다
+    return o.all||(key?o[key]:null)||o.regression||null;
+  }
+  function metricTable(m,vc){
+    var S=m.s,B=m.b,B2=m.b2,two=!!B2;
+    var head='<thead><tr><th scope="col">지표</th><th scope="col" style="color:'+vc+'">전략</th>'+
+      '<th scope="col">'+esc(m.bm_label||'벤치')+'</th>'+(two?'<th scope="col">'+esc(m.bm2_label||'보조 벤치')+'</th>':'')+
+      '<th scope="col">차이 (전략 − '+esc(m.bm_label||'벤치')+')</th></tr></thead>';
+    var body=MROWS.map(function(r){
+      var k=r[0],u=r[2],nd=r[3];
+      return '<tr'+(r[4]===0&&k!=='n_months'?' class="disp"':'')+'><th scope="row">'+r[1]+'</th>'+
+        mcell(S,k,nd,u,'')+mcell(B,k,nd,u,'bm')+(two?mcell(B2,k,nd,u,'bm'):'')+mdiff(S,B,r,m.vs)+'</tr>';
+    }).join('');
+    return '<div class="mtblwrap"><table class="mtbl"><caption>성과지표 — 전략 vs 벤치마크 (같은 구간·같은 기준)</caption>'+
+      head+'<tbody>'+body+'</tbody></table></div>';
+  }
+  function relTable(m){
+    var vs=m.vs,vs2=m.vs2,two=!!vs2;
+    var head='<thead><tr><th scope="col">관계지표</th><th scope="col">vs '+esc(m.bm_label||'벤치')+'</th>'+
+      (two?'<th scope="col">vs '+esc(m.bm2_label||'')+'</th>':'')+'</tr></thead>';
+    function cell(v,r){
+      var k=r[0];
+      if(!v)return '<td class="why">—</td>';
+      if(v[k]==null){
+        var w=omitWhy(v,r[4]);
+        return '<td class="why">— '+esc(w||'산출 불가')+'</td>';
+      }
+      var t=fnum(v[k],r[3],r[2]);
+      // 알파 p는 다중검정 보정 대상에 들어 있지 않다(보정은 ΔSharpe의 p에만 적용).
+      // 보정 없이 노출하면 아래 각주의 BH·Bonferroni 문턱이 이 값에도 적용된 것처럼 읽힌다.
+      if(k==='alpha'&&v.alpha_p!=null)t+='<span class="sub2" title="다중검정 보정을 적용하지 않은 원(raw) p값입니다. 아래 각주의 BH-FDR·Bonferroni 문턱은 샤프 차이의 p에만 적용됩니다. 정규근사 기준이라 표본이 작을수록 실제보다 낙관적일 수 있습니다.">미보정 p='+Number(v.alpha_p).toFixed(3)+'</span>';
+      if(k==='d_sharpe')t+='<span class="mlab" style="color:'+(v.d_sharpe_sig?'var(--ink-2)':'var(--muted)')+'">'+
+        (v.d_sharpe_sig?'유의':'구별 불가')+'</span><span class="sub2">'+esc(v.d_sharpe_note||'')+'</span>';
+      return '<td class="mv">'+t+'</td>';
+    }
+    var body=RROWS.map(function(r){
+      return '<tr><th scope="row">'+r[1]+'</th>'+cell(vs,r)+(two?cell(vs2,r):'')+'</tr>';
+    }).join('');
+    return '<div class="mtblwrap"><table class="mtbl"><caption>관계지표 — 정의상 값 자체가 「전략 vs 벤치」인 항목</caption>'+
+      head+'<tbody>'+body+'</tbody></table></div>';
+  }
+  function basisLine(m){
+    var b=m.basis||{},N=b.n_months;
+    return '<div class="btbasis"><span class="nbadge'+(b.sample_warning?' warn':'')+'">관측 '+N+'개월'+
+      (b.sample_warning?' · 표본 부족':'')+'</span>'+
+      '<span><b>'+esc(b.start_month||'')+' ~ '+esc(b.end_month||'')+'</b> 월말 기준 · 월간 수익률 연환산(√12) · gross(무비용) · '+
+      '무위험금리 <b>연 '+(b.rf_ann_pct!=null?b.rf_ann_pct.toFixed(2):'—')+'%</b>('+esc(b.rf_source||'FRED')+') 차감한 초과수익 기준'+
+      (b.dropped_incomplete_month?' · 미완결 월 <b>'+esc(b.dropped_incomplete_month)+'</b> 제외':'')+'</span></div>';
+  }
+  function multNote(m){
+    var q=m.multiplicity; if(!q)return '';
+    return '<div class="btnote"><b>다중검정 —</b> 이 사이트의 전략 '+q.n_tests+'개를 한 번에 비교하면 문턱이 올라갑니다. '+
+      'BH-FDR(q='+q.bh_q+') 순위 '+q.bh_rank+'위 문턱 p≤'+q.bh_threshold+' · Bonferroni p≤'+q.bonferroni_threshold+
+      ' 대비 이 전략의 p='+q.p_raw+' → <b>'+(q.passed?'통과':'미통과')+'</b>. '+
+      '진짜 Sharpe가 0인 전략을 '+q.n_tests+'번 시도해 최고치를 고르면 기대 Sharpe가 '+q.dsr_chance_sharpe+
+      ' 입니다 — 이 값보다 낮은 Sharpe는 우연의 기댓값에도 못 미칩니다.</div>';
+  }
   function btSection(bt,vc){
-    var m=bt.metrics,sg=function(x){return (x>=0?'+':'')+x;},bl=bt.bench_label||'NDX';
+    var m=bt.metrics,bl=bt.bench_label||'NDX';
     var pp=periodPerf(bt,vc);
-    var mg='<div class="btm-grid">'+
-      '<div class="btm"><div class="k">CAGR</div><div class="v" style="color:'+vc+'">'+sg(m.cagr)+'%</div></div>'+
-      '<div class="btm"><div class="k">Sharpe</div><div class="v">'+m.sharpe+'</div></div>'+
-      '<div class="btm"><div class="k">MDD</div><div class="v" style="color:var(--rej)">'+m.mdd+'%</div>'+(bt.mdd_b!=null?'<div class="bsub">'+(bt.bench_label||'벤치')+' '+bt.mdd_b+'%'+(bt.mdd_b2!=null?' · '+(bt.bench2_label||'')+' '+bt.mdd_b2+'%':'')+'</div>':'')+'</div>'+
-      '<div class="btm"><div class="k">변동성</div><div class="v">'+m.vol+'%</div></div>'+
-      '<div class="btm"><div class="k">Calmar</div><div class="v">'+m.calmar+'</div></div>'+
-      '<div class="btm"><div class="k">승률</div><div class="v">'+m.hit+'%</div></div></div>'+
-      // 기준을 명시하지 않으면 좌측 헤드라인 수치와 달라 보인다 — 둘은 측정 기준·구간이 다르다
-      '<div class="btnote">지표는 <b>이 차트 구간</b> 기준(변동성·Sharpe·승률은 월간 수익률 연환산, CAGR은 실제 경과기간). '+
-      '전략과 벤치는 <b>첫 월말을 100</b>으로 공통 리베이스하며, 편입 전 무포지션 구간은 제외합니다. '+
-      '왼쪽 목록의 헤드라인 수치는 랩 정본 리서치의 측정 기준이라 값이 다를 수 있습니다.</div>';
+    var mg=(m&&m.s)?(basisLine(m)+metricTable(m,vc)+relTable(m)+
+      '<div class="btnote">차이 칸에서 <b>다중검정 보정을 거친 것은 샤프 한 줄뿐</b>입니다(Jobson-Korkie·Memmel 검정). '+
+      'CAPM 알파의 p는 <b>보정하지 않은 원(raw) 값</b>이며 정규근사 기준이라 표본이 작을수록 낙관 쪽으로 치우칩니다 — '+
+      '아래 BH-FDR·Bonferroni 문턱은 알파에 적용되지 않습니다. '+
+      '나머지 「전략 우위/벤치 우위」는 점추정 비교일 뿐 유의성 주장이 아닙니다. '+
+      '샤프는 표준오차(±)를 병기하며, 차이가 이 표본의 <b>최소 판정치</b>보다 작으면 「구별 불가」로 표기합니다. '+
+      '관측 개월(N)이 전략마다 다르므로 같은 눈금으로 비교하지 마십시오 — N이 작을수록 같은 차이도 우연일 확률이 큽니다.</div>'+
+      multNote(m)+
+      '<div class="btnote">전략과 벤치는 <b>첫 월말을 100</b>으로 공통 리베이스하며, 편입 전 무포지션 구간은 제외합니다. '+
+      'MDD·얼서·회복기간도 <b>월말 NAV 기준</b>으로 통일했습니다(과거에는 MDD만 일별 기준이라 낙폭 곡선과 숫자가 어긋났습니다). '+
+      '참고용이며 매매 권유가 아닙니다.</div>'):
+      ('<div class="btnote">이 전략은 지표 v2가 아직 산출되지 않았습니다 — <b>python build/strategy_metrics.py</b> 로 다시 구우십시오.</div>');
     return '<div class="btsec"><h4><span>백테스트 성과</span><small>'+bt.start+' ~ '+bt.end+' · gross(무비용)</small></h4>'+mg+pp+
       '<div class="chartttl">누적수익 (로그축) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span><span class="lg"><i style="border-color:var(--muted);border-top-style:dashed"></i>'+bl+'</span>'+(bt.bench2?'<span class="lg"><i style="border-color:var(--champ);border-top-style:dashed"></i>'+(bt.bench2_label||'보조')+'</span>':'')+'</div>'+svgEquity(bt,vc)+
       '<div class="chartttl">낙폭 (drawdown) <span class="lg"><i style="border-color:'+vc+'"></i>전략</span>'+
@@ -601,12 +734,15 @@
   }
 
   render();   // 인라인 D로 즉시 렌더(빈 화면 방지) — json 도착 시 det/bt 병합 후 재렌더
-  // #s-슬러그 딥링크 — 로테이션 카드의 '랩 검증(배포·제한적 유효)' 링크가 해당 전략을 바로 선택하도록
+  // #s-<sid> 딥링크 — 로테이션 카드의 '랩 검증(배포·제한적 유효)' 링크가 해당 전략을 바로 선택하도록.
+  // 앵커 키는 표시명이 아니라 **불변 id(sid)** 다. 개명해도 링크가 살아 있어야 하므로
+  // 구 한글 슬러그(aka)와 현재 이름 슬러그도 함께 받아준다.
   function _slug(n){return String(n).toLowerCase().replace(/[^0-9a-z가-힣]+/g,'-').replace(/^-+|-+$/g,'');}
+  function _keys(d){return [d.sid||_slug(d.n),_slug(d.n)].concat(d.aka||[]);}
   function _fromHash(){
     var h=(location.hash||'').replace(/^#s-/,''); if(!h||location.hash.indexOf('#s-')!==0)return;
     try{h=decodeURIComponent(h);}catch(e){}   // 한글 슬러그는 퍼센트 인코딩돼 들어온다
-    for(var i=0;i<D.length;i++){ if(_slug(D[i].n)===h){ select(D[i]); return; } }
+    for(var i=0;i<D.length;i++){ if(_keys(D[i]).indexOf(h)>=0){ select(D[i]); return; } }
   }
   _fromHash(); window.addEventListener('hashchange',_fromHash);
   // 플레이북(strategy_detail.json) + 백테스트 차트데이터(strategy_backtests.json) 병합

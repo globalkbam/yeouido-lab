@@ -167,7 +167,23 @@
       공개 범위는 <b>집계 성과(월간 누적수익·낙폭·연환산 지표)와 정성 판정</b>으로 한정하며,
       원천 수치(가격·추정치·팩터값)와 종목 선정 결과(보유 리스트)는 공개하지 않습니다.
       백테스트 구간은 전략별로 다르며 탐색기 각 패널에 표기됩니다. 무비용·월말(gross) 기준이고, <b>벤치마크는 배당을 재투자한 총수익(TR)</b>으로 비교합니다(SPY·QQQ 수정주가).</p>
-    <div class="meta"><span><b>생성일</b><span id="d-btgen">—</span></span><span><b>백테스트 구간</b><span id="d-btspan">전략별 상이 — 각 패널 표기</span></span><span><b>갱신</b>수시(정적 재생성)</span></div>
+    <p><b>성과지표 산출(지표 체계 v2)</b> — 전 지표를 <b>월간 수익률 기준·연환산(√12)</b>으로 통일하고, 샤프·소르티노 등 위험조정지표는
+      <b>무위험금리를 차감한 초과수익</b>으로 계산합니다. 무위험금리는 <b>FRED 3개월 국채수익률(DGS3MO)</b>을 월평균 → 월복리 환산해 쓰며
+      (인증 불필요 공개 CSV, 캐시 <span style="font-family:var(--mono);font-size:11px">data/rf_monthly.json</span>),
+      사내 DB에는 단기금리 계열이 없어 외부 조달이 유일한 정합 경로입니다.
+      MDD·얼서·회복기간도 <b>월말 NAV 기준</b>으로 통일했고(종전에는 MDD만 일별 기준), <b>미완결 월은 제외</b>합니다.
+      벤치마크가 현금성이어서 분모가 붕괴하는 지표(베타·알파·포착률 등)는 <b>수치를 만들지 않고 생략 사유를 표기</b>합니다.
+      산출기: <span style="font-family:var(--mono);font-size:11px">build/strategy_metrics.py</span> (외부 의존 없이 커밋된 월말 시계열 + FRED만 사용).</p>
+    <p><b>데이터 주의 — 업종(GICS) 분류는 시점 정합이 아닙니다.</b>
+      사내 DB <span style="font-family:var(--mono);font-size:11px">index_constituents</span>에서 <b>지수 멤버십은 시점 정합(PIT)</b>이지만,
+      같은 테이블의 <b>업종 라벨(gics_name)은 현재 분류를 과거 전 구간에 소급 적용한 백필</b>입니다.
+      실측 근거: 2018-09 개편으로 신설된 'Communication Services'가 2014-06 스냅샷에 이미 존재하고,
+      2014~2026년 사이 업종이 한 번이라도 바뀐 종목이 <b>0건</b>이며(이 기간에 GICS 대개편이 두 차례 있었습니다),
+      원천 분류 테이블에는 날짜 컬럼 자체가 없습니다.
+      따라서 <b>업종을 처리변수로 쓰는 검증(업종 중립화·업종 로테이션의 시점정합판 등)은 이 컬럼으로 수행할 수 없으며</b>,
+      해당 항목들은 성과가 나빠서가 아니라 <b>판정 불가</b>로 아카이브에 남아 있습니다.
+      개편 이력이 반영된 히스토리컬 GICS 패널을 확보하기 전까지 이 제약은 유지됩니다.</p>
+    <div class="meta"><span><b>생성일</b><span id="d-btgen">—</span></span><span><b>백테스트 구간</b><span id="d-btspan">전략별 상이 — 각 패널 표기</span></span><span><b>무위험금리</b><span id="d-rf">—</span></span><span><b>갱신</b>지표 매주 월 08:20 KST + 백테스트 시계열 수시(정적 재생성)</span></div>
   </div>
 
   <footer>
@@ -195,6 +211,9 @@
     if(!bt)return; put(['src-bt','d-btgen'],'생성 '+(bt.generated||'—'));
     var st=[],en=[];Object.keys(bt.strategies||{}).forEach(function(k){var b_=bt.strategies[k];if(b_.start)st.push(b_.start);if(b_.end)en.push(b_.end);});
     if(st.length&&en.length)put(['d-btspan'],st.sort()[0].slice(0,7)+' ~ '+en.sort().pop().slice(0,7)+' (전략별 상이 — 각 패널 표기)');
+  });
+  j('data/rf_monthly.json').then(function(rf){   // 11KB — 무위험금리 캐시(FRED). stale이면 그 사실을 드러낸다
+    if(!rf)return; put(['d-rf'],(rf.source||'FRED')+' · 최종 '+(rf.last_obs||'—')+(rf.stale?' (캐시·갱신 실패)':''));
   });
   j('data/stocks.json').then(function(d){   // 225KB 슬림 — FINRA 공매도 기준일(factor_defs)만 사용
     if(d&&d.factor_defs&&d.factor_defs.dtc)put(['d-si'],d.factor_defs.dtc.as_of);

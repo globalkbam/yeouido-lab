@@ -66,7 +66,9 @@ def build(root: str = ROOT) -> dict:
     ar = list(_records(_array(os.path.join(root, "archive.html"))))
 
     def grp(v):
-        return [{"n": _field(r, "n"), "slug": _slug(_field(r, "n")), "alias": _field(r, "alias")}
+        # slug은 **이름이 아니라 불변 id(sid)** 에서 온다 — 이름을 고쳐도 딥링크가 살아 있어야 한다.
+        return [{"n": _field(r, "n"), "slug": _field(r, "sid") or _slug(_field(r, "n")),
+                 "alias": _field(r, "alias")}
                 for r in ex if _field(r, "v") == v]
 
     deploy, marginal, rej_cmp = grp("deploy"), grp("marginal"), grp("reject")

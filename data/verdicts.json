@@ -2,19 +2,19 @@
  "note": "explorer.html·archive.html의 전략 배열에서 파싱한 집계. 홈은 이 파일만 읽고 숫자를 적지 않는다.",
  "deploy": [
   {
-   "n": "통합 포트폴리오 — 실적 상향주 + 자산배분",
-   "slug": "통합-포트폴리오-실적-상향주-자산배분",
-   "alias": "EPS 리비전 + 크로스에셋 RP"
+   "n": "이익추정 리비전 · 크로스에셋 RP 통합 (Multi-Sleeve Core)",
+   "slug": "multi-sleeve-core",
+   "alias": "검증 통과 2개 슬리브의 위험균등 결합 + 목표변동성 13%"
   },
   {
-   "n": "실적 전망 상향주 매수 (나스닥100)",
-   "slug": "실적-전망-상향주-매수-나스닥100",
-   "alias": "EPS 리비전 드리프트 · PEAD"
+   "n": "이익추정 리비전 드리프트 (EPS Revision Drift · NDX100)",
+   "slug": "eps-revision-drift-ndx",
+   "alias": "PEAD 계열 · 12M 선행 EPS 컨센서스 1M·3M 변화율"
   },
   {
-   "n": "12개 자산 분산 배분 — 변동성 균등",
-   "slug": "12개-자산-분산-배분-변동성-균등",
-   "alias": "크로스에셋 리스크패리티 + vol타겟"
+   "n": "크로스에셋 리스크패리티 (Cross-Asset Risk Parity · 12자산)",
+   "slug": "cross-asset-rp-12",
+   "alias": "역변동성 가중 + 추세게이트 + 목표변동성 10%"
   }
  ],
  "marginal_n": 9,

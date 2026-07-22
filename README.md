@@ -22,10 +22,23 @@
 | `data/rotation_pool.json` | 헤드리스 리서치 잡(로컬) | 매일 07:50 KST (10선 + 방치 3종) |
 | `data/sentiment.json` | `build/refresh_sentiment.py` | 매일 08:00 KST + 08:35 백업 |
 | `data/strategy_holdings.json` | `build/refresh_holdings.py` | 매월 1일 07:55 KST |
-| `data/strategy_backtests.json`·`strategy_detail.json` | 비공개 repo에서 정적 생성 | 수시 |
+| `data/strategy_backtests.json`·`strategy_detail.json` | 비공개 repo에서 정적 생성(시계열) | 수시 |
+| `data/strategy_backtests.json`의 `metrics`(지표 v2) + `data/rf_monthly.json` | `build/strategy_metrics.py` | 매주 월 08:20 KST + 시계열 커밋 시 |
 
 `build/validate_site.py`가 푸시마다 CI에서 JS 괄호·미정의 호출·JSON 스키마·딥링크 앵커·선별 상수(프론트↔잡)·
 기준일 정합을 검사합니다.
+
+### 전략 식별자 규약 — 이름은 표시용, `sid`가 기본키
+전략명은 화면 표시 문자열일 뿐이고, 딥링크 앵커(`archive.html#a-<sid>` / `explorer.html#s-<sid>`)와
+`data/verdicts.json`의 `deploy[].slug`는 각 레코드의 **불변 id `sid`** 에서 나옵니다.
+2026-07 이전에는 슬러그를 표시명에서 즉석 생성했기 때문에 전략을 개명하는 순간
+`data/rotation_pool.json`의 `lab.href` 19개와 외부 북마크가 조용히 깨졌습니다.
+
+- 개명할 때는 `n`만 고치고 **`sid`는 절대 바꾸지 않습니다.**
+- 과거 이름에서 파생된 한글 슬러그는 각 레코드의 `aka[]`에 남기며, 두 페이지의 해시 해석 코드가
+  이를 sid로 되돌려 기존 링크를 계속 살립니다.
+- `data/strategy_backtests.json`·`strategy_holdings*.json`·`strategy_detail.json`은 여전히 **표시명을 키**로
+  조인하므로, 개명하면 이 파일들의 키도 함께 바꿔야 합니다(validate_site가 불일치를 잡습니다).
 
 ## 배포
 GitHub Pages(branch source: `main` / root). `main`에 푸시하면 자동 재빌드.
@@ -52,6 +65,7 @@ python3 -m http.server 8080   # → http://localhost:8080
 | `build/screens_apply.py` | `stocks.json.screens` — 펀더멘털 스크리닝 통과 종목·적합도 | stocks.html · db_load |
 | `build/home_summary.py` | `home_reco.json` — 스윙 타점 상위 8+8, 확정/잠정 카운트 | index.html |
 | `build/verdicts_gen.py` | `verdicts.json` — 배포/제한적 유효/기각 집계(explorer·archive의 전략 배열에서 파싱) | index.html |
+| `build/strategy_metrics.py` | `strategy_backtests.json.metrics`(전략·BM1·BM2 대칭 25지표) + `rf_monthly.json` | explorer.html · sources.html · db_load |
 
 홈은 대형 파일(`stocks.json` 354KB · `rotation_pool.json` 364KB · `strategy_backtests.json` 85KB)을
 **절대 fetch하지 않는다.** 필요한 값은 위 산출물에 구워 넣는다.
@@ -59,11 +73,27 @@ python3 -m http.server 8080   # → http://localhost:8080
 정의·배열을 고쳤으면 다시 구워야 CI를 통과한다:
 
 ```bash
-python build/screens_apply.py && python build/verdicts_gen.py && python build/validate_site.py
+python build/screens_apply.py && python build/verdicts_gen.py && python build/strategy_metrics.py && python build/validate_site.py
 ```
 
 CI가 막는 것 — ①인라인 정의 복제 ②화면의 자체 계산 ③정의 지문(`screens_fp`) 불일치 ④결과 정렬 역전
-⑤판정 원장과 전략 배열 불일치 ⑥홈에 판정 수치 하드코딩 ⑦폭 토큰 이탈. 전부 위반 주입으로 탐지 확인.
+⑤판정 원장과 전략 배열 불일치 ⑥홈에 판정 수치 하드코딩 ⑦폭 토큰 이탈 ⑧지표 v2 블록 결측·rf 미차감·
+MDD 기준 불일치. 전부 위반 주입으로 탐지 확인.
+
+### 성과지표 규약 (지표 체계 v2)
+
+`build/strategy_metrics.py` 하나가 전략·벤치1·벤치2를 **대칭으로** 굽는다. 화면은 계산하지 않고 읽기만 한다.
+
+- **월간 기준으로 통일** — 전 지표를 월말 수익률·연환산(√12). 종전에는 MDD만 일별이라 같은 전략에
+  낙폭이 3개(일별 −29.6 / 일별의 월말샘플 −27.7 / 월말 −25.9) 존재했고 차트와 숫자 카드가 어긋났다.
+- **초과수익 기준** — Sharpe·Sortino·알파는 `rf`(FRED DGS3MO, 월평균→월복리) 차감. rf=0은 금지다.
+  왜곡폭이 ≈ 연rf/vol 이라 **저변동 전략일수록 부당하게 유리**해진다(실측 최대 0.30).
+- **미완결 월 제외** — `end`가 그 달 말일보다 앞서면 마지막 달은 연환산에서 뺀다(`basis.dropped_incomplete_month`).
+- **분모가 붕괴하면 숫자를 만들지 않는다** — 현금성 벤치의 베타·알파·포착률·ΔSharpe는 생략하고
+  `vs.omitted`에 사유를 남겨 화면이 그 사유를 그대로 표시한다.
+- **차이를 '우위'라 부르려면 표본이 판정할 수 있어야 한다** — `sharpe_se`, JK-Memmel `d_sharpe_p`,
+  `min_detectable_d_sharpe_95`, BH-FDR/Bonferroni/DSR(`multiplicity`)을 함께 굽는다.
+- 외부 의존 0(표준 라이브러리)·DB 의존 0 — Actions 러너는 Tailscale 밖이라 사내 Postgres에 도달할 수 없다.
 
 ### 폭 토큰
 

@@ -1,0 +1,61 @@
+name: Refresh strategy metrics (FRED rf)
+
+# 성과지표 v2 재계산 — 커밋된 월말 시계열 + FRED 무위험금리로만 산출한다.
+# ⚠ Actions 러너는 Tailscale 밖이라 사내 Postgres에 도달할 수 없다. 이 잡은 DB에 의존하지 않는다.
+#   (백테스트 시계열 자체는 비공개 repo에서 정적 생성되어 커밋되고, 여기서는 그 시계열을 재해석만 한다.)
+# rf가 매월 갱신되므로 주 1회면 충분하다. 시계열이 새로 커밋되면 push 트리거로 즉시 재계산된다.
+
+on:
+  schedule:
+    - cron: '20 23 * * 0'          # 매주 월 08:20 KST
+  push:
+    paths:
+      - 'data/strategy_backtests.json'   # 시계열이 새로 커밋되면 지표를 즉시 다시 굽는다
+      - 'build/strategy_metrics.py'
+      - '.github/workflows/refresh-metrics.yml'
+    # 이 잡 자신의 커밋은 GITHUB_TOKEN 푸시라 워크플로를 재트리거하지 않는다(무한 루프 없음)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-metrics
+  cancel-in-progress: false
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # 표준 라이브러리만 사용 — 설치 단계 없음(의존성이 늘면 크론이 깨질 확률도 는다)
+      - name: Recompute metrics v2
+        run: python build/strategy_metrics.py
+      - name: Validate
+        run: python build/validate_site.py
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ⚠ 생성기 산출물 전부 커밋: strategy_backtests.json(지표 v2·월말 낙폭 재계산)
+          #   + rf_monthly.json(무위험금리 캐시 — 커밋 안 하면 FRED 장애 시 폴백할 대상이 사라진다)
+          #   과거 home_reco.json·target_history.json 을 git add에서 빠뜨려 영구 유실시킨 사고가 3번 있었다.
+          # 변경 감지는 data/ 전체로 본다 — 특정 경로만 보면 '새 산출물 파일만 생긴' 사고 유형에서
+          # else로 빠져 아래 누락 검증이 아예 돌지 않는다(refresh-stocks.yml과 같은 가드).
+          if [ -n "$(git status --porcelain data/)" ]; then
+            git add data/strategy_backtests.json data/rf_monthly.json
+            LEFT="$(git status --porcelain data/ | grep -E '^([ ?])' || true)"
+            if [ -n "$LEFT" ]; then
+              echo "::error::data/ 산출물이 커밋 목록에서 빠졌습니다(과거 home_reco·target_history 유실 사고와 동일 유형):"
+              echo "$LEFT"
+              exit 1
+            fi
+            git commit -m "chore(data): 전략 성과지표 v2 재계산(rf 갱신)"
+            git push || (git pull --rebase origin main && git push)
+            echo "갱신·푸시 완료"
+          else
+            echo "변경 없음 — 스킵"
+          fi

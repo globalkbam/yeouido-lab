@@ -394,8 +394,14 @@ def load_strategy_perf(cur, doc, sha, force=False):
     for nm, b in S.items():
         m = b.get("metrics") or {}
         lean = {k: v for k, v in b.items() if k not in ("dates", "nav", "bench", "bench2", "dd", "dd_b", "dd_b2")}
+        # 지표는 미완결 월을 제외한 계열(basis.end_month)에서 나온다. 원본 b["end"]는
+        # 그보다 뒤인 원자료 최종일이라, 그대로 넣으면 같은 행의 기간과 지표 기준일이 어긋난다.
+        _bs = m.get("basis") or {}
+        _start = (_bs.get("start_month") or b.get("start") or "")[:7] + "-01" if _bs.get("start_month") else b.get("start")
+        _end = _bs.get("end_month")
+        _end = (_end + "-01") if _end else b.get("end")     # 월 단위 → 그 달 1일로 정규화(월말 기준임을 basis가 보유)
         rows.append((asof, nm, b.get("bench_label"), b.get("bench2_label"),
-                     b.get("start"), b.get("end"), num(m.get("cagr")), num(m.get("vol")),
+                     _start, _end, num(m.get("cagr")), num(m.get("vol")),
                      num(m.get("sharpe")), num(m.get("mdd")), num(b.get("mdd_b")), num(b.get("mdd_b2")),
                      num(m.get("calmar")), num(m.get("hit")), Json(lean)))
     execute_values(cur, "insert into yeodoo.strategy_perf(asof,strategy,bench_label,bench2_label,"

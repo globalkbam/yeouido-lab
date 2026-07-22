@@ -103,11 +103,62 @@ if pool:
         if not s.get("sources"): errors.append(f"rotation_pool {s.get('id')}: 출처 없음")
         if s["id"] in ids: errors.append(f"rotation_pool: id 중복 {s['id']}")
         ids.add(s["id"])
-    # lab 앵커가 실제 항목을 가리키는지
-    anames = {d["n"] for d in json.loads(re.search(r"var D=(\[.*?\]);", rd("archive.html"), re.S).group(1))}
-    enames = set(re.findall(r'\{n:"([^"]+)"', rd("explorer.html")))
-    def _slug(n):   # archive.html / explorer.html의 slug()와 동일 규칙이어야 딥링크가 맞는다
+    # lab 앵커가 실제 항목을 가리키는지 — 앵커 키는 표시명이 아니라 **불변 id(sid)** 다.
+    # 전에는 슬러그를 이름에서 즉석 생성해, 전략을 개명하는 순간 여기 19개 딥링크가 조용히 깨졌다.
+    def _slug(n):   # archive.html / explorer.html의 slug()와 동일 규칙(구 슬러그 호환용)
         return re.sub(r"^-+|-+$", "", re.sub(r"[^0-9a-z가-힣]+", "-", str(n).lower()))
+
+    def _recs(page, var="D"):
+        """`var D=[ … ];` 를 대괄호 균형으로 잘라 JSON으로 읽는다(주석 허용)."""
+        src = rd(page)
+        m = re.search(r"var\s+%s\s*=\s*\[" % var, src)
+        if not m: raise SystemExit(f"{page}: var {var}=[ 를 찾지 못함")
+        i, depth, j, instr, esc = m.end() - 1, 0, m.end() - 1, False, False
+        while j < len(src):
+            c = src[j]
+            if instr:
+                if esc: esc = False
+                elif c == "\\": esc = True
+                elif c == '"': instr = False
+            elif c == '"': instr = True
+            elif c == "[": depth += 1
+            elif c == "]":
+                depth -= 1
+                if depth == 0: break
+            j += 1
+        body = re.sub(r"(?m)^\s*//.*$", "", src[i:j + 1])
+        return json.loads(body)
+
+    try:
+        AREC, EREC = _recs("archive.html"), _recs("explorer.html")
+    except Exception as e:
+        errors.append(f"전략 배열 파싱 실패: {e}"); AREC = EREC = []
+    anames = {d["n"] for d in AREC}
+    enames = {d["n"] for d in EREC}
+
+    # sid 불변식: 전 항목에 있어야 하고, 페이지 안에서 유일해야 하며, 앵커로 쓸 수 있어야 한다
+    for page, recs in (("archive.html", AREC), ("explorer.html", EREC)):
+        seen = {}
+        for d in recs:
+            sid = d.get("sid")
+            if not sid:
+                errors.append(f"{page} \"{d['n']}\": sid 없음 — 개명하면 딥링크가 깨진다"); continue
+            if not re.fullmatch(r"[0-9a-z][0-9a-z-]*", sid):
+                errors.append(f"{page} \"{d['n']}\": sid '{sid}'는 소문자 영숫자·하이픈만 허용")
+            if sid in seen:
+                errors.append(f"{page}: sid 중복 '{sid}' ({seen[sid]} / {d['n']})")
+            seen[sid] = d["n"]
+
+    # 구 슬러그(aka) → sid 해석표. 기존 북마크·외부 링크가 계속 도달해야 한다.
+    def _resolve(recs):
+        m = {}
+        for d in recs:
+            sid = d.get("sid") or _slug(d["n"])
+            for k in [sid, _slug(d["n"])] + list(d.get("aka") or []):
+                m[k] = d
+        return m
+    ARES, ERES = _resolve(AREC), _resolve(EREC)
+
     for s in pool.get("strategies", []):
         L = s.get("lab")
         if not L: continue
@@ -119,10 +170,24 @@ if pool:
             errors.append(f"rotation_pool {s['id']}: lab.href 대상 파일 없음 ({page})"); continue
         if L["t"] not in (anames if page == "archive.html" else enames):
             errors.append(f"rotation_pool {s['id']}: lab.t \"{L['t']}\"가 {page}에 없음(링크 깨짐)"); continue
-        # 프래그먼트도 실제 앵커 규칙과 일치하는지(형식만 맞고 대상이 없는 딥링크 방지)
-        want = ("a-" if page == "archive.html" else "s-") + _slug(L["t"])
-        if frag and frag != want:
-            errors.append(f"rotation_pool {s['id']}: lab.href 앵커 불일치 (#{frag} ≠ #{want})")
+        pre, res = ("a-", ARES) if page == "archive.html" else ("s-", ERES)
+        if not frag:
+            errors.append(f"rotation_pool {s['id']}: lab.href에 앵커(#)가 없음 ({href})"); continue
+        if not frag.startswith(pre):
+            errors.append(f"rotation_pool {s['id']}: 앵커 접두어가 '{pre}'가 아님 (#{frag})"); continue
+        tgt = res.get(frag[len(pre):])
+        if tgt is None:
+            errors.append(f"rotation_pool {s['id']}: 앵커 #{frag}가 {page}의 어떤 항목에도 도달하지 못함")
+        elif tgt["n"] != L["t"]:
+            errors.append(f"rotation_pool {s['id']}: 앵커 #{frag}는 \"{tgt['n']}\"인데 lab.t는 \"{L['t']}\"")
+        elif frag[len(pre):] != (tgt.get("sid") or ""):
+            errors.append(f"rotation_pool {s['id']}: 앵커가 구 슬러그(#{frag}) — sid 기준 #{pre}{tgt.get('sid')}로 갱신할 것")
+
+    # 구 슬러그 하위호환: 각 페이지의 해시 해석 코드가 aka를 실제로 참조하는지(문안만 남고 로직이 빠지는 사고 방지)
+    if "aka" not in rd("archive.html") or "ALIAS" not in rd("archive.html"):
+        errors.append("archive.html: 구 슬러그(aka) 해석 로직이 없음 — 기존 딥링크가 깨진다")
+    if "aka" not in rd("explorer.html") or "_keys" not in rd("explorer.html"):
+        errors.append("explorer.html: 구 슬러그(aka) 해석 로직이 없음 — 기존 딥링크가 깨진다")
 
 # ── 선별 알고리즘 상수 일치(프론트 ↔ 일일잡) ──────────────────
 rot, sel = rd("rotation.html"), rd(os.path.join("build", "rotation_select.py"))
@@ -287,6 +352,45 @@ try:
 except Exception as e:
     errors.append(f"판정 원장 검증 실패: {e}")
 
+# ── 성과지표 v2 스키마(build/strategy_metrics.py 산출) ─────────
+# explorer의 지표표는 metrics.s/.b/.basis 를 읽는다. 시계열만 다시 굽고 지표를 안 구우면
+# 화면이 조용히 폴백 문구로 바뀐다 — 그 상태를 배포하지 않도록 여기서 잡는다.
+try:
+    _bt = json.load(io.open(os.path.join(ROOT, "data", "strategy_backtests.json"), encoding="utf-8"))
+    if _bt.get("metrics_schema") != "v2":
+        errors.append("strategy_backtests.json: metrics_schema가 v2가 아님 — python build/strategy_metrics.py 실행 필요")
+    for _nm, _b in (_bt.get("strategies") or {}).items():
+        # 키는 explorer D 배열의 표시명과 **글자 단위로** 같아야 조인된다(개명 사고 방지)
+        if _nm not in enames:
+            errors.append(f"strategy_backtests.json \"{_nm}\": explorer.html D 배열에 없는 이름 — 차트·지표가 통째로 사라진다")
+        _m = _b.get("metrics") or {}
+        if not (_m.get("s") and _m.get("b") and _m.get("basis")):
+            errors.append(f"{_nm}: 지표 v2 블록(s/b/basis) 없음 — build/strategy_metrics.py 로 다시 구울 것"); continue
+        _ba = _m["basis"]
+        if not _ba.get("excess") or not _ba.get("rf_source"):
+            errors.append(f"{_nm}: 초과수익 기준(rf) 표기가 없음 — rf=0 Sharpe 게시 금지")
+        if _ba.get("mdd_basis") != "monthly_nav":
+            errors.append(f"{_nm}: MDD 기준이 월말 NAV가 아님 — 차트 낙폭 곡선과 어긋난다")
+        for _k in ("dd", "dd_b"):
+            if len(_b.get(_k) or []) != len(_b.get("dates") or []):
+                errors.append(f"{_nm}: {_k} 길이가 dates와 다름")
+        if _b.get("mdd_b") is not None and _m["b"].get("mdd") is not None and abs(_b["mdd_b"] - _m["b"]["mdd"]) > 0.011:
+            errors.append(f"{_nm}: mdd_b({_b['mdd_b']})와 metrics.b.mdd({_m['b']['mdd']})가 어긋남")
+        # N은 화면에 반드시 노출돼야 한다(전략별 3배 차이) — 값이 비면 표가 거짓말을 한다
+        if not _ba.get("n_months") or _ba["n_months"] != _m["s"].get("n_months"):
+            errors.append(f"{_nm}: basis.n_months 결측/불일치")
+    _rf = os.path.join(ROOT, "data", "rf_monthly.json")
+    if not os.path.exists(_rf):
+        errors.append("data/rf_monthly.json 없음 — 무위험금리 캐시가 커밋되지 않았다(FRED 장애 시 폴백 불가)")
+    else:
+        _rfj = json.load(io.open(_rf, encoding="utf-8"))
+        if len(_rfj.get("monthly") or {}) < 100:
+            errors.append("data/rf_monthly.json: 월간 관측이 100개 미만 — 비정상")
+    if "metrics.s" not in rd("explorer.html") and "m.s" not in rd("explorer.html"):
+        errors.append("explorer.html이 지표 v2(metrics.s)를 읽지 않음")
+except Exception as e:
+    errors.append(f"성과지표 v2 검증 실패: {e}")
+
 # ── 폭 토큰: 페이지 이동 시 콘텐츠 폭이 튀지 않게 세 가지로만 ──
 try:
     _want = {"stocks.html": "--w-wide", "index.html": "--w-base", "explorer.html": "--w-base",
@@ -361,6 +465,7 @@ def _dates_of(fn, j):
     if fn == "rotation_pool.json": return [("generated", j.get("generated"))]
     if fn in ("strategy_holdings.json", "strategy_holdings_db.json"):
         return [("generated", j.get("generated"))] + [(f"{nm}.as_of", st.get("as_of")) for nm, st in (j.get("strategies") or {}).items()]
+    if fn == "rf_monthly.json": return [("fetched", j.get("fetched")), ("last_obs", j.get("last_obs"))]
     if fn == "strategy_backtests.json":
         out = [("generated", j.get("generated"))]
         for nm, b in (j.get("strategies") or {}).items():
@@ -368,7 +473,7 @@ def _dates_of(fn, j):
         return out
     return []
 for _fn in ("stocks.json", "home_reco.json", "regime.json", "members.json", "rotation_pool.json", "updates.json",
-            "strategy_holdings.json", "strategy_holdings_db.json", "strategy_backtests.json"):
+            "strategy_holdings.json", "strategy_holdings_db.json", "strategy_backtests.json", "rf_monthly.json"):
     _p = os.path.join(ROOT, "data", _fn)
     if not os.path.exists(_p): continue
     try:

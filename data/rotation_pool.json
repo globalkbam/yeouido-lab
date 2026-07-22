@@ -79,9 +79,9 @@
    "id": "A4",
    "lab": {
     "v": "기각",
-    "t": "최소분산 (Ledoit-Wolf)",
+    "t": "축소추정 최소분산 배분 (Minimum Variance · Ledoit-Wolf)",
     "why": "무위험금리 착시 — excess Sharpe 0.62 < 60/40 0.67, 채권 불장에 의존.",
-    "href": "archive.html#a-최소분산-ledoit-wolf"
+    "href": "archive.html#a-min-variance-lw"
    }
   },
   {
@@ -104,9 +104,9 @@
    "id": "A5",
    "lab": {
     "v": "기각",
-    "t": "대형 모멘텀·200MA 추세",
+    "t": "대형주 횡단면 모멘텀 · 200일선 추세 (Large-Cap Momentum · 200-DMA)",
     "why": "PIT 엄격 적용 시 EPS 리비전 드리프트에 열위(0.83) — 증분 없음.",
-    "href": "archive.html#a-대형-모멘텀-200ma-추세"
+    "href": "archive.html#a-largecap-momentum-200dma"
    }
   },
   {
@@ -265,9 +265,9 @@
    ],
    "lab": {
     "v": "배포",
-    "t": "실적 전망 상향주 매수 (나스닥100)",
+    "t": "이익추정 리비전 드리프트 (EPS Revision Drift · NDX100)",
     "why": "랩의 챔피언 전략. 유일하게 강건하게 살아남은 알파(벤치 +10.46%p).",
-    "href": "explorer.html#s-실적-전망-상향주-매수-나스닥100"
+    "href": "explorer.html#s-eps-revision-drift-ndx"
    },
    "recent_at": "2026-07-22"
   },
@@ -289,9 +289,9 @@
    ],
    "lab": {
     "v": "기각",
-    "t": "돈치안 브레이크아웃",
+    "t": "돈치안 채널 브레이크아웃 (Donchian Breakout)",
     "why": "빠른 채널은 거래비용에 사망, 느린 채널은 CAGR 1.8%에 그침.",
-    "href": "archive.html#a-돈치안-브레이크아웃"
+    "href": "archive.html#a-donchian-breakout"
    }
   },
   {
@@ -465,9 +465,9 @@
    "id": "C4",
    "lab": {
     "v": "기각",
-    "t": "오버나이트 드리프트",
+    "t": "오버나이트 드리프트 (Overnight Drift)",
     "why": "종가매수/시가매도 일별 왕복이 신호의 본질 → 비용 breakeven 2bp.",
-    "href": "archive.html#a-오버나이트-드리프트"
+    "href": "archive.html#a-overnight-drift"
    }
   },
   {
@@ -489,9 +489,9 @@
    "id": "C5",
    "lab": {
     "v": "기각",
-    "t": "소형 주간 반전 롱숏",
+    "t": "소형주 단기 반전 롱숏 (Short-Term Reversal · Weekly)",
     "why": "gross Sharpe 1.97이나 50bp 비용에서 −1.87 — 고회전 본질.",
-    "href": "archive.html#a-소형-주간-반전-롱숏"
+    "href": "archive.html#a-smallcap-weekly-reversal"
    }
   },
   {
@@ -592,9 +592,9 @@
    ],
    "lab": {
     "v": "기각",
-    "t": "VIX 기간구조",
+    "t": "VIX 기간구조 신호 (VIX Term Structure)",
     "why": "실현변동성 타게팅과 중복(0.988)이고, 2022 같은 완만한 약세장에선 콘탱고라 개입 자체가 없었다.",
-    "href": "archive.html#a-vix-기간구조"
+    "href": "archive.html#a-vix-term-structure"
    }
   },
   {
@@ -693,9 +693,9 @@
    ],
    "lab": {
     "v": "기각",
-    "t": "변동성 타깃 — 흔들리면 주식 축소",
+    "t": "변동성 타깃팅 — NDX 단일자산 (Volatility Targeting · NDX)",
     "why": "단일 팩터로 검증 통과했으나 증분은 제한적(marginal).",
-    "href": "archive.html#a-변동성-타깃-흔들리면-주식-축소"
+    "href": "archive.html#a-vol-targeting-ndx"
    }
   },
   {
@@ -718,9 +718,9 @@
    "id": "D2",
    "lab": {
     "v": "배포",
-    "t": "12개 자산 분산 배분 — 변동성 균등",
+    "t": "크로스에셋 리스크패리티 (Cross-Asset Risk Parity · 12자산)",
     "why": "배포 코어 3슬리브 중 하나. 추세 게이트와 결합해 운용.",
-    "href": "explorer.html#s-12개-자산-분산-배분-변동성-균등"
+    "href": "explorer.html#s-cross-asset-rp-12"
    }
   },
   {
@@ -742,9 +742,9 @@
    "id": "D3",
    "lab": {
     "v": "기각",
-    "t": "CTA 멀티에셋 트렌드 (TSMOM)",
+    "t": "시계열 모멘텀 — 멀티에셋 (Time-Series Momentum · CTA)",
     "why": "통합 포트폴리오의 RP 추세 게이트와 정보 중복(corr 0.43).",
-    "href": "archive.html#a-cta-멀티에셋-트렌드-tsmom"
+    "href": "archive.html#a-tsmom-multiasset"
    }
   },
   {
@@ -766,9 +766,9 @@
    "id": "D4",
    "lab": {
     "v": "기각",
-    "t": "테일 헤지 (long-vol)",
+    "t": "테일 리스크 헤지 (Tail-Risk Hedge · Long-Volatility)",
     "why": "상시 비용부담이 크고, 정작 위기에서도 기대만큼 방어하지 못함.",
-    "href": "archive.html#a-테일-헤지-long-vol"
+    "href": "archive.html#a-tail-risk-hedge"
    },
    "recent_at": "2026-07-22"
   },
@@ -809,9 +809,9 @@
    "id": "D6",
    "lab": {
     "v": "기각",
-    "t": "레짐 조건부 (챔피언↔RP)",
+    "t": "레짐 조건부 슬리브 스위칭 (Regime-Conditional Sleeve Switching)",
     "why": "서브기간이 서로 반대로 틸트돼 효과가 상쇄됨.",
-    "href": "archive.html#a-레짐-조건부-챔피언-rp"
+    "href": "archive.html#a-regime-conditional-switch"
    },
    "recent_at": "2026-07-22"
   },
@@ -934,9 +934,9 @@
    "id": "D11",
    "lab": {
     "v": "기각",
-    "t": "듀얼모멘텀 (GEM)",
+    "t": "글로벌 듀얼 모멘텀 (Global Equities Momentum · GEM)",
     "why": "SPY·60/40 대비 Sharpe 열위 — 낮은 MDD만 강점.",
-    "href": "archive.html#a-듀얼모멘텀-gem"
+    "href": "archive.html#a-dual-momentum-gem"
    }
   },
   {
@@ -1010,9 +1010,9 @@
    ],
    "lab": {
     "v": "기각",
-    "t": "CTA 멀티에셋 트렌드 (TSMOM)",
+    "t": "시계열 모멘텀 — 멀티에셋 (Time-Series Momentum · CTA)",
     "why": "통합 포트폴리오의 RP 추세 게이트와 정보 중복(corr 0.43).",
-    "href": "archive.html#a-cta-멀티에셋-트렌드-tsmom"
+    "href": "archive.html#a-tsmom-multiasset"
    }
   },
   {
@@ -1052,9 +1052,9 @@
    "id": "E3",
    "lab": {
     "v": "기각",
-    "t": "저평가주 10종 — 장부가 대비 (S&P500)",
+    "t": "장부가 대비 저평가 (Book-to-Price · SPX Top 10)",
     "why": "검증 단일팩터 중 열위로 기각.",
-    "href": "explorer.html#s-저평가주-10종-장부가-대비-s-p500"
+    "href": "explorer.html#s-book-to-price-spx"
    }
   },
   {
@@ -1076,9 +1076,9 @@
    "id": "E4",
    "lab": {
     "v": "기각",
-    "t": "SUE PEAD (실측 서프라이즈)",
+    "t": "표준화 실적 서프라이즈 PEAD (SUE-based PEAD)",
     "why": "대·중·소형 전 유니버스 음성 — 소형 효과는 어닝이 아닌 가격 반전.",
-    "href": "archive.html#a-sue-pead-실측-서프라이즈"
+    "href": "archive.html#a-sue-pead"
    }
   },
   {
@@ -1100,9 +1100,9 @@
    "id": "E5",
    "lab": {
     "v": "기각",
-    "t": "크로스에셋 캐리",
+    "t": "크로스에셋 캐리 (Cross-Asset Carry)",
     "why": "60/40 '동률'은 GFC 08-11의 산물, 이후 구간에선 지배당함.",
-    "href": "archive.html#a-크로스에셋-캐리"
+    "href": "archive.html#a-cross-asset-carry"
    }
   },
   {
@@ -1124,9 +1124,9 @@
    "id": "E6",
    "lab": {
     "v": "기각",
-    "t": "머저 아비트리지 (MNA)",
+    "t": "합병차익거래 (Merger Arbitrage · MNA)",
     "why": "단독 Sharpe 0.39이나 위기에서 tail dependence 폭발(2020-03 −16.2%) — 헤지 아님.",
-    "href": "archive.html#a-머저-아비트리지-mna"
+    "href": "archive.html#a-merger-arbitrage"
    }
   },
   {
@@ -1202,9 +1202,9 @@
    "id": "E9",
    "lab": {
     "v": "기각",
-    "t": "VRP 숏볼",
+    "t": "변동성 위험프리미엄 숏볼 (Variance Risk Premium · Short-Vol)",
     "why": "초과수익의 정체가 레버리지 — 위험조정 개선 0.",
-    "href": "archive.html#a-vrp-숏볼"
+    "href": "archive.html#a-vrp-short-vol"
    }
   },
   {
