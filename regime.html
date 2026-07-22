@@ -88,6 +88,11 @@
   .ic .icd{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:7px}
 
   /* 차트 — 39개 지표·6열 표를 훑을 수 있게 만드는 요약 그래픽 */
+  /* 표 앞 안내 — 열 이름만으로는 뜻이 안 통한다는 피드백에서 추가 */
+  .tbintro{background:var(--panel-2);border:1px solid var(--line-soft);border-left:3px solid var(--cold);
+           border-radius:10px;padding:11px 15px;margin:26px 0 4px;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+  .tbintro b{color:var(--ink)}
+  .tbintro .mbody div{padding:2px 0;font-size:12px}
   .chartbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:15px 18px}
   .chartbox + .chartbox{margin-top:14px}
   .bar{display:grid;grid-template-columns:minmax(96px,132px) 1fr minmax(48px,auto);gap:9px;align-items:center;padding:3px 0;font-size:12px}
@@ -461,8 +466,24 @@
     }
     var curLvl=ok?BANDS.indexOf(b):-1;
     var p=d.score_pctl, curPct=(p==null)?-1:(p<0.10?0:p<0.25?1:p<0.75?2:p<0.90?3:4);
-    tb=btable('레벨 버킷별 이후 수익','SPY '+esc(bt.sample||'')+' · n='+(bt.n_days||'—')+' · 무비용(gross)',bt.buckets,bt.base,curLvl,false)+
-       btable('분위 버킷별 이후 수익 — 에피소드 검정 포함','지수의 확장 백분위 기준 · 겹치는 관측을 에피소드로 묶어 t검정',bt.buckets_pctl,bt.base_pctl,curPct,true);
+    // 두 표가 뭘 묻는지·열이 뭘 뜻하는지 먼저 말한다 — '분위 버킷'만 보고는 알 수 없다는 피드백.
+    var tbintro='<div class="tbintro"><b>두 표가 답하는 질문은 같습니다</b> — “심리 지수가 이 구간일 때, '+
+      '그 뒤 20일·60일 동안 S&amp;P500이 얼마나 올랐나?” 다른 것은 <b>구간을 나누는 기준</b>입니다. '+
+      '위 표는 점수 <b>절대값</b>(0~100), 아래 표는 그날까지의 역사와 비교한 <b>상대 위치</b>(확장 백분위)로 나눕니다. '+
+      '지수 수준이 시대에 따라 표류하면 절대값 기준이 왜곡되므로 아래가 더 보수적인 읽기입니다.'+
+      '<details class="more"><summary>열 읽는 법</summary><div class="mbody">'+
+      '<div><b>관측일</b> — 그 구간에 해당한 날 수</div>'+
+      '<div><b>20일 후 · 60일 후</b> — 그날 샀다면 20·60거래일 뒤 평균 수익. <b>승률</b>은 플러스였던 비율</div>'+
+      '<div><b>에피소드</b> — 60일 수익은 날마다 겹친다. 연속 구간을 하나로 묶어 센 <b>독립 사건 수</b>다. '+
+      '관측일 208일이어도 독립 사건은 38번뿐이며, 이걸 무시하면 통계가 실제보다 강해 보인다</div>'+
+      '<div><b>t / p</b> — 그 구간 수익이 전체 평균과 다른지. p가 0.05보다 작으면 우연으로 보기 어렵다는 뜻</div>'+
+      '<div><b>3지표 구간</b> — VIX·기간구조·MOVE가 <b>모두 존재하는 2006-07 이후</b>로 좁혀 다시 검정한 값. '+
+      '<b>소멸</b>은 전 구간에서 유의해 보이던 것이 여기서 사라졌다는 표시다 — 그래서 “극단탐욕=매도”를 주장하지 않는다</div>'+
+      '<div style="margin-top:6px;color:var(--muted)">구간 이름은 명목 10%가 아니라 임계값 서술이라 표본 비중이 균등하지 않다(각 행에 실제 비중 표기).</div>'+
+      '</div></details></div>';
+    tb=tbintro+
+       btable('레벨 버킷별 이후 수익 — 점수 절대값 기준','SPY '+esc(bt.sample||'')+' · n='+(bt.n_days||'—')+' · 무비용(gross)',bt.buckets,bt.base,curLvl,false)+
+       btable('분위 버킷별 이후 수익 — 역사 대비 상대 위치 기준','확장 백분위 · 겹치는 관측을 에피소드로 묶어 t검정',bt.buckets_pctl,bt.base_pctl,curPct,true);
 
     // ⑤ 정직 고지
     var vv=bt.vs_vix_only||{};
