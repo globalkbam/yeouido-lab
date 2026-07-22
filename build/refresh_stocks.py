@@ -965,7 +965,7 @@ def main():
     import home_summary
     _p, _h = home_summary.write(stocks, out["pxd_dates"], as_of, os.path.join(HERE, ".."))
     print(f"→ {os.path.basename(_p)} (매수 {_h['nbuy']}·확정 {_h['buy_conf']}/잠정 {_h['buy_prov']} · "
-          f"매도 {_h['nsell']}·확정 {_h['sell_conf']}/잠정 {_h['sell_prov']} · 배포 {len(_h['deploy'])}종)")
+          f"매도 {_h['nsell']}·확정 {_h['sell_conf']}/잠정 {_h['sell_prov']})")
 
 
 if __name__ == "__main__":

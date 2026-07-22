@@ -73,6 +73,18 @@
   .spline .spd{color:var(--muted);font-weight:400}
   .ic .icd{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:7px}
 
+  /* 차트 — 39개 지표·6열 표를 훑을 수 있게 만드는 요약 그래픽 */
+  .chartbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:15px 18px}
+  .chartbox + .chartbox{margin-top:14px}
+  .bar{display:grid;grid-template-columns:minmax(96px,132px) 1fr minmax(48px,auto);gap:9px;align-items:center;padding:3px 0;font-size:12px}
+  .bar .bl{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .bt{font-family:var(--mono);font-size:11px;text-align:right;color:var(--ink-2);white-space:nowrap}
+  .bar svg{display:block;width:100%;height:13px;overflow:visible}
+  .chartnote{font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px;border-top:1px solid var(--line-soft);padding-top:8px}
+  .ctabs{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}
+  .ctab{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);
+        border-radius:999px;padding:4px 11px;cursor:pointer}
+  .ctab[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
   .histwrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px}
   canvas{width:100%;display:block}
   .leg{display:flex;gap:9px 14px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
@@ -192,6 +204,68 @@
     new MutationObserver(drawHist).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   }).catch(function(){el('main').innerHTML='<div class="empty">데이터 로드 오류</div>';});
 
+  // ⚠ 이 파일은 IIFE가 둘이다(국면 / 심리). 심리 쪽 esc는 여기서 안 보이므로 따로 둔다.
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  // 0을 가운데 둔 수평 바 하나. v는 이미 스케일된 값, mx는 축 최대(절대값).
+  function barRow(label, v, mx, color, txt){
+    var w=Math.min(100,Math.abs(v)/mx*50), x=v>=0?50:50-w;
+    return '<div class="bar"><span class="bl" title="'+esc(label)+'">'+esc(label)+'</span>'+
+      '<svg viewBox="0 0 100 13" preserveAspectRatio="none" aria-hidden="true">'+
+        '<line x1="50" y1="0" x2="50" y2="13" stroke="var(--line)" stroke-width="0.6" vector-effect="non-scaling-stroke"/>'+
+        '<rect x="'+x.toFixed(2)+'" y="2.5" width="'+w.toFixed(2)+'" height="8" rx="1.2" fill="'+color+'"/>'+
+      '</svg><span class="bt">'+txt+'</span></div>';
+  }
+  // ① 추세 서프라이즈 — 추세 대비 z가 큰 순. 색은 지표 카드와 같은 정책(의미가 갈리는 지표는 중립).
+  function surpriseChart(d){
+    var xs=(d.indicators||[]).filter(function(x){return x.sp&&x.sp.z!=null&&!isNaN(x.sp.z);});
+    if(xs.length<4)return '';
+    xs.sort(function(a,b){return b.sp.z-a.sp.z;});
+    var N=8, pick=xs.length<=N*2?xs:xs.slice(0,N).concat(xs.slice(-N));
+    var mx=Math.max.apply(null,pick.map(function(x){return Math.abs(x.sp.z);}))||1;
+    var rows=pick.map(function(x){
+      var pol=(GOOD_UP[x.k]?1:(BAD_UP[x.k]?-1:0))*(x.sp.z>=0?1:-1);
+      var col=pol>0?'var(--good)':(pol<0?'var(--hot)':'var(--muted)');
+      return barRow(x.label, x.sp.z, mx, col, (x.sp.z>=0?'+':'')+x.sp.z.toFixed(1)+'σ');
+    }).join('');
+    return '<div class="lbl">추세 서프라이즈 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 최근값이 자기 추세에서 얼마나 벗어났나(z)</span></div>'+
+      '<div class="chartbox">'+rows+
+      '<div class="chartnote">39개 지표 중 위·아래 '+Math.min(N,Math.floor(xs.length/2))+'개씩. '+
+      '<b style="color:var(--good)">초록</b>=경기에 우호적 방향, <b style="color:var(--hot)">빨강</b>=비우호적, '+
+      '<b>회색</b>=방향의 좋고 나쁨이 갈리는 지표(금리·달러·통화량 등)라 색을 주지 않습니다. '+
+      '추세 대비 편차일 뿐 수익 예측이 아닙니다.</div></div>';
+  }
+  // ② 현재 국면 성과 — 표의 '현재 레짐' 열만 뽑아 정렬. 표는 다른 국면 비교용으로 그대로 둔다.
+  var CPERF={i:0};
+  function curPerfChart(d){
+    var cur=d.regime.label;
+    var SETS=[['자산',d.asset_perf],['섹터',d.sector_perf],['팩터',d.factor_perf]].filter(function(x){return x[1];});
+    if(!SETS.length)return '';
+    var set=SETS[Math.min(CPERF.i,SETS.length-1)], perf=set[1];
+    var rows=Object.keys(perf).map(function(a){return [a,perf[a][cur]];}).filter(function(x){return x[1]!=null;});
+    if(!rows.length)return '';
+    rows.sort(function(a,b){return b[1]-a[1];});
+    var mx=Math.max.apply(null,rows.map(function(x){return Math.abs(x[1]);}))||1;
+    var body=rows.map(function(x){
+      return barRow(PNM[x[0]]||x[0], x[1], mx, x[1]>=0?'var(--good)':'var(--hot)', (x[1]>0?'+':'')+x[1]+'%');
+    }).join('');
+    return '<div class="lbl">현재 국면 성과 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· '+
+        esc(cur)+'('+(RKO[cur]||'')+') 국면의 월평균 수익률, 2009~</span></div>'+
+      '<div class="chartbox"><div class="ctabs" id="ctabs">'+
+        SETS.map(function(x,i){return '<button class="ctab" data-i="'+i+'" aria-pressed="'+(i===CPERF.i)+'">'+x[0]+'</button>';}).join('')+
+      '</div>'+body+
+      '<div class="chartnote">같은 국면이었던 과거 달들의 <b>평균</b>일 뿐 이번에도 그러리라는 근거가 아닙니다 — '+
+      '국면 표본이 적은 구간은 몇 달 값에 좌우됩니다. 국면 간 비교는 아래 표에서 보세요.</div></div>';
+  }
+  var PNM={SPY:"S&P500",QQQ:"나스닥100",TLT:"장기국채",GLD:"금",DBC:"원자재",
+    XLK:"기술",XLF:"금융",XLE:"에너지",XLV:"헬스케어",XLI:"산업재",XLY:"경기소비",XLP:"필수소비",
+    XLU:"유틸리티",XLB:"소재",XLRE:"부동산",XLC:"커뮤니케이션",
+    MTUM:"모멘텀",QUAL:"퀄리티",USMV:"저변동",VLUE:"가치",SIZE:"중소형"};
+  // 현재 국면이 몇 달째인지 — 히스토리 타임라인을 숫자로도 읽게
+  function runLen(d){
+    var h=(d.history||[]).filter(function(x){return x&&x.r;}), n=0;
+    for(var i=h.length-1;i>=0;i--){if(h[i].r===h[h.length-1].r)n++;else break;}
+    return n;
+  }
   function render(){
     var d=DATA, rg=d.regime, rc=RC[rg.label]||css('--accent');
     // hero
@@ -237,12 +311,15 @@
     var tbl=perfTable('레짐별 자산 조건부 성과','월평균 %, 2009~ · 현재 레짐('+cur+') 열 강조','자산',d.asset_perf)+
       perfTable('레짐별 섹터 로테이션','11개 섹터 SPDR 월평균 % · 현재 레짐서 유리한 순','섹터',d.sector_perf)+
       perfTable('레짐별 팩터','모멘텀·퀄리티·저변동·가치·중소형 월평균 %','팩터',d.factor_perf);
-    el('main').innerHTML=hero+
+    el('main').innerHTML=hero+surpriseChart(d)+
       '<div class="lbl">매크로 지표 현황</div>'+ig+
-      '<div class="lbl">레짐 히스토리 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 2009~ 월별</span></div>'+
+      '<div class="lbl">레짐 히스토리 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· 2009~ 월별 · 현재 '+(RKO[rg.label]||rg.label)+' '+runLen(d)+'개월째</span></div>'+
       '<div class="histwrap"><canvas id="histc" height="54" role="img" aria-label="시장 국면(레짐) 히스토리 — 2009년 이후 월별 성장×물가 분류 타임라인"></canvas><div class="leg" id="leg"></div></div>'+
-      tbl;
+      curPerfChart(d)+tbl;
     el('leg').innerHTML=RORDER.map(function(r){return '<span><i style="background:'+RC[r]+'"></i>'+r+' · '+(RKO[r]||'')+'</span>';}).join('');
+    var ct=el('ctabs');
+    if(ct)ct.querySelectorAll('.ctab').forEach(function(b){
+      b.addEventListener('click',function(){CPERF.i=+b.getAttribute('data-i');render();});});
     drawHist();
   }
 

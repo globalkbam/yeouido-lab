@@ -50,7 +50,7 @@ python3 -m http.server 8080   # → http://localhost:8080
 | 스크립트 | 굽는 것 | 소비처 |
 |---|---|---|
 | `build/screens_apply.py` | `stocks.json.screens` — 펀더멘털 스크리닝 통과 종목·적합도 | stocks.html · db_load |
-| `build/home_summary.py` | `home_reco.json` — 스윙 타점 상위 8+8, 확정/잠정 카운트, 배포 3종 성과·구간·축약 NAV | index.html |
+| `build/home_summary.py` | `home_reco.json` — 스윙 타점 상위 8+8, 확정/잠정 카운트 | index.html |
 | `build/verdicts_gen.py` | `verdicts.json` — 배포/제한적 유효/기각 집계(explorer·archive의 전략 배열에서 파싱) | index.html |
 
 홈은 대형 파일(`stocks.json` 354KB · `rotation_pool.json` 364KB · `strategy_backtests.json` 85KB)을

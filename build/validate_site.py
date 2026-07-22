@@ -273,6 +273,12 @@ try:
         for _d in _fresh["deploy"]:
             if _d["n"] not in _eh:
                 errors.append(f"배포 전략명이 explorer.html에 없음: {_d['n']}")
+        # 배포 전략에 백테스트가 있는지 — 이름을 고치면 explorer와 backtests가 조용히 어긋난다
+        _bt = json.load(io.open(os.path.join(ROOT, "data", "strategy_backtests.json"), encoding="utf-8"))
+        _bs = (_bt or {}).get("strategies") or {}
+        for _d in _fresh["deploy"]:
+            if _d["n"] not in _bs:
+                errors.append(f"배포 전략에 백테스트가 없음: {_d['n']} — 이름 불일치 의심")
 except Exception as e:
     errors.append(f"판정 원장 검증 실패: {e}")
 
