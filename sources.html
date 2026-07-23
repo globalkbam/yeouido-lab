@@ -111,19 +111,19 @@
       <tbody>
         <tr><th scope="row"><a href="stocks.html">종목 시그널</a></th>
           <td><span class="freetag">무료</span>yfinance · FINRA · 구성종목 리스트는 사내 DB(index_constituents) 스냅샷</td>
-          <td class="dt" id="src-stk">—</td><td>매일 07:35 KST</td></tr>
+          <td class="dt" id="src-stk">—</td><td>매일 08:35 KST</td></tr>
         <tr><th scope="row"><a href="regime.html">시장 국면</a></th>
           <td><span class="freetag">무료</span>FRED · yfinance</td>
-          <td class="dt" id="src-rg">—</td><td>매일 07:45 KST</td></tr>
+          <td class="dt" id="src-rg">—</td><td>매일 08:45 KST</td></tr>
         <tr><th scope="row"><a href="regime.html#sent">시장 심리</a></th>
           <td><span class="freetag">무료</span>yfinance(VIX·VIX3M·MOVE) · FRED(VIXCLS·NFCI)</td>
-          <td class="dt" id="src-snt">—</td><td>매일 08:00 KST</td></tr>
+          <td class="dt" id="src-snt">—</td><td>매일 09:00 KST</td></tr>
         <tr><th scope="row"><a href="rotation.html">오늘의 전략 탐색</a></th>
           <td><span class="freetag">무료</span>웹 리서치(공개 문헌)</td>
-          <td class="dt" id="src-rot">—</td><td>매일 07:50 KST</td></tr>
+          <td class="dt" id="src-rot">—</td><td>매일 08:50 KST</td></tr>
         <tr><th scope="row"><a href="explorer.html">현재 포트폴리오 구성</a></th>
           <td>yfinance(ETF·지수 가격) + <span class="dbtag">사내 DB</span>(종목선택 전략 신호)</td>
-          <td class="dt" id="src-hold">—</td><td>매월 1일 07:55 KST</td></tr>
+          <td class="dt" id="src-hold">—</td><td>매월 1일 08:55 KST</td></tr>
         <tr class="dbrow"><th scope="row"><a href="explorer.html">전략 백테스트·판정</a></th>
           <td><span class="dbtag">사내 DB</span>사내 리서치 DB(FactSet) · 벤치마크는 배당 재투자(총수익) 기준 SPY·QQQ</td>
           <td class="dt" id="src-bt">—</td><td>수시(정적)</td></tr>
@@ -138,14 +138,14 @@
     <p>NDX·SPX 512종목의 가격·테크니컬 22지표·EPS(트레일링/포워드)는 <b>yfinance</b>, 공매도잔량·커버일수는 <b>FINRA</b>(격주 공시라 가격 기준일보다 오래됨 — 페이지에 별도 기준일 표기).
       구성종목 리스트(<span style="font-family:var(--mono)">data/members.json</span>)는 사내 DB <b>index_constituents</b>의 최신 스냅샷입니다 — 지수 구성·회사명·GICS 섹터는 공개 정보로 재구성 가능한 수준이며, 지수 정기변경 시 재생성해 갱신합니다.
       갱신 잡에는 완전성 게이트가 있어 데이터 소스 부분 장애 시 갱신을 중단하고 이전본을 유지합니다.</p>
-    <div class="meta"><span><b>기준일</b><span id="d-stk">—</span></span><span><b>공매도 기준일</b><span id="d-si">—</span></span><span><b>구성종목 스냅샷</b><span id="d-memb">—</span></span><span><b>갱신</b>매일 07:35 + 08:10 KST (GitHub Actions)</span></div>
+    <div class="meta"><span><b>기준일</b><span id="d-stk">—</span></span><span><b>공매도 기준일</b><span id="d-si">—</span></span><span><b>구성종목 스냅샷</b><span id="d-memb">—</span></span><span><b>갱신</b>매일 08:35 + 09:10 KST (GitHub Actions)</span></div>
   </div>
 
   <div class="card">
     <h3><span class="freetag">무료</span><a href="regime.html">시장 국면</a> <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">data/regime.json</span></h3>
     <p>매크로 39지표(성장·노동·물가·금융·금리·주택)는 <b>FRED</b>(세인트루이스 연준 공개 API), 레짐별 자산·섹터·팩터 조건부 성과는 <b>yfinance</b>.
       각 지표의 '서프라이즈'는 자체 6개월 추세 대비 이탈이며 <b>애널리스트 컨센서스가 아닙니다</b>.</p>
-    <div class="meta"><span><b>기준일</b><span id="d-rg">—</span></span><span><b>갱신</b>매일 07:45 + 08:20 KST (GitHub Actions)</span></div>
+    <div class="meta"><span><b>기준일</b><span id="d-rg">—</span></span><span><b>갱신</b>매일 08:45 + 09:20 KST (GitHub Actions)</span></div>
   </div>
 
   <div class="card">
@@ -153,7 +153,7 @@
     <p>전략 풀은 <b>공개 논문·기관 리서치 웹 리서치</b>로 수집·검증한 카드이며, 카드마다 원 출처 링크를 표기합니다.
       성과 수치는 원 출처 인용(미검증)이고, 랩이 자체 검증한 전략에는 별도 판정 배지가 붙습니다.
       기준일·갱신일은 로테이션 페이지 상단에 표기됩니다.</p>
-    <div class="meta"><span><b>풀 갱신일</b><span id="d-rot">—</span></span><span><b>갱신</b>매일 07:50 KST — 그날의 10선 + 방치 3종 최근동향</span></div>
+    <div class="meta"><span><b>풀 갱신일</b><span id="d-rot">—</span></span><span><b>갱신</b>매일 08:50 KST — 그날의 10선 + 방치 3종 최근동향</span></div>
   </div>
 
   <div class="card">
@@ -161,7 +161,7 @@
     <p>전략별 <b>현재 보유 종목·자산과 비중</b>을 공개합니다. 자산배분 전략(12개 자산 분산·업종 분산·변동성 타깃)은
       yfinance 가격으로, 종목선택 전략(실적 상향주·저평가주·잉여현금 개선주·투자스타일 추종)은 사내 DB 신호로 산출합니다.
       리서치 재현 기준의 구성이며 실제 운용 계좌·실시간 비중이 아닙니다.</p>
-    <div class="meta"><span><b>리밸 기준일</b><span id="d-hold">—</span></span><span><b>생성일</b><span id="d-holdgen">—</span></span><span><b>갱신</b>매월 1일 07:55 KST (GitHub Actions)</span></div>
+    <div class="meta"><span><b>리밸 기준일</b><span id="d-hold">—</span></span><span><b>생성일</b><span id="d-holdgen">—</span></span><span><b>갱신</b>매월 1일 08:55 KST (GitHub Actions)</span></div>
   </div>
 
   <div class="card" style="background:color-mix(in srgb,var(--marg) 6%,var(--panel))">
@@ -186,7 +186,7 @@
       따라서 <b>업종을 처리변수로 쓰는 검증(업종 중립화·업종 로테이션의 시점정합판 등)은 이 컬럼으로 수행할 수 없으며</b>,
       해당 항목들은 성과가 나빠서가 아니라 <b>판정 불가</b>로 아카이브에 남아 있습니다.
       개편 이력이 반영된 히스토리컬 GICS 패널을 확보하기 전까지 이 제약은 유지됩니다.</p>
-    <div class="meta"><span><b>생성일</b><span id="d-btgen">—</span></span><span><b>백테스트 구간</b><span id="d-btspan">전략별 상이 — 각 패널 표기</span></span><span><b>무위험금리</b><span id="d-rf">—</span></span><span><b>갱신</b>지표 매주 월 08:20 KST + 백테스트 시계열 수시(정적 재생성)</span></div>
+    <div class="meta"><span><b>생성일</b><span id="d-btgen">—</span></span><span><b>백테스트 구간</b><span id="d-btspan">전략별 상이 — 각 패널 표기</span></span><span><b>무위험금리</b><span id="d-rf">—</span></span><span><b>갱신</b>지표 매주 월 09:20 KST + 백테스트 시계열 수시(정적 재생성)</span></div>
   </div>
 
   <footer>

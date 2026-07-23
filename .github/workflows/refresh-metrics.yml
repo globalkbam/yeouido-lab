@@ -7,7 +7,7 @@ name: Refresh strategy metrics (FRED rf)
 
 on:
   schedule:
-    - cron: '20 23 * * 0'          # 매주 월 08:20 KST
+    - cron: '20 0 * * 1'           # 매주 월 09:20 KST (00:20 UTC 월요일 — 전 UTC일 23:20에서 +1h이라 요일이 일→월로 넘어감)
   push:
     paths:
       - 'data/strategy_backtests.json'   # 시계열이 새로 커밋되면 지표를 즉시 다시 굽는다

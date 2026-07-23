@@ -2,8 +2,8 @@ name: Refresh market sentiment (VIX/FRED)
 
 on:
   schedule:
-    - cron: '0 23 * * *'    # 매일 08:00 KST (23:00 UTC 전일) — stocks(:35/:10)·regime(:45/:20)·holdings(:55)와 분(minute) 모두 어긋나게
-    - cron: '35 23 * * *'    # 08:35 KST 백업 (변경 없으면 스킵)
+    - cron: '0 0 * * *'     # 매일 09:00 KST (00:00 UTC 당일) — stocks(:35/:10)·regime(:45/:20)·holdings(:55)와 분(minute) 모두 어긋나게
+    - cron: '35 0 * * *'    # 09:35 KST 백업 (변경 없으면 스킵)
   workflow_dispatch:
 
 permissions:

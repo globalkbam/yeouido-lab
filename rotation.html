@@ -198,7 +198,7 @@
   var CATSHORT={A:'S&P500 초과',B:'NDX 초과',C:'단기 타이밍',D:'자산배분',E:'알파·팩터'};
   var DATA=null, state={q:'', cats:new Set(), mode:'today', labonly:false};
   // KST 고정: UTC였을 때 한국 사용자에게 00~09시에 '어제 날짜'가 뜨고 10선이 오전 9시에 바뀌었다.
-  // 갱신 잡(08:20 KST)이 뽑는 날짜와도 어긋났다 — rotation_select.py도 동일하게 KST를 쓴다.
+  // 갱신 잡(08:50 KST)이 뽑는 날짜와도 어긋났다 — rotation_select.py도 동일하게 KST를 쓴다.
   function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10);}
   function browsing(){return state.mode==='all' || !!state.q || state.cats.size>0 || state.labonly;}
   function selection(){

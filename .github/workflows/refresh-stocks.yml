@@ -2,8 +2,8 @@ name: Refresh stock signals (yfinance)
 
 on:
   schedule:
-    - cron: '35 22 * * *'    # 매일 07:35 KST (22:35 UTC 전일) — 미국장 마감 후(하계 155분·동계 95분 여유)·정시 부하 회피
-    - cron: '10 23 * * *'    # 08:10 KST 백업 (첫 슬롯 드롭 대비, 변경 없으면 스킵)
+    - cron: '35 23 * * *'    # 매일 08:35 KST (23:35 UTC 전일) — 미국장 마감 후 여유 확대·정시 부하 회피
+    - cron: '10 0 * * *'     # 09:10 KST 백업 (첫 슬롯 드롭 대비, 변경 없으면 스킵)
   workflow_dispatch:
 
 permissions:
