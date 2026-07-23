@@ -69,6 +69,9 @@
   .srctbl tbody th a:hover{color:var(--accent)}
   .srctbl td{color:var(--ink-2)}
   .srctbl .dt{font-family:var(--mono);white-space:nowrap;color:var(--ink)}
+  .srctbl .stale{display:inline-block;margin-left:6px;font-family:var(--mono);font-size:10px;font-weight:700;
+    color:var(--hot);background:color-mix(in srgb,var(--hot) 12%,transparent);
+    border:1px solid color-mix(in srgb,var(--hot) 40%,transparent);border-radius:5px;padding:1px 5px;white-space:nowrap}
   .srctbl .dbrow{background:color-mix(in srgb,var(--marg) 6%,transparent)}
   .dbtag{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--marg);border:1px solid color-mix(in srgb,var(--marg) 45%,transparent);border-radius:5px;padding:1px 6px;margin-right:6px;white-space:nowrap}
   .freetag{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 45%,transparent);border-radius:5px;padding:1px 6px;margin-right:6px;white-space:nowrap}
@@ -196,17 +199,30 @@
   function el(i){return document.getElementById(i);}
   function put(ids,v){ids.forEach(function(i){var e=el(i);if(e)e.textContent=v||'—';});}
   function j(u){return fetch(u,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
+  // 자동 갱신 '안 뜬' 케이스(스케줄러가 잡을 시작조차 안 함)는 실패 메일이 불가능하다(잡이 안 돌았으니).
+  //   그건 여기서 접속 시 눈에 보이게 드러낸다 — build/check_freshness.py와 같은 영업일 규약·같은 임계(2).
+  function bizBehind(asof){
+    if(!asof)return 0; var p=String(asof).slice(0,10).split('-'); if(p.length!==3)return 0;
+    var cur=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])), t=new Date(Date.now()+9*3600e3);   // KST 기준일
+    var end=Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate()), n=0;
+    while(cur.getTime()<end&&n<60){cur.setUTCDate(cur.getUTCDate()+1);var w=cur.getUTCDay();if(w!==0&&w!==6)n++;}
+    return n;
+  }
+  function putFresh(id,asof,maxbiz){
+    var e=el(id); if(!e)return; var n=bizBehind(asof), warn=n>=(maxbiz||2);
+    e.innerHTML=(asof||'—')+(warn?' <span class="stale" title="자동 갱신이 '+n+'영업일 지연됐습니다 — GitHub Actions에서 해당 워크플로를 재실행하세요">⚠ '+n+'일 지연</span>':'');
+  }
   // 기준일은 실데이터에서 — 초소형 파일만 fetch(home_reco 1KB·regime 20KB·holdings 3KB·members 40KB)
-  j('data/home_reco.json').then(function(h){if(h)put(['src-stk','d-stk'],h.as_of);});
-  j('data/regime.json').then(function(r){if(r)put(['src-rg','d-rg'],r.as_of);});
-  j('data/sentiment.json').then(function(r){if(r)put(['src-snt'],r.as_of);});
+  j('data/home_reco.json').then(function(h){if(h){put(['d-stk'],h.as_of);putFresh('src-stk',h.as_of,2);}});
+  j('data/regime.json').then(function(r){if(r){put(['d-rg'],r.as_of);putFresh('src-rg',r.as_of,2);}});
+  j('data/sentiment.json').then(function(r){if(r)putFresh('src-snt',r.as_of,2);});
   j('data/strategy_holdings.json').then(function(hd){
     if(!hd)return; put(['d-holdgen'],hd.generated);
     var ks=Object.keys(hd.strategies||{});
     if(ks.length)put(['src-hold','d-hold'],hd.strategies[ks[0]].as_of);
   });
   j('data/members.json').then(function(m){if(m)put(['d-memb'],m.as_of_members);});
-  j('data/rotation_pool.json').then(function(rp){if(rp)put(['src-rot','d-rot'],rp.generated);});
+  j('data/rotation_pool.json').then(function(rp){if(rp){put(['d-rot'],rp.generated);putFresh('src-rot',rp.generated,2);}});
   j('data/strategy_backtests.json').then(function(bt){
     if(!bt)return; put(['src-bt','d-btgen'],'생성 '+(bt.generated||'—'));
     var st=[],en=[];Object.keys(bt.strategies||{}).forEach(function(k){var b_=bt.strategies[k];if(b_.start)st.push(b_.start);if(b_.end)en.push(b_.end);});

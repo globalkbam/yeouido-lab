@@ -51,3 +51,8 @@ jobs:
           else
             echo "변경 없음 — 스킵"
           fi
+      # 갱신이 '돌았는데 낡은 데이터'면 잡을 실패시켜 GitHub 기본 실패 알림 메일이 소유자에게 가게 한다.
+      #   커밋 스텝 뒤라 데이터는 이미 남기고(있는 만큼 최선), 잡만 빨갛게 만든다.
+      #   '아예 안 뜬' 케이스는 이걸로 못 잡으니 sources.html 신선도 배지가 상보적으로 드러낸다.
+      - name: Verify freshness
+        run: python build/check_freshness.py data/stocks.json "종목 시그널" 2

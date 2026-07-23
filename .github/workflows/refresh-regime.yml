@@ -40,3 +40,6 @@ jobs:
           else
             echo "변경 없음 — 스킵"
           fi
+      # '돌았는데 낡은 데이터'면 잡 실패 → GitHub 기본 실패 알림 메일. '안 뜬' 케이스는 sources.html 배지가 드러낸다.
+      - name: Verify freshness
+        run: python build/check_freshness.py data/regime.json "시장 국면" 2
