@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install deps
-        run: pip install --quiet pandas numpy yfinance fredapi
+        run: pip install --quiet pandas numpy scipy yfinance fredapi
       - name: Compute market sentiment index
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
