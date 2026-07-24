@@ -18,82 +18,92 @@
 <meta name="twitter:description" content="계량 리서치 공개 — 구현·적대검증한 전략의 통과와 기각을 전부 공개. 종목 시그널·시장 국면·전략 탐색.">
 <script>try{var s=localStorage.getItem('yeouido-theme');if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}</script>
 <style>
+  /* ─────────────────────────────────────────────────────────────
+     여두 전략 랩 — SA(Seeking Alpha)풍 리서치 대시보드 스타일.
+     쿨-뉴트럴 팔레트 + 브랜드 골드 액센트 유지. 등급 스펙트럼(A→F)·
+     상단 내비·데이터 밀도형 카드. 다크 토큰은 기존 값을 보존한다. */
   :root{
-    --ground:#F4F1EA;--panel:#FFFFFF;--panel-2:#F8F6F1;--line:#E2DDD1;--line-soft:#EDE9E0;
-    --ink:#2A2621;--ink-2:#4B453B;--muted:#786F61;--accent:#8A6B00;--accent-2:#5E4900;
-    --deploy:#0E8A54;--deploy-bg:#dff0e6;--marg:#B25E12;--champ:#2C6E8F;--rp:#7A5AA6;--hot:#A64B3B;
-    --shadow:0 1px 2px rgba(42,38,33,.05),0 10px 30px -14px rgba(42,38,33,.2);
+    --ground:#F5F7FA;--panel:#FFFFFF;--panel-2:#EEF2F6;--line:#DCE3EA;--line-soft:#E9EEF3;
+    --ink:#1B2733;--ink-2:#42505E;--muted:#66757F;--accent:#8A6B00;--accent-2:#5E4900;
+    --deploy:#0E8A54;--deploy-bg:#dcefe5;--marg:#B25E12;--champ:#2C6E8F;--rp:#7A5AA6;--hot:#A64B3B;
+    --gA:#158A52;--gB:#4F9A54;--gC:#B0870F;--gD:#C2600F;--gF:#A64B3B;
+    --shadow:0 1px 2px rgba(23,39,51,.05),0 10px 30px -16px rgba(23,39,51,.18);
   }
   @media (prefers-color-scheme:dark){:root{
-    --ground:#15130F;--panel:#201D18;--panel-2:#2A2620;--line:#3A342B;--line-soft:#2F2A23;
-    --ink:#F1EDE4;--ink-2:#D0C9BB;--muted:#968C7C;--accent:#FFBC00;--accent-2:#FFD766;
+    --ground:#0F141A;--panel:#181E26;--panel-2:#20272F;--line:#2E3742;--line-soft:#242C34;
+    --ink:#EAEEF2;--ink-2:#C4CDD6;--muted:#8A97A3;--accent:#FFBC00;--accent-2:#FFD766;
     --deploy:#38D083;--deploy-bg:#12291f;--marg:#F0863C;--champ:#6BB0D6;--rp:#B79AE0;--hot:#E5806A;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);
+    --gA:#2FBE77;--gB:#5FB06A;--gC:#D6A537;--gD:#E5893C;--gF:#E5806A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.6);
   }}
-  :root[data-theme="light"]{--ground:#F4F1EA;--panel:#FFFFFF;--panel-2:#F8F6F1;--line:#E2DDD1;--line-soft:#EDE9E0;--ink:#2A2621;--ink-2:#4B453B;--muted:#786F61;--accent:#8A6B00;--accent-2:#5E4900;--deploy:#0E8A54;--deploy-bg:#dff0e6;--marg:#B25E12;--champ:#2C6E8F;--rp:#7A5AA6;--hot:#A64B3B;--shadow:0 1px 2px rgba(42,38,33,.05),0 10px 30px -14px rgba(42,38,33,.2);}
-  :root[data-theme="dark"]{--ground:#15130F;--panel:#201D18;--panel-2:#2A2620;--line:#3A342B;--line-soft:#2F2A23;--ink:#F1EDE4;--ink-2:#D0C9BB;--muted:#968C7C;--accent:#FFBC00;--accent-2:#FFD766;--deploy:#38D083;--deploy-bg:#12291f;--marg:#F0863C;--champ:#6BB0D6;--rp:#B79AE0;--hot:#E5806A;--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);}
-  /* 폭 토큰 — 페이지마다 제각각(1440/1120/1080/1040/980)이라 이동할 때 폭이 튀었다.
-     넓은 표(종목 시그널)·본문형(홈·전략·국면)·읽기형(출처) 세 가지로만 통일한다. */
+  :root[data-theme="light"]{--ground:#F5F7FA;--panel:#FFFFFF;--panel-2:#EEF2F6;--line:#DCE3EA;--line-soft:#E9EEF3;--ink:#1B2733;--ink-2:#42505E;--muted:#66757F;--accent:#8A6B00;--accent-2:#5E4900;--deploy:#0E8A54;--deploy-bg:#dcefe5;--marg:#B25E12;--champ:#2C6E8F;--rp:#7A5AA6;--hot:#A64B3B;--gA:#158A52;--gB:#4F9A54;--gC:#B0870F;--gD:#C2600F;--gF:#A64B3B;--shadow:0 1px 2px rgba(23,39,51,.05),0 10px 30px -16px rgba(23,39,51,.18);}
+  :root[data-theme="dark"]{--ground:#0F141A;--panel:#181E26;--panel-2:#20272F;--line:#2E3742;--line-soft:#242C34;--ink:#EAEEF2;--ink-2:#C4CDD6;--muted:#8A97A3;--accent:#FFBC00;--accent-2:#FFD766;--deploy:#38D083;--deploy-bg:#12291f;--marg:#F0863C;--champ:#6BB0D6;--rp:#B79AE0;--hot:#E5806A;--gA:#2FBE77;--gB:#5FB06A;--gC:#D6A537;--gD:#E5893C;--gF:#E5806A;--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.6);}
   :root{--w-wide:1440px;--w-base:1200px;--w-read:980px}
   *,*::before,*::after{box-sizing:border-box}
-  /* 본문 글꼴: 맑은 고딕 우선. Segoe UI에는 한글 글리프가 없어 한글은 어차피 맑은 고딕으로
-     떨어졌고, 영문만 Segoe UI로 갈렸다 — 한 글꼴로 통일한다. 숫자·차트 라벨은 고정폭(--mono)
-     유지: 맑은 고딕은 가변폭이라 적합도·수익률 열이 어긋난다. */
   :root{--mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",monospace;--sans:"Malgun Gothic","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
-  /* keep-all은 한글 단어를 안 쪼개려고 넣은 것인데, 끊을 곳 없는 라틴 문자열
-     (예: "(Goldilocks·Recovery·…·Recession)" 527px)까지 통째로 붙들어 모바일에서 페이지를
-     가로로 밀어냈다. overflow-wrap:break-word는 **넘칠 때만** 끊으므로 한글 단어 보전은 유지된다. */
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
   .tnum{font-variant-numeric:tabular-nums}
+  a{color:inherit}
   .wrap{max-width:var(--w-base);margin:0 auto;padding:0 22px 80px}
 
-  /* ── 마스트헤드 ─────────────────────────────────────────────── */
-  header.mast{padding:44px 0 24px;border-bottom:1px solid var(--line)}
-  .utilbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px}
-  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600}
-  /* 테마 버튼은 position:fixed였다 — 폭을 넓히면 우측 콘텐츠와 겹치므로 유틸바 안으로 넣는다 */
-  .themebtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  /* ── 상단 내비게이션(SA풍 지속 바) ───────────────────────────── */
+  .topnav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .nvin{max-width:var(--w-base);margin:0 auto;padding:0 22px;height:52px;display:flex;align-items:center;gap:18px}
+  .topnav .brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:-.01em;flex:none}
+  .topnav .brand svg{width:22px;height:22px;flex:none}
+  .navlinks{display:flex;align-items:center;gap:2px;margin-left:6px;overflow-x:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink-2);text-decoration:none;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  .navlinks a:hover{background:var(--panel-2);color:var(--accent)}
+  .navlinks a[aria-current="page"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent)}
+  .navlinks a .lk{font-size:9px;opacity:.6;margin-left:3px;vertical-align:1px}
+  .navsp{flex:1}
+  .themebtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
   .themebtn:hover{border-color:var(--accent)}
-  h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(28px,5.4vw,44px);line-height:1.1;letter-spacing:-.015em;margin:0;text-wrap:balance}
-  h1.title span.gx{background:linear-gradient(92deg,var(--accent),var(--champ) 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .asofbar{margin:16px 0 0;display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 15px;box-shadow:var(--shadow);font-family:var(--mono);font-size:12px}
-  .asofbar .asoftag{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600}
+  @media(max-width:640px){.topnav .nvin{gap:10px;padding:0 14px}.wrap{padding:0 14px 60px}}
+
+  /* ── 히어로 ─────────────────────────────────────────────────── */
+  header.mast{padding:40px 0 22px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;display:flex;align-items:center;gap:12px}
+  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
+  h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(27px,5vw,42px);line-height:1.08;letter-spacing:-.02em;margin:14px 0 0;text-wrap:balance}
+  h1.title span.gx{background:linear-gradient(92deg,var(--accent),var(--champ) 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .herolede{margin:14px 0 0;max-width:74ch;font-size:15px;color:var(--ink-2)}
+  .herolede b{color:var(--ink)}
+  .asofbar{margin:18px 0 0;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 15px;box-shadow:var(--shadow);font-family:var(--mono);font-size:12px}
+  .asofbar .asoftag{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:700}
   .asofbar b{color:var(--ink);font-size:14px;font-weight:700}
-  .asofbar .asofnote{color:var(--muted);font-size:10.5px;border-left:1px solid var(--line);padding-left:9px}
-  /* 자동갱신(GitHub cron)이 조용히 실패하면 낡은 신호가 최신처럼 보이므로 명시 경고 */
-  .stalewarn{color:var(--hot);font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--hot) 45%,transparent);border-radius:5px;padding:2px 7px}
+  .asofbar .asofnote{color:var(--muted);font-size:10.5px;border-left:1px solid var(--line);padding-left:10px}
+  .stalewarn{color:var(--hot);font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--hot) 45%,transparent);border-radius:6px;padding:2px 8px}
   @media(max-width:560px){.asofbar .asofnote{border-left:0;padding-left:0;flex-basis:100%}}
 
-  /* ── 본문 흐름 ─────────────────────────────────────────────
-     사이드 레일 대신 위→아래 한 줄기: 시장 → 신호 → 전략 → 도구 → 업데이트.
-     전폭이므로 안쪽을 2열 이상으로 쪼개 밀도를 유지한다(카드 하나가 늘어나 비지 않도록). */
-  .home{margin-top:28px;display:flex;flex-direction:column;gap:30px}
+  /* ── 본문 흐름 ──────────────────────────────────────────────── */
+  .home{margin-top:30px;display:flex;flex-direction:column;gap:34px}
   .mkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
-  .lbl{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .lbl::before{content:"";width:3px;height:14px;background:var(--accent);border-radius:2px;flex:none}
   .lbl .sub{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)}
 
-  /* ── 판정 원장 ───────────────────────────────────────────────
-     숫자는 HTML에 적지 않는다 — data/verdicts.json(빌드가 explorer·archive 배열에서 파싱).
-     손으로 적으면 전략 등재일에 조용히 틀리고, 정직성 페이지가 틀린 숫자를 자랑하게 된다. */
-  .ledger{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 20px}
-  .ldrow{display:flex;align-items:baseline;gap:22px;flex-wrap:wrap}
-  .ldn{font-family:var(--mono);text-decoration:none;display:inline-flex;align-items:baseline;gap:7px}
-  .ldn b{font-size:23px;font-weight:700;color:var(--c,var(--ink));line-height:1}
+  /* ── 판정 원장 ──────────────────────────────────────────────── */
+  .ledger{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 22px}
+  .ldrow{display:flex;align-items:baseline;gap:26px;flex-wrap:wrap}
+  .ldn{font-family:var(--mono);text-decoration:none;display:inline-flex;align-items:baseline;gap:8px}
+  .ldn b{font-size:25px;font-weight:800;color:var(--c,var(--ink));line-height:1}
   .ldn span{font-size:12px;color:var(--muted)}
   a.ldn:hover b{color:var(--accent)}
-  .ldnote{margin:9px 0 0;font-size:11.5px;color:var(--muted);line-height:1.6}
+  .ldnote{margin:11px 0 0;font-size:11.5px;color:var(--muted);line-height:1.6}
   .ldskel{font-family:var(--mono);font-size:12px;color:var(--muted)}
 
-  /* ── 오늘의 신호 ─────────────────────────────────────────── */
-  .signote{background:var(--panel-2);border:1px solid var(--line-soft);border-left:3px solid var(--marg);border-radius:9px;padding:8px 12px;margin:0 0 12px;font-size:11.5px;color:var(--ink-2);line-height:1.65}
+  /* ── 오늘의 신호 ────────────────────────────────────────────── */
+  .signote{background:var(--panel-2);border:1px solid var(--line-soft);border-left:3px solid var(--marg);border-radius:9px;padding:9px 13px;margin:0 0 13px;font-size:11.5px;color:var(--ink-2);line-height:1.65}
   .signote b{color:var(--ink)}
   .reco-stocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
-  .rcol{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;box-shadow:var(--shadow)}
-  .rcol h4{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin:0 0 8px;display:flex;justify-content:space-between;gap:8px}
-  a.rstk{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;text-decoration:none}
-  a.rstk.brec{background:color-mix(in srgb,var(--deploy) 9%,transparent);border-bottom:0;border-radius:7px;padding:5px 8px;margin:2px 0}
-  a.rstk.srec{background:color-mix(in srgb,var(--hot) 9%,transparent);border-bottom:0;border-radius:7px;padding:5px 8px;margin:2px 0}
+  .rcol{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .rcol h4{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin:0 0 9px;display:flex;justify-content:space-between;gap:8px}
+  a.rstk{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;text-decoration:none}
+  a.rstk.brec{background:color-mix(in srgb,var(--deploy) 9%,transparent);border-bottom:0;border-radius:8px;padding:6px 9px;margin:2px 0}
+  a.rstk.srec{background:color-mix(in srgb,var(--hot) 9%,transparent);border-bottom:0;border-radius:8px;padding:6px 9px;margin:2px 0}
   a.rstk.brec:hover{background:color-mix(in srgb,var(--deploy) 16%,transparent)}
   a.rstk.srec:hover{background:color-mix(in srgb,var(--hot) 16%,transparent)}
   a.rstk:last-child{border-bottom:none} a.rstk:hover .rk{color:var(--accent)}
@@ -104,22 +114,27 @@
   .rstk .rv{font-family:var(--mono);font-size:11px;color:var(--ink-2);white-space:nowrap}
   @media(max-width:400px){.rstk .rn2{display:none}}
 
-  /* ── 레일 카드(지금 시장) ─────────────────────────────────── */
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px;display:block;text-decoration:none;color:inherit;border-top:3px solid var(--edge,var(--line))}
-  a.card:hover{border-color:var(--accent)}
+  /* ── 시장 카드(지금 시장) ───────────────────────────────────── */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:15px 17px;display:block;text-decoration:none;color:inherit;border-top:3px solid var(--edge,var(--line));transition:border-color .12s,transform .12s}
+  a.card:hover{border-color:var(--accent);transform:translateY(-2px)}
   .card .ch{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
-  .card .cv{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--edge,var(--ink));margin-top:5px;line-height:1.2}
-  .card .cd{font-size:12px;color:var(--ink-2);margin-top:5px;line-height:1.55}
-  .card .cx{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:7px;display:flex;gap:9px;flex-wrap:wrap}
-  .axis{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;color:var(--muted);background:color-mix(in srgb,var(--muted) 12%,transparent)}
-  .cbadge{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:8px;display:inline-block}
+  .card .cv{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--edge,var(--ink));margin-top:6px;line-height:1.2}
+  .card .cd{font-size:12px;color:var(--ink-2);margin-top:6px;line-height:1.55}
+  .card .cx{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px;display:flex;gap:9px;flex-wrap:wrap}
+  .axis{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:5px;padding:2px 7px;color:var(--muted);background:color-mix(in srgb,var(--muted) 12%,transparent)}
+  .cbadge{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:2px 7px;margin-top:9px;display:inline-block}
 
-  /* ── 최근 업데이트(레일) ──────────────────────────────────── */
-  .updwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:4px 20px}
-  .upd{display:grid;grid-template-columns:158px 104px 1fr;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;text-decoration:none}
+  /* ── 등급 배지 · 레이팅 필(SA 시그니처, 도구 페이지로 확장 예정) ── */
+  .grade{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:22px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:800;padding:0 6px;color:#fff;line-height:1}
+  .grade.gA{background:var(--gA)}.grade.gB{background:var(--gB)}.grade.gC{background:var(--gC)}.grade.gD{background:var(--gD)}.grade.gF{background:var(--gF)}
+  .rpill{display:inline-flex;gap:7px;align-items:center;font-family:var(--mono);font-size:11px;font-weight:700;border-radius:999px;padding:4px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2)}
+
+  /* ── 최근 업데이트 ──────────────────────────────────────────── */
+  .updwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:4px 22px}
+  .upd{display:grid;grid-template-columns:158px 108px 1fr;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;text-decoration:none}
   .upd:last-child{border-bottom:none}
   .upd .ud{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
-  .upd .ut{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:5px;padding:2px 0;white-space:nowrap;
+  .upd .ut{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:6px;padding:3px 0;white-space:nowrap;
            color:var(--utc,var(--muted));background:color-mix(in srgb,var(--utc,var(--muted)) 13%,transparent);border:1px solid color-mix(in srgb,var(--utc,var(--muted)) 38%,transparent)}
   .upd .uv{color:var(--ink-2);font-size:13.5px;line-height:1.5}
   @media(max-width:640px){.upd{grid-template-columns:1fr auto;gap:3px 8px;font-size:12.5px}.upd .ut{justify-self:end}.upd .uv{grid-column:1/-1;font-size:12.5px}}
@@ -129,33 +144,51 @@
   a.upd:hover .uv{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
   .updempty{padding:14px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
 
-
-
-  /* ── 도구 타일 ──────────────────────────────────────────── */
-  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}
-  a.tile{display:flex;flex-direction:column;gap:3px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;box-shadow:var(--shadow);border-top:3px solid var(--edge,var(--accent));transition:transform .12s,border-color .12s}
+  /* ── 도구·전략 타일 ─────────────────────────────────────────── */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:13px}
+  a.tile{display:flex;flex-direction:column;gap:4px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 15px;box-shadow:var(--shadow);border-top:3px solid var(--edge,var(--accent));transition:transform .12s,border-color .12s}
   a.tile:hover{transform:translateY(-2px);border-color:var(--accent)}
-  .tile .tn{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);line-height:1.25}
-  .tile .td{font-size:11px;color:var(--muted);line-height:1.45}
-  .tile .tb{font-family:var(--mono);font-size:10px;color:var(--edge,var(--muted));font-weight:700;margin-top:2px}
+  .tile .tn{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink);line-height:1.25}
+  .tile .td{font-size:11.5px;color:var(--muted);line-height:1.45}
+  .tile .tb{font-family:var(--mono);font-size:10px;color:var(--edge,var(--muted));font-weight:700;margin-top:3px}
   @media(max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}}
 
-  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:10.5px;line-height:1.8}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:10.5px;line-height:1.8}
   footer a{color:var(--accent);text-decoration:none} footer a:hover{text-decoration:underline}
   .lockmark{margin-left:5px;font-size:11px;opacity:.65;vertical-align:1px}
   a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media(pointer:coarse){a.rstk,a.upd,a.tile{min-height:40px}}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
 </style>
 </head>
 <body>
+
+<nav class="topnav" aria-label="주 메뉴">
+  <div class="nvin">
+    <a class="brand" href="index.html" aria-current="page">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="currentColor" opacity=".12"/><path d="M6 22 L13 15 L18 19 L26 8" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="8" r="2.4" fill="var(--accent)"/></svg>
+      여두 랩
+    </a>
+    <div class="navlinks">
+      <a href="stocks.html">종목 시그널</a>
+      <a href="regime.html">시장 국면</a>
+      <a href="explorer.html" rel="nofollow">전략 리스트<span class="lk">🔒</span></a>
+      <a href="rotation.html" rel="nofollow">전략 탐색<span class="lk">🔒</span></a>
+      <a href="archive.html" rel="nofollow">기각</a>
+      <a href="sources.html" rel="nofollow">출처</a>
+      <a href="kb.html" rel="nofollow">BK<span class="lk">🔒</span></a>
+    </div>
+    <span class="navsp"></span>
+    <button class="themebtn" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
+  </div>
+</nav>
+
 <div class="wrap">
   <header class="mast">
-    <div class="utilbar">
-      <div class="eyebrow">Yeodoo Quant Strategy Lab</div>
-      <button class="themebtn" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
-    </div>
+    <div class="eyebrow">Yeodoo Quant Strategy Lab</div>
     <h1 class="title">여두 <span class="gx">전략 랩</span></h1>
+    <p class="herolede">나스닥100·S&amp;P500 <b>518종목</b>과 FRED 매크로로 퀀트 전략을 구현하고 <b>적대적으로 검증</b>한 뒤, 통과·기각 판정을 전부 공개합니다.</p>
     <div class="asofbar" id="asofbar">
       <span class="asoftag">데이터 기준일</span><b id="mainasof">불러오는 중…</b>
       <span class="asofnote">가격·테크니컬·EPS·시장국면 통일 · 공매도잔량만 격주(FINRA)</span>
@@ -186,7 +219,7 @@
       <div class="reco-stocks" id="recostocks"><div class="rcol"><h4>불러오는 중…</h4></div></div>
     </section>
 
-    <!-- ③ 전략 — 판정 원장 → 배포 판정 → 검증하지 않은 것.
+    <!-- ④ 전략 — 판정 원장 → 배포 판정 → 검증하지 않은 것.
          '검증하지 않은 것'을 배포 바로 아래 두는 배치는 유지한다(자랑 다음 칸이 자기부정). -->
     <section id="s-ledger" aria-labelledby="ld-h">
       <p class="lbl" id="ld-h">전략 <span class="sub">· 구현 → 적대검증 → 판정</span></p>
@@ -208,6 +241,7 @@
     <a href="archive.html" rel="nofollow">기각 아카이브</a><span id="ft-arc"></span> · <a href="sources.html" rel="nofollow">데이터 출처·기준일</a> · <a href="kb.html" rel="nofollow">BK</a><span class="lockmark" title="열람 암호 필요">🔒</span>
   </footer>
 </div>
+
 <script>
 (function(){
   var root=document.documentElement, btn=document.getElementById('themebtn');
