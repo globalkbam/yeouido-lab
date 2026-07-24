@@ -19,19 +19,19 @@
 <meta name="twitter:description" content="나스닥100·S&P500 구성종목 테크니컬 매매 타이밍 — 스윙 저점매수/고점매도·과매수/과매도·눌림목·52주돌파.">
 <style>
   :root{
-    --ground:#F4F1EA;--panel:#FFFFFF;--panel-2:#F8F6F1;--line:#E2DDD1;--line-soft:#EDE9E0;
-    --ink:#2A2621;--ink-2:#4B453B;--muted:#786F61;--accent:#8A6B00;--accent-2:#5E4900;
-    --hot:#A64B3B;--hot-bg:#f3e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dff0e6;--watch:#B25E12;--watch-bg:#f7e6d5;
-    --shadow:0 1px 2px rgba(42,38,33,.05),0 8px 24px -12px rgba(42,38,33,.18);--sel:color-mix(in srgb,var(--accent) 12%,var(--panel));
+    --ground:#F5F7FA;--panel:#FFFFFF;--panel-2:#EEF2F6;--line:#DCE3EA;--line-soft:#E9EEF3;
+    --ink:#1B2733;--ink-2:#42505E;--muted:#66757F;--accent:#8A6B00;--accent-2:#5E4900;--gA:#158A52;--gB:#4F9A54;--gC:#B0870F;--gD:#C2600F;--gF:#A64B3B;
+    --hot:#A64B3B;--hot-bg:#f2e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dcefe5;--watch:#B25E12;--watch-bg:#f7e6d5;
+    --shadow:0 1px 2px rgba(23,39,51,.05),0 8px 24px -12px rgba(23,39,51,.18);--sel:color-mix(in srgb,var(--accent) 12%,var(--panel));
   }
   @media (prefers-color-scheme:dark){:root{
-    --ground:#15130F;--panel:#201D18;--panel-2:#2A2620;--line:#3A342B;--line-soft:#2F2A23;
-    --ink:#F1EDE4;--ink-2:#D0C9BB;--muted:#968C7C;--accent:#FFBC00;--accent-2:#FFD766;
+    --ground:#0F141A;--panel:#181E26;--panel-2:#20272F;--line:#2E3742;--line-soft:#242C34;
+    --ink:#EAEEF2;--ink-2:#C4CDD6;--muted:#8A97A3;--accent:#FFBC00;--accent-2:#FFD766;--gA:#2FBE77;--gB:#5FB06A;--gC:#D6A537;--gD:#E5893C;--gF:#E5806A;
     --hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#F0863C;--watch-bg:#2b1c12;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);--sel:color-mix(in srgb,var(--accent) 16%,var(--panel));
   }}
-  :root[data-theme="light"]{--ground:#F4F1EA;--panel:#FFFFFF;--panel-2:#F8F6F1;--line:#E2DDD1;--line-soft:#EDE9E0;--ink:#2A2621;--ink-2:#4B453B;--muted:#786F61;--accent:#8A6B00;--accent-2:#5E4900;--hot:#A64B3B;--hot-bg:#f3e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dff0e6;--watch:#B25E12;--watch-bg:#f7e6d5;--shadow:0 1px 2px rgba(42,38,33,.05),0 8px 24px -12px rgba(42,38,33,.18);--sel:color-mix(in srgb,var(--accent) 12%,var(--panel));}
-  :root[data-theme="dark"]{--ground:#15130F;--panel:#201D18;--panel-2:#2A2620;--line:#3A342B;--line-soft:#2F2A23;--ink:#F1EDE4;--ink-2:#D0C9BB;--muted:#968C7C;--accent:#FFBC00;--accent-2:#FFD766;--hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#F0863C;--watch-bg:#2b1c12;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);--sel:color-mix(in srgb,var(--accent) 16%,var(--panel));}
+  :root[data-theme="light"]{--ground:#F5F7FA;--panel:#FFFFFF;--panel-2:#EEF2F6;--line:#DCE3EA;--line-soft:#E9EEF3;--ink:#1B2733;--ink-2:#42505E;--muted:#66757F;--accent:#8A6B00;--accent-2:#5E4900;--gA:#158A52;--gB:#4F9A54;--gC:#B0870F;--gD:#C2600F;--gF:#A64B3B;--hot:#A64B3B;--hot-bg:#f2e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dcefe5;--watch:#B25E12;--watch-bg:#f7e6d5;--shadow:0 1px 2px rgba(23,39,51,.05),0 8px 24px -12px rgba(23,39,51,.18);--sel:color-mix(in srgb,var(--accent) 12%,var(--panel));}
+  :root[data-theme="dark"]{--ground:#0F141A;--panel:#181E26;--panel-2:#20272F;--line:#2E3742;--line-soft:#242C34;--ink:#EAEEF2;--ink-2:#C4CDD6;--muted:#8A97A3;--accent:#FFBC00;--accent-2:#FFD766;--gA:#2FBE77;--gB:#5FB06A;--gC:#D6A537;--gD:#E5893C;--gF:#E5806A;--hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#F0863C;--watch-bg:#2b1c12;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);--sel:color-mix(in srgb,var(--accent) 16%,var(--panel));}
   *,*::before,*::after{box-sizing:border-box}
   /* 본문 글꼴: 맑은 고딕 우선. Segoe UI에는 한글 글리프가 없어 한글은 어차피 맑은 고딕으로
      떨어졌고, 영문만 Segoe UI로 갈렸다 — 한 글꼴로 통일한다. 숫자·차트 라벨은 고정폭(--mono)
@@ -43,7 +43,7 @@
      (예: "(Goldilocks·Recovery·…·Recession)" 527px)까지 통째로 붙들어 모바일에서 페이지를
      가로로 밀어냈다. overflow-wrap:break-word는 **넘칠 때만** 끊으므로 한글 단어 보전은 유지된다. */
   .wrap{max-width:var(--w-wide);margin:0 auto;padding:0 20px 70px}
-  header.mast{padding:64px 0 16px;border-bottom:1px solid var(--line)}
+  header.mast{padding:34px 0 16px;border-bottom:1px solid var(--line)}
   .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:12px}
   .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
   h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(23px,4vw,34px);line-height:1.14;letter-spacing:-.01em;margin:14px 0 0}
@@ -52,7 +52,7 @@
   .stat{display:inline-flex;align-items:baseline;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--muted)}
   .stat b{color:var(--ink);font-size:14px;font-weight:600}
 
-  .controls{position:sticky;top:56px;z-index:5;background:color-mix(in srgb,var(--ground) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:14px 0 11px;margin-top:8px;border-bottom:1px solid var(--line-soft)}
+  .controls{position:sticky;top:52px;z-index:5;background:color-mix(in srgb,var(--ground) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:14px 0 11px;margin-top:8px;border-bottom:1px solid var(--line-soft)}
   .searchrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .search{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;box-shadow:var(--shadow)}
   .search input{border:0;background:transparent;color:var(--ink);font-family:var(--sans);font-size:14px;width:100%;outline:none}
@@ -149,6 +149,7 @@
   .cmp .cl{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;color:var(--muted)}
   .cmp .cv{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1;margin-top:5px}
   .cmp .cu{font-size:8.5px;color:var(--muted);margin-top:3px}
+  .cmp .cmeter{height:4px;border-radius:3px;background:var(--line-soft);margin:6px 5px 0;overflow:hidden}.cmp .cmeter>span{display:block;height:100%;border-radius:3px}
   .fund{padding:13px 20px 5px;border-bottom:1px solid var(--line-soft)}
   .fhd{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:9px;display:flex;justify-content:space-between}
   .fhd span{text-transform:none;letter-spacing:0;opacity:.7;font-weight:400}
@@ -257,10 +258,22 @@
   .siglegend i{width:9px;height:9px;border-radius:3px;display:inline-block}
   .marklegend{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;gap:10px}
 
-  a.home,button.theme{position:fixed;top:14px;z-index:50;height:38px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);box-shadow:var(--shadow);border-radius:10px;cursor:pointer}
-  a.home{left:14px;display:flex;align-items:center;gap:6px;padding:0 13px;font-family:var(--mono);font-size:12px;font-weight:600;text-decoration:none}
-  button.theme{right:14px;width:38px;font-size:16px}
-  a.home:hover,button.theme:hover{border-color:var(--accent)}
+  .topnav{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .nvin{max-width:var(--w-wide);margin:0 auto;padding:0 20px;height:52px;display:flex;align-items:center;gap:16px}
+  .topnav .brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:-.01em;flex:none}
+  .topnav .brand svg{width:22px;height:22px;flex:none}
+  .navlinks{display:flex;align-items:center;gap:2px;margin-left:4px;overflow-x:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink-2);text-decoration:none;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  .navlinks a:hover{background:var(--panel-2);color:var(--accent)}
+  .navlinks a[aria-current="page"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent)}
+  .navlinks a .lk{font-size:9px;opacity:.6;margin-left:3px;vertical-align:1px}
+  .navsp{flex:1}
+  .themebtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .themebtn:hover{border-color:var(--accent)}
+  .grade{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:22px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:800;padding:0 6px;color:#fff;line-height:1}
+  .grade.gA{background:var(--gA)}.grade.gB{background:var(--gB)}.grade.gC{background:var(--gC)}.grade.gD{background:var(--gD)}.grade.gF{background:var(--gF)}
+  .rpill{display:inline-flex;gap:7px;align-items:center;font-family:var(--mono);font-size:11px;font-weight:700;border-radius:999px;padding:4px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2)}
   footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.8}
   footer a{color:var(--accent);text-decoration:none}
   @media(max-width:840px){.board{grid-template-columns:1fr}.listwrap{max-height:none;order:2}.detail{position:static;order:1;margin-bottom:16px}.dbody{max-height:none}}
@@ -276,8 +289,25 @@
 </style>
 </head>
 <body>
-<a class="home" href="index.html" title="홈">← 홈</a>
-<button class="theme" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
+<nav class="topnav" aria-label="주 메뉴">
+  <div class="nvin">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="currentColor" opacity=".12"/><path d="M6 22 L13 15 L18 19 L26 8" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="8" r="2.4" fill="var(--accent)"/></svg>
+      여두 랩
+    </a>
+    <div class="navlinks">
+      <a href="stocks.html" aria-current="page">종목 시그널</a>
+      <a href="regime.html">시장 국면</a>
+      <a href="explorer.html" rel="nofollow">전략 리스트<span class="lk">🔒</span></a>
+      <a href="rotation.html" rel="nofollow">전략 탐색<span class="lk">🔒</span></a>
+      <a href="archive.html" rel="nofollow">기각</a>
+      <a href="sources.html" rel="nofollow">출처</a>
+      <a href="kb.html" rel="nofollow">BK<span class="lk">🔒</span></a>
+    </div>
+    <span class="navsp"></span>
+    <button class="themebtn" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
+  </div>
+</nav>
 <div class="wrap">
   <header class="mast">
     <div class="eyebrow">여두 전략 랩 · 종목 테크니컬</div>
@@ -857,7 +887,7 @@
         '<div class="dbody"><div class="empty">상세 데이터를 불러오지 못했습니다 (data/sd/'+esc(s.t)+'.json). 새로고침 해보세요.</div></div>';
       return;
     }
-    var comps=COMPS.map(function(c){var v=s.comp[c[0]];return '<div class="cmp"><div class="cl">'+c[1]+'</div><div class="cv" style="color:'+cc(c[0])+'">'+(v!=null?Math.round(v):'—')+'</div><div class="cu">'+(v!=null?'pct':'')+'</div></div>';}).join('');
+    var comps=COMPS.map(function(c){var v=s.comp[c[0]];return '<div class="cmp"><div class="cl">'+c[1]+'</div><div class="cv" style="color:'+cc(c[0])+'">'+(v!=null?Math.round(v):'—')+'</div><div class="cmeter">'+(v!=null?'<span style="width:'+Math.max(2,Math.min(100,Math.round(v)))+'%;background:'+cc(c[0])+'"></span>':'')+'</div><div class="cu">'+(v!=null?'pct':'')+'</div></div>';}).join('');
     var byG={};Object.keys(F).forEach(function(k){var d=F[k];if(s.sig[k]==null)return;(byG[d.group]=byG[d.group]||[]).push([k,d,s.sig[k]]);});
     var body=GROUPS.map(function(g){
       var arr=byG[g[0]];if(!arr)return '';
