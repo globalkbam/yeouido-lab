@@ -239,12 +239,6 @@
   .timstate{font-family:var(--mono);font-size:16px;font-weight:700}
   .timsub{font-size:10.5px;color:var(--muted)}
   .tsum{font-size:11.5px;color:var(--ink-2);margin-bottom:12px;padding:8px 11px;background:var(--panel-2);border-radius:8px;line-height:1.5}
-  .tpbox{margin-bottom:12px;padding:9px 11px;background:var(--panel-2);border-radius:8px}
-  .tphd{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
-  .pivrow{display:flex;flex-wrap:wrap;gap:5px 16px}
-  .pivchip{font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums} .pivchip b{font-family:var(--mono);font-size:10px;margin-right:5px} .pivchip .pm{color:var(--muted);font-size:10.5px}
-  .dvgbadge{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 7px;border-radius:4px;text-transform:none;letter-spacing:0}
-  .dvgbadge.bull{color:var(--good);background:var(--good-bg)} .dvgbadge.bear{color:var(--hot);background:var(--hot-bg)}
   .sigrow{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:start;margin-bottom:9px}
   .sigl{font-family:var(--mono);font-size:10px;font-weight:700;padding-top:3px}
   .sigl.buy{color:var(--good)}.sigl.sell{color:var(--hot)}
@@ -399,8 +393,8 @@
     cash:"시총 대비 잉여현금흐름 상위 + 이익률 양호 — 현금창출력. 미검증 스크리닝",
     garp:"성장하되 밸류에이션 과하지 않은 종목(GARP). 미검증 스크리닝",
     lowvol:"베타 낮고 이익률 받쳐주는 방어형 — 하락장 방어·강세장 열위. 미검증 스크리닝",
-    swingbuy:"차트 스윙 저점 매수 타점(확정 ▲ + 잠정 △)이 최근 발생한 종목 — 최신 타점순. 잠정=미확정이라 날짜 이동 가능",
-    swingsell:"차트 스윙 고점 매도 타점(확정 ▼ + 잠정 ▽)이 최근 발생한 종목 — 최신 타점순. 잠정=미확정이라 날짜 이동 가능",
+    swingbuy:"차트 스윙 저점 매수 타점(확정 ▲ + 잠정 △)이 최근 발생한 종목 — 최신 타점순. '강'=다이버전스·거래량 확인이 동반된 타점(확인 유무 표기·검증된 우위 아님). 잠정=미확정이라 날짜 이동 가능",
+    swingsell:"차트 스윙 고점 매도 타점(확정 ▼ + 잠정 ▽)이 최근 발생한 종목 — 최신 타점순. '강'=다이버전스·거래량 확인이 동반된 타점(확인 유무 표기·검증된 우위 아님). 잠정=미확정이라 날짜 이동 가능",
     buy:"상승추세(200일선 위) 종목 중 종합점수(과열도·추세·모멘텀·변동성, 섹터 상대) 내림차순 — 매수 후보 1차 기준",
     sell:"하락추세(200일선 아래) 종목 중 약세 종합점수 내림차순 — 비중축소 주의 (공매도 근거 아님)",
     oh:"과열도 상위 — RSI·스토캐스틱·MFI 등 과매수권",
@@ -456,26 +450,9 @@
     if(buys)block+='<div class="sigrow"><span class="sigl buy">매수</span><div class="sigcol">'+buys+'</div></div>';
     if(sells)block+='<div class="sigrow"><span class="sigl sell">매도</span><div class="sigcol">'+sells+'</div></div>';
     if(!buys&&!sells)block='<div class="signone">최근 5거래일 발동 신호 없음</div>';
-    // ③ 스윙 전환점 구조(지그재그) + 다이버전스 — 고점/저점 포착
+    // ③ 스윙 저점/고점 원시 구조(●) 표시는 제거(2026-07-24) — 매수/매도 타점(▲▼)과 같은 전환점에 겹쳐 이중으로 보였다.
+    //    다이버전스·거래량 확인은 이제 각 타점의 강/약 등급(아래 '왜 이 신호인가' 근거)에 접목돼 표시된다.
     var tpHtml='';
-    if(s.tp&&s.tp.zz&&s.tp.zz.length>=2){
-      var pxa=s.pxd||[], dts=DATA.pxd_dates||[], cur=null, ci;
-      for(ci=pxa.length-1;ci>=0;ci--){if(pxa[ci]!=null){cur=pxa[ci];break;}}
-      var lastH=null, lastL=null, zi;
-      for(zi=s.tp.zz.length-1;zi>=0;zi--){var z=s.tp.zz[zi];if(!lastH&&z[1]==='H')lastH=z;if(!lastL&&z[1]==='L')lastL=z;}
-      // 미확정 꼬리 극점(마지막 zz)엔 확정 진행률·과거 확정확률 표시 — "왜 아직 잠정 △가 없나"를 화면이 설명
-      var tailZ=s.tp.zz[s.tp.zz.length-1];
-      var atrpv=(s.sig&&s.sig.atrp)?s.sig.atrp.v:null;
-      var th=atrpv!=null?Math.min(0.16,Math.max(0.05,3.0*atrpv/100)):null;
-      function odds(prog,lo){var T=lo?[21,40,56,70,89]:[15,30,45,61,85];return T[prog>=0.8?4:prog>=0.6?3:prog>=0.4?2:prog>=0.2?1:0];}
-      var fmtPiv=function(z,lab,cv){if(!z||pxa[z[0]]==null)return '';var lv=pxa[z[0]],dd=dts[z[0]]||'',pc=cur?((cur/lv-1)*100):0;
-        var extra='';
-        if(th&&cur&&z===tailZ){var lo=z[1]==='L',prog=lo?((cur/lv-1)/th):((1-cur/lv)/th);prog=Math.max(0,Math.min(prog,1));
-          extra=' · <b style="color:var(--watch)">미확정</b> 진행률 '+Math.round(prog*100)+'%/임계 '+Math.round(th*100)+'% · 확정확률 ~'+odds(prog,lo)+'%';}
-        return '<span class="pivchip"><b style="color:'+cv+'">'+lab+'</b> '+lv.toLocaleString()+' <span class="pm">'+(dd?dd.slice(5):'')+' · 현재 '+(pc>=0?'+':'')+pc.toFixed(1)+'%'+extra+'</span></span>';};
-      var dvgHtml=s.tp.dvg==='bull'?'<span class="dvgbadge bull">강세 다이버전스</span>':s.tp.dvg==='bear'?'<span class="dvgbadge bear">약세 다이버전스</span>':'';
-      tpHtml='<div class="tpbox"><div class="tphd"><span>스윙 전환점 구조</span>'+dvgHtml+'</div><div class="pivrow">'+fmtPiv(lastH,'최근 고점','var(--hot)')+fmtPiv(lastL,'최근 저점','var(--good)')+'</div></div>';
-    }
     var TRIGKO={reclaim:"200MA 회복",golden:"골든크로스",macd_bull:"MACD 상향",lose:"200MA 이탈",death:"데드크로스",macd_bear:"MACD 하향"};
     var trigs=(s.trig||[]).map(function(x){return TRIGKO[x]||x;});
     var trigHtml=trigs.length?'<div class="tsum">추세 트리거 · <b style="color:var('+col+')">'+trigs.join(' · ')+'</b></div>':'';
@@ -525,8 +502,8 @@
   // 프리셋 설명 — 툴팁(hover)만으로는 '골든 임박·과밀숏'이 뭔지 알 수 없다는 피드백 → 목록 위에 상시 노출.
   // [이름, 평문 뜻, 판정 기준]. 기준값은 stocks.json의 flag_defs와 같은 정의를 풀어 쓴 것.
   var PDESC={
-    swingbuy:['스윙 저점매수','주가가 바닥을 찍고 돌아선 지점이 최근에 나온 종목. 확정 타점(▲)과 아직 확정 전인 잠정 타점(△)을 함께 본다.','최신 타점순 · 확정은 며칠 뒤에야 판정되므로 사후 표시'],
-    swingsell:['스윙 고점매도','주가가 고점을 찍고 꺾인 지점이 최근에 나온 종목. 매도라기보다 비중을 줄여 볼 구간이라는 뜻이다.','최신 타점순 · 하락추세에서만 표시'],
+    swingbuy:['스윙 저점매수','주가가 바닥을 찍고 돌아선 지점이 최근에 나온 종목. 확정 타점(▲)과 아직 확정 전인 잠정 타점(△)을 함께 본다. 다이버전스나 거래량이 확인된 타점은 <b>강</b>으로 진하게 표시.','최신 타점순 · 확정은 며칠 뒤에야 판정되므로 사후 표시'],
+    swingsell:['스윙 고점매도','주가가 고점을 찍고 꺾인 지점이 최근에 나온 종목. 매도라기보다 비중을 줄여 볼 구간이라는 뜻이다. 다이버전스나 거래량이 확인된 타점은 <b>강</b>으로 진하게 표시.','최신 타점순 · 하락추세에서만 표시'],
     oh:['과매수','단기간에 많이 올라 열이 오른 상태. 쉬어갈 가능성을 보는 구간이지 하락 예고는 아니다.','RSI 70 이상 또는 볼린저 밴드 상단(%b 0.95↑)'],
     os:['과매도','단기간에 많이 빠져 눌린 상태. 반등 여지를 보지만 하락추세라면 더 빠질 수도 있다.','RSI 30 이하 또는 볼린저 밴드 하단(%b 0.05↓)'],
     dip:['눌림목','장기 상승추세를 유지하는 중에 잠깐 밀린 종목. 추세는 살아 있는데 단기 과열만 식은 상태를 찾는다.','상승추세(종가>50일선>200일선·ADX 20↑) + RSI 45 미만 + 볼린저 하단권(%b 0.3↓)'],
@@ -630,7 +607,8 @@
     listEl.innerHTML=rows.map(function(s){
       var v=s.comp[comp]||0, fl=(s.flags||[]).slice(0,2).map(flagHtml).join(''), metric;
       if(sk){var mp=lastMkP(s,state.preset),mi=mp.i,dt=(dts[mi]||'').slice(5),ago=NN-1-mi,mc=state.preset==='swingbuy'?'--good':'--hot';
-        metric='<span class="metric"><div class="mv" style="color:var('+mc+');font-size:13px">'+dt+(mp.prov?' <span style="color:var(--watch);font-size:9px;font-weight:700">잠정</span>':'')+'</div><div class="nm" style="text-align:right;margin-top:2px">'+(ago<=0?'당일':ago+'일 전')+(mp.prov?' · 이동가능':'')+'</div></span>';
+        var mstr=(s.strong||[]).indexOf(mi)>=0;   // 최신 타점에 다이버전스·거래량 확인이 동반됐나
+        metric='<span class="metric"><div class="mv" style="color:var('+mc+');font-size:13px">'+dt+(mstr?' <span style="color:var(--accent);font-size:9px;font-weight:800" title="다이버전스·거래량 확인이 동반된 타점 — 확인 신호 유무 표기일 뿐, 검증된 수익 우위가 아님">강</span>':'')+(mp.prov?' <span style="color:var(--watch);font-size:9px;font-weight:700">잠정</span>':'')+'</div><div class="nm" style="text-align:right;margin-top:2px">'+(ago<=0?'당일':ago+'일 전')+(mp.prov?' · 이동가능':'')+'</div></span>';
       }else if(state.preset==='tgt'){
         // 목표주가 탭 — 목표평균·상승여력·커버 애널 수. 상승여력은 무채색(강조하지 않는다: 검증상 최근 하락의 기계적 반영)
         var fu=s.fund||{}, upv=fu.up, tpm=fu.tpm;
@@ -928,20 +906,20 @@
     var cd=el('chgd');
     if(cd)cd.innerHTML=(l!=null?l.toLocaleString():'—')+(chg!=null?' <b style="color:'+(chg>=0?'var(--good)':'var(--hot)')+'">'+(chg>=0?'+':'')+chg.toFixed(1)+'%</b>':'')+' <span style="color:var(--muted);font-weight:400">· '+(sdates[0]||'')+' ~ '+(DATA.as_of||'')+'</span>';
     var off=pxd.length-n;
-    var sl=function(a){return (a||[]).filter(function(i){return i>=off;}).map(function(i){return i-off;});};
+    // 강한 타점(다이버전스·거래량 확인) 인덱스 — 원본 좌표계 기준. 각 마커를 [상대인덱스, 강여부]로 싣는다.
+    // strong_tiers 플래그가 없는 구버전 데이터면 등급 정보가 없으므로 전부 '강'(진하게)으로 렌더 — 전부 흐려 보이는 오해 방지.
+    var tiers=!!DATA.strong_tiers, strongSet={}; (s.strong||[]).forEach(function(i){strongSet[i]=1;});
+    var sl=function(a){return (a||[]).filter(function(i){return i>=off;}).map(function(i){return [i-off, tiers?!!strongSet[i]:true];});};
     var mk={bms:sl(s.bms),bmw:sl(s.bmw),sms:sl(s.sms),smw:sl(s.smw)};
     var nb=mk.bms.length+mk.bmw.length, ns=mk.sms.length+mk.smw.length;
     var ma20=sma(pxd,20).slice(off), ma60=sma(pxd,60).slice(off);   // 주봉이면 20주·60주
     var vsl=(s.vd||[]).slice(off);
-    var zzf=((s.tp&&s.tp.zz)||[]);   // 마지막 원소 = 미확정 진행 중 극점 → prov 플래그로 빈 원 표시
-    var zz=zzf.map(function(p,k){return [p[0],p[1],k===zzf.length-1];})
-              .filter(function(p){return p[0]>=off;}).map(function(p){return [p[0]-off,p[1],p[2]];});
     var ml=el('marklg');
-    if(ml)ml.innerHTML='<span style="color:var(--good)">●저점</span><span style="color:var(--hot)">●고점</span><span style="color:var(--muted)">스윙</span> <span style="color:var(--good)">▲매수</span><span style="color:var(--hot)">▼매도</span> <span style="color:var(--muted)">빈 도형=잠정(미확정·이동가능)</span> <span style="color:var(--cold)">━MA20</span> <span style="color:var(--watch)">━MA60</span> <span style="color:var(--muted)">▮거래량</span>';
-    drawChart(slice, sdates, mk, ma20, ma60, vsl, zz);
+    if(ml)ml.innerHTML='<span style="color:var(--good)">▲매수</span><span style="color:var(--hot)">▼매도</span> <span style="color:var(--muted)">진한 도형=강(다이버전스·거래량 확인)</span> <span style="color:var(--muted)">흐린 도형=약(구조 전환만)</span> <span style="color:var(--muted)">빈 도형=잠정(미확정·이동가능)</span> <span style="color:var(--cold)">━MA20</span> <span style="color:var(--watch)">━MA60</span> <span style="color:var(--muted)">▮거래량</span>';
+    drawChart(slice, sdates, mk, ma20, ma60, vsl);
     var cv=el('pxc');if(cv)cv.setAttribute('aria-label', s.t+' 가격 차트, 최근 '+n+'거래일 ('+(sdates[0]||'')+'~'+(DATA.as_of||'')+'), 변동 '+(chg==null?'—':(chg>=0?'+':'')+chg.toFixed(1)+'%')+', 매수 '+nb+'·매도 '+ns+' 타점');
   }
-  function drawChart(arr, dates, mk, ma20, ma60, vd, zz){
+  function drawChart(arr, dates, mk, ma20, ma60, vd){
     var cv=el('pxc');if(!cv)return;var ctx=cv.getContext('2d');
     var pts=[];for(var i=0;i<arr.length;i++)if(arr[i]!=null)pts.push([i,arr[i]]);
     var dpr=window.devicePixelRatio||1,W=cv.clientWidth||560,H=150;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
@@ -975,30 +953,23 @@
     // 이동평균선
     function drawMA(m,color){if(!m)return;ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();var st=false;for(var i=0;i<m.length;i++){if(m[i]==null){st=false;continue;}var x=X(i),y=Y(m[i]);if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y);}ctx.stroke();}
     drawMA(ma20,css('--cold'));drawMA(ma60,css('--watch'));
-    // 스윙 전환점(지그재그) — 확정 고점/저점 구조: 얇은 스켈레톤 + 저점(초록)·고점(빨강) 원
-    if(zz&&zz.length>=2){
-      var zpts=zz.filter(function(p){return arr[p[0]]!=null;});
-      ctx.strokeStyle=css('--muted');ctx.globalAlpha=.4;ctx.lineWidth=1;ctx.beginPath();
-      zpts.forEach(function(p,k){var x=X(p[0]),y=Y(arr[p[0]]);if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
-      ctx.stroke();ctx.globalAlpha=1;
-      // 확정 전환점 = 채운 원 · 미확정(진행 중 극점, 마지막 하나) = 속 빈 원 — 날짜 이동 가능함을 시각 구분
-      zpts.forEach(function(p){var x=X(p[0]),y=Y(arr[p[0]]),lo=p[1]==='L',prov=!!p[2],c2=lo?css('--good'):css('--hot');
-        ctx.beginPath();ctx.arc(x,y,prov?3:2.6,0,7);
-        if(prov){ctx.fillStyle=css('--panel');ctx.fill();ctx.strokeStyle=c2;ctx.lineWidth=1.5;ctx.stroke();}
-        else{ctx.fillStyle=c2;ctx.fill();}});
-    }
     var lp=pts[pts.length-1];ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(lp[0]),Y(lp[1]),3,0,7);ctx.fill();
-    // 매수(▲)/매도(▼) 타점 — 채움=확정(날짜 불변) · 빈 도형=잠정(미확정 꼬리, 날짜 이동 가능)
-    function tri(i,up,color,hollow){if(i>=arr.length||arr[i]==null)return;var x=X(i),y=Y(arr[i]);ctx.beginPath();
-      if(up){ctx.moveTo(x,y+5);ctx.lineTo(x-4,y+12);ctx.lineTo(x+4,y+12);}else{ctx.moveTo(x,y-5);ctx.lineTo(x-4,y-12);ctx.lineTo(x+4,y-12);}
+    // 매수(▲)/매도(▼) 타점 — 채움=확정 · 빈 도형=잠정(미확정 꼬리) · 강(진하게·큼)=다이버전스/거래량 확인 · 약(흐리게·작음)=구조 전환만
+    function tri(i,up,color,hollow,strong){if(i>=arr.length||arr[i]==null)return;var x=X(i),y=Y(arr[i]);
+      var w=strong?5:3.6, d=strong?14:11;
+      ctx.globalAlpha=strong?1:0.5;
+      ctx.beginPath();
+      if(up){ctx.moveTo(x,y+5);ctx.lineTo(x-w,y+d);ctx.lineTo(x+w,y+d);}else{ctx.moveTo(x,y-5);ctx.lineTo(x-w,y-d);ctx.lineTo(x+w,y-d);}
       ctx.closePath();
-      if(hollow){ctx.fillStyle=css('--panel');ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();}
-      else{ctx.fillStyle=color;ctx.fill();}}
+      if(hollow){ctx.fillStyle=css('--panel');ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=strong?2:1.4;ctx.stroke();}
+      else{ctx.fillStyle=color;ctx.fill();}
+      ctx.globalAlpha=1;}
+    // p=[상대인덱스, 강여부]
     if(mk){var g=css('--good'),h=css('--hot');
-      mk.bms.forEach(function(i){tri(i,true,g);});
-      mk.sms.forEach(function(i){tri(i,false,h);});
-      mk.bmw.forEach(function(i){tri(i,true,g,true);});
-      mk.smw.forEach(function(i){tri(i,false,h,true);});}
+      mk.bms.forEach(function(p){tri(p[0],true,g,false,p[1]);});
+      mk.sms.forEach(function(p){tri(p[0],false,h,false,p[1]);});
+      mk.bmw.forEach(function(p){tri(p[0],true,g,true,p[1]);});
+      mk.smw.forEach(function(p){tri(p[0],false,h,true,p[1]);});}
   }
 
   // 자동갱신(GitHub cron) 조용한 실패 대비 — 기준일 이후 흐른 영업일이 3일 이상이면 명시 경고(휴장·1회 결측은 허용)

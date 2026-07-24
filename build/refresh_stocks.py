@@ -721,6 +721,7 @@ def main():
         bms, sms = [], []
         bmw, smw = [], []      # 잠정(미확정 꼬리) 타점 — 진행 중 극점, 날짜 이동 가능. 차트에 '빈 도형'으로 표시
         bmr, smr = {}, {}      # 타점별 근거 문자열 {인덱스: "사유"}
+        strong_idx = []        # 강한 타점(다이버전스·거래량 확인) 인덱스 — 차트/리스트에서 강조. 나머지는 '약(구조 전환만)'
         whyb = None
         if dser is not None and t in px:
             cf = raw[t]["close"]; hf = px[t]["High"].reindex(cf.index); lf = px[t]["Low"].reindex(cf.index); vf = px[t]["Volume"].reindex(cf.index)
@@ -851,6 +852,50 @@ def main():
             bmw = [p for p in bmw if p not in bms]; smw = [p for p in smw if p not in sms]
             bms.sort(); sms.sort()
 
+            # ── 타점 강화(2026-07-24): 다이버전스 + 거래량으로 강/약 2단계 판정 ──
+            #   저점/고점 원시 구조(●) 표시를 없애는 대신, 그 핵심 정보(반전 다이버전스)를 타점에 접목한다.
+            #   강 = 반전 다이버전스 OR 거래량 급증(≥1.3배) 확인 · 약 = 확인 없이 구조 전환만.
+            #   ⚠ 미래참조 없음 — pos 시점 이하만 사용: dv[pos]·rsb[pos]·pos 이전 동일유형 전환점·20일 트레일링 거래량(_ctx).
+            #   ⚠ 배포 알파 주장 아님(스윙 타점은 랩 검증에서 진단용으로 판정) — '확인 여부' 표기일 뿐이다.
+            # 다이버전스 비교 기준 = '직전 동일유형 타점'(이전 매수 저점 / 이전 매도 고점).
+            #   ⚠ 지그재그 스윙극점(_zz)이 아니라 실제 타점열(bms+bmw / sms+smw)과 비교한다.
+            #   눌림목·반등 타점은 _zz에 없어서 _zz 기준으로 대면 (a) 다이버전스가 거의 안 잡히고
+            #   (b) 잡혀도 '직전 저점'이 몇 달 전 다른 국면의 스윙극점이라 근거 문구가 사실과 어긋난다.
+            _lows = sorted(bms + bmw); _highs = sorted(sms + smw)
+            def _prev_tp(pos, typ):
+                prev = None
+                for q in (_lows if typ == "L" else _highs):
+                    if q >= pos: break
+                    prev = q
+                return prev
+
+            def _strength(pos, typ):
+                notes = []; div = False
+                pv = _prev_tp(pos, typ)
+                if pv is not None:
+                    pp = _f(dv[pv]); pr = _f(rsb.iloc[pv]); cp = _f(dv[pos]); cr = _f(rsb.iloc[pos])
+                    _ref = pxd_dates[pv] if 0 <= pv < len(pxd_dates) else "?"
+                    if pp == pp and pr == pr and cp == cp and cr == cr:
+                        if typ == "L" and cp < pp and cr > pr + 2:
+                            div = True; notes.append(f"강세 다이버전스(직전 매수 타점 {_ref}보다 저가인데 RSI는 상승)")
+                        elif typ == "H" and cp > pp and cr < pr - 2:
+                            div = True; notes.append(f"약세 다이버전스(직전 매도 타점 {_ref}보다 고가인데 RSI는 하락)")
+                vr = _ctx(pos)["vr"]; vol = vr is not None and vr == vr and vr >= 1.3
+                if vol: notes.append(f"거래량 평소의 {vr:.1f}배 동반")
+                strong = div or vol
+                note = (" · 확인 동반(강) — " + " · ".join(notes)) if strong else " · 확인 신호 없음 — 구조 전환만(약)"
+                return strong, note
+
+            for _pos in bms + bmw:
+                _st, _nt = _strength(_pos, "L")
+                if _pos in bmr: bmr[_pos] += _nt
+                if _st: strong_idx.append(_pos)
+            for _pos in sms + smw:
+                _st, _nt = _strength(_pos, "H")
+                if _pos in smr: smr[_pos] += _nt
+                if _st: strong_idx.append(_pos)
+            strong_idx = sorted(set(strong_idx))
+
             # (c) 현재 상태 근거(왜 지금 이 라벨인가) + 최근 타점 사유
             last = len(pxd_dates) - 1
             cl = _ctx(last); bullets = []
@@ -919,10 +964,14 @@ def main():
                        **({"fundx": _fundx} if _fundx else {}),
                        **({"fundx_flags": fx_b[t]} if fx_b.get(t) else {}),
                        **({"fundx_na": fx_na[t]} if fx_na.get(t) else {}),
-                       **({"tp": tp} if tp else {})})
+                       # 스윙 저점/고점 원시 구조(tp.zz)는 화면에서 제거(2026-07-24) — 타점(bms/smw)과 겹쳐 이중 표시됐음.
+                       #   지그재그는 타점 산출의 내부 입력으로만 쓰고 JSON에는 싣지 않는다. 강한 타점 인덱스만 노출.
+                       **({"strong": strong_idx} if strong_idx else {})})
     stocks.sort(key=lambda s: -(s["comp"].get("momentum") or 0))
     def _rnd(x, nd): return round(float(x), nd) if nd else int(round(float(x)))
     out = {"as_of": as_of, "source": "yfinance + 표준 테크니컬 (cloud)", "n_stocks": len(stocks), "pxd_dates": pxd_dates,
+           "strong_tiers": True,   # 이 빌드가 타점 강/약(strong 인덱스)을 싣는다는 신호 — 없으면(구버전) 프런트가 전부 '강'으로 렌더
+
            # 지수 구성종목인데 커버에서 빠진 것 — 숨기지 않고 사유와 함께 싣는다
            "excluded": [{"t": t, "name": (mem.get(t) or {}).get("name"), "idx": (mem.get(t) or {}).get("idx"),
                          "why": w, "n": n} for t, (w, n) in sorted(dropped.items())],
@@ -990,14 +1039,14 @@ def main():
         _prev = 0
     if _prev and len(stocks) < _prev * 0.9:
         raise SystemExit(f"커버 종목 급감 {_prev}→{len(stocks)} (yfinance 부분 장애 의심) — 갱신 중단, 이전본 유지")
-    # ── 상세 분리(지연 로드): sig·pxd·vd·tp(페이로드의 72%)는 종목별 data/sd/<티커>.json으로, 본체는 슬림하게 ──
+    # ── 상세 분리(지연 로드): sig·pxd·vd·why 등(페이로드의 대부분)은 종목별 data/sd/<티커>.json으로, 본체는 슬림하게 ──
     # ⚠ 워크플로 커밋 대상에 data/sd 포함 필수(home_reco 누락 사고와 동일 함정) · stocks.html이 선택 시 fetch.
     SD_DIR = os.path.join(HERE, "..", "data", "sd")
     os.makedirs(SD_DIR, exist_ok=True)
     _keep = set()
     for s in stocks:
         det = {"as_of": as_of, "t": s["t"]}
-        for k in ("sig", "pxd", "vd", "tp", "why", "fundx", "fundx_flags", "fundx_na"):
+        for k in ("sig", "pxd", "vd", "why", "fundx", "fundx_flags", "fundx_na"):
             v = s.pop(k, None)
             if v is not None: det[k] = v
         fn = s["t"] + ".json"; _keep.add(fn)
