@@ -19,19 +19,19 @@
 <meta name="twitter:description" content="FRED 무료 매크로 39지표(성장·노동·물가·금융·금리·주택)로 판별하는 시장 국면 + 직전·추세 대비 서프라이즈.">
 <style>
   :root{
-    --ground:#F4F1EA;--panel:#FFFFFF;--panel-2:#F8F6F1;--line:#E2DDD1;--line-soft:#EDE9E0;
-    --ink:#2A2621;--ink-2:#4B453B;--muted:#786F61;--accent:#8A6B00;
-    --hot:#A64B3B;--hot-bg:#f3e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dff0e6;--watch:#B25E12;--watch-bg:#f7e6d5;
-    --shadow:0 1px 2px rgba(42,38,33,.05),0 8px 24px -12px rgba(42,38,33,.18);
+    --ground:#F5F7FA;--panel:#FFFFFF;--panel-2:#EEF2F6;--line:#DCE3EA;--line-soft:#E9EEF3;
+    --ink:#1B2733;--ink-2:#42505E;--muted:#66757F;--accent:#8A6B00;--accent-2:#5E4900;--gA:#158A52;--gB:#4F9A54;--gC:#B0870F;--gD:#C2600F;--gF:#A64B3B;
+    --hot:#A64B3B;--hot-bg:#f2e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dcefe5;--watch:#B25E12;--watch-bg:#f7e6d5;
+    --shadow:0 1px 2px rgba(23,39,51,.05),0 8px 24px -12px rgba(23,39,51,.18);
   }
   @media (prefers-color-scheme:dark){:root{
-    --ground:#15130F;--panel:#201D18;--panel-2:#2A2620;--line:#3A342B;--line-soft:#2F2A23;
-    --ink:#F1EDE4;--ink-2:#D0C9BB;--muted:#968C7C;--accent:#FFBC00;
+    --ground:#0F141A;--panel:#181E26;--panel-2:#20272F;--line:#2E3742;--line-soft:#242C34;
+    --ink:#EAEEF2;--ink-2:#C4CDD6;--muted:#8A97A3;--accent:#FFBC00;--accent-2:#FFD766;--gA:#2FBE77;--gB:#5FB06A;--gC:#D6A537;--gD:#E5893C;--gF:#E5806A;
     --hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#F0863C;--watch-bg:#2b1c12;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
   }}
-  :root[data-theme="light"]{--ground:#F4F1EA;--panel:#FFFFFF;--panel-2:#F8F6F1;--line:#E2DDD1;--line-soft:#EDE9E0;--ink:#2A2621;--ink-2:#4B453B;--muted:#786F61;--accent:#8A6B00;--hot:#A64B3B;--hot-bg:#f3e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dff0e6;--watch:#B25E12;--watch-bg:#f7e6d5;--shadow:0 1px 2px rgba(42,38,33,.05),0 8px 24px -12px rgba(42,38,33,.18);}
-  :root[data-theme="dark"]{--ground:#15130F;--panel:#201D18;--panel-2:#2A2620;--line:#3A342B;--line-soft:#2F2A23;--ink:#F1EDE4;--ink-2:#D0C9BB;--muted:#968C7C;--accent:#FFBC00;--hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#F0863C;--watch-bg:#2b1c12;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);}
+  :root[data-theme="light"]{--ground:#F5F7FA;--panel:#FFFFFF;--panel-2:#EEF2F6;--line:#DCE3EA;--line-soft:#E9EEF3;--ink:#1B2733;--ink-2:#42505E;--muted:#66757F;--accent:#8A6B00;--accent-2:#5E4900;--gA:#158A52;--gB:#4F9A54;--gC:#B0870F;--gD:#C2600F;--gF:#A64B3B;--hot:#A64B3B;--hot-bg:#f2e0db;--cold:#2C6E8F;--cold-bg:#dbe9f0;--good:#0E8A54;--good-bg:#dcefe5;--watch:#B25E12;--watch-bg:#f7e6d5;--shadow:0 1px 2px rgba(23,39,51,.05),0 8px 24px -12px rgba(23,39,51,.18);}
+  :root[data-theme="dark"]{--ground:#0F141A;--panel:#181E26;--panel-2:#20272F;--line:#2E3742;--line-soft:#242C34;--ink:#EAEEF2;--ink-2:#C4CDD6;--muted:#8A97A3;--accent:#FFBC00;--accent-2:#FFD766;--gA:#2FBE77;--gB:#5FB06A;--gC:#D6A537;--gD:#E5893C;--gF:#E5806A;--hot:#E5806A;--hot-bg:#2c1815;--cold:#6BB0D6;--cold-bg:#152834;--good:#38D083;--good-bg:#12291f;--watch:#F0863C;--watch-bg:#2b1c12;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);}
   /* 폭 토큰 — 넓은 표/본문형/읽기형 세 가지로 통일(페이지 이동 시 폭이 튀지 않게) */
   :root{--w-wide:1440px;--w-base:1200px;--w-read:980px}
   *,*::before,*::after{box-sizing:border-box}
@@ -45,7 +45,7 @@
      (예: "(Goldilocks·Recovery·…·Recession)" 527px)까지 통째로 붙들어 모바일에서 페이지를
      가로로 밀어냈다. overflow-wrap:break-word는 **넘칠 때만** 끊으므로 한글 단어 보전은 유지된다. */
   .wrap{max-width:var(--w-base);margin:0 auto;padding:0 20px 70px}
-  header.mast{padding:64px 0 18px;border-bottom:1px solid var(--line)}
+  header.mast{padding:34px 0 18px;border-bottom:1px solid var(--line)}
   .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:12px}
   .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
   h1.title{font-family:var(--mono);font-weight:600;font-size:clamp(23px,4vw,34px);line-height:1.14;letter-spacing:-.01em;margin:14px 0 0}
@@ -126,10 +126,22 @@
   td.pv{font-family:var(--mono);font-weight:600}
   th.cur,td.cur{background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
 
-  a.home,button.theme{position:fixed;top:14px;z-index:50;height:38px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);box-shadow:var(--shadow);border-radius:10px;cursor:pointer}
-  a.home{left:14px;display:flex;align-items:center;gap:6px;padding:0 13px;font-family:var(--mono);font-size:12px;font-weight:600;text-decoration:none}
-  button.theme{right:14px;width:38px;font-size:16px}
-  a.home:hover,button.theme:hover{border-color:var(--accent)}
+  .topnav{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+  .topnav .nvin{max-width:var(--w-base);margin:0 auto;padding:0 20px;height:52px;display:flex;align-items:center;gap:16px}
+  .topnav .brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:-.01em;flex:none}
+  .topnav .brand svg{width:22px;height:22px;flex:none}
+  .navlinks{display:flex;align-items:center;gap:2px;margin-left:4px;overflow-x:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink-2);text-decoration:none;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  .navlinks a:hover{background:var(--panel-2);color:var(--accent)}
+  .navlinks a[aria-current="page"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent)}
+  .navlinks a .lk{font-size:9px;opacity:.6;margin-left:3px;vertical-align:1px}
+  .navsp{flex:1}
+  .themebtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .themebtn:hover{border-color:var(--accent)}
+  .grade{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:22px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:800;padding:0 6px;color:#fff;line-height:1}
+  .grade.gA{background:var(--gA)}.grade.gB{background:var(--gB)}.grade.gC{background:var(--gC)}.grade.gD{background:var(--gD)}.grade.gF{background:var(--gF)}
+  .rpill{display:inline-flex;gap:7px;align-items:center;font-family:var(--mono);font-size:11px;font-weight:700;border-radius:999px;padding:4px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2)}
   footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.8}
   footer a{color:var(--accent);text-decoration:none}
   .empty{font-family:var(--mono);font-size:13px;color:var(--muted);padding:30px;text-align:center}
@@ -179,8 +191,25 @@
 </style>
 </head>
 <body>
-<a class="home" href="index.html" title="홈">← 홈</a>
-<button class="theme" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
+<nav class="topnav" aria-label="주 메뉴">
+  <div class="nvin">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="currentColor" opacity=".12"/><path d="M6 22 L13 15 L18 19 L26 8" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="8" r="2.4" fill="var(--accent)"/></svg>
+      여두 랩
+    </a>
+    <div class="navlinks">
+      <a href="stocks.html">종목 시그널</a>
+      <a href="regime.html" aria-current="page">시장 국면</a>
+      <a href="explorer.html" rel="nofollow">전략 리스트<span class="lk">🔒</span></a>
+      <a href="rotation.html" rel="nofollow">전략 탐색<span class="lk">🔒</span></a>
+      <a href="archive.html" rel="nofollow">기각</a>
+      <a href="sources.html" rel="nofollow">출처</a>
+      <a href="kb.html" rel="nofollow">BK<span class="lk">🔒</span></a>
+    </div>
+    <span class="navsp"></span>
+    <button class="themebtn" id="themebtn" aria-label="테마 전환" title="라이트/다크 전환">◐</button>
+  </div>
+</nav>
 <div class="wrap">
   <header class="mast">
     <div class="eyebrow">여두 전략 랩 · 시장 국면</div>
